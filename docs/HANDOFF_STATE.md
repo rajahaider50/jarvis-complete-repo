@@ -17,4 +17,5 @@ v8: workspace agent + documents + skills, real phone facts, chat actions + strea
 
 ## Next step
 - Done: custom provider save now fetches and persists the complete `/models` catalog; Chat and Code use provider Auto/model selection with retries for transient HTTP errors.
-- Next step: run the first GitHub Actions build and phone-test provider model fetching, Auto selection, and 402/429/5xx retry behavior.
+- Done: provider discovery phase 1 adds API pricing/context/tools metadata, Free only filtering, Unverified grouping, manual model metadata, cached provider catalogs, and Chat eligibility; GitHub Actions build passed on run 38932098213.
+- Next step: phone-test provider discovery, then implement the guide's task-state/checkpoint phase before scored routing and network resume.
