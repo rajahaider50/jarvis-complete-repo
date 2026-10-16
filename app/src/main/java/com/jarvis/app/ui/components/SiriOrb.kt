@@ -335,7 +335,7 @@ private fun DrawScope.prism(c: Offset, r: Float, t: Float, amp: Float) = ball(c,
     for (i in 0 until 6) {
         val a = t * 0.6f + i * 2 * PI.toFloat() / 6
         val tip = Offset(c.x + cos(a) * r * (0.8f + amp * 0.4f), c.y + sin(a) * r * (0.8f + amp * 0.4f))
-        val p = Path(); p.moveTo(c.x, c.y); p.lineTo(Offset(c.x + cos(a - 0.5f) * r * 0.5f, c.y + sin(a - 0.5f) * r * 0.5f)); p.lineTo(tip.x, tip.y); p.close()
+        val p = Path(); p.moveTo(c.x, c.y); p.lineTo(c.x + cos(a - 0.5f) * r * 0.5f, c.y + sin(a - 0.5f) * r * 0.5f); p.lineTo(tip.x, tip.y); p.close()
         drawPath(p, listOf(Gold, GoldLight, warm(), GoldDark)[i % 4].copy(alpha = 0.45f))
     }
     soft(Color.White, c, r * (0.22f + amp), 0.85f)
