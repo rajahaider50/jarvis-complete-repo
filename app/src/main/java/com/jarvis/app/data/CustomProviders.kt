@@ -14,6 +14,15 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
+/** One model offered by a provider. Used by the smart router (`ModelRouter`) to score and pick models. */
+data class ProviderModel(
+    val id: String,
+    val source: String = "manual",       // where it came from: "manual", "import", "discovery"
+    val contextWindow: Int? = null,       // tokens, null = unknown
+    val supportsTools: Boolean? = null,   // null = unknown
+    val qualityTier: Int? = null          // 1 (small) .. 5 (flagship), null = unknown
+)
+
 /** An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRouter, Groq, DeepSeek, Mistral, Together, Ollama, LM Studio ...). */
 data class CustomProvider(
     val id: String,
@@ -31,7 +40,9 @@ data class CustomProvider(
     val ttsModel: String = "",        // text-to-speech model, e.g. tts-1
     val ttsVoices: String = "",       // the provider's own voices, comma separated
     val ttsVoice: String = "",        // the voice in use
-    val speechFrom: String = ""       // take speech-to-text / voices from another provider (its id)
+    val speechFrom: String = "",      // take speech-to-text / voices from another provider (its id)
+    val models: List<ProviderModel> = emptyList(),  // models discovered/imported for this provider (smart router)
+    val dailyLimitTokens: Long = 0                  // optional daily token cap, 0 = none (smart router)
 ) {
     fun voiceList(): List<String> = ttsVoices.split(',', '\n').map { it.trim() }.filter { it.isNotEmpty() }
 }
@@ -157,6 +168,10 @@ object CustomProviders {
         if (Prefs.manualModel.startsWith("custom:")) list.firstOrNull { it.id == Prefs.manualModel.removePrefix("custom:") } else null
 
     fun fallbacks(): List<CustomProvider> = list.filter { it.fallback }
+
+    /** Models the smart router may route to for a provider: its discovered list, or its single manual model. */
+    fun eligibleModels(p: CustomProvider): List<ProviderModel> =
+        p.models.ifEmpty { if (p.modelId.isNotBlank()) listOf(ProviderModel(p.modelId, source = "manual")) else emptyList() }
 
     /** The provider whose speech-to-text and voices are used for [p] (itself, unless it borrows another one). */
     fun speechOf(p: CustomProvider): CustomProvider =

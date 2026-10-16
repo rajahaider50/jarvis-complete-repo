@@ -90,6 +90,7 @@ fun HomeScreen(onNav: (String) -> Unit) {
     ScreenScaffold("home", onNav) {
         if (Palettes.style != 0) Box(Modifier.weight(1f).fillMaxWidth()) { com.jarvis.app.ui.styles.StyledHome(ui) }
         else Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            val col = this
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     JText("Good to see you", 13, Muted)
@@ -101,7 +102,7 @@ fun HomeScreen(onNav: (String) -> Unit) {
             }
             // ---- animated boot: orb + rotating rings ----
             Box(Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
-                AnimatedVisibility(stage >= 1, enter = scaleIn(tween(900), initialScale = 0.3f) + fadeIn(tween(900))) {
+                col.AnimatedVisibility(stage >= 1, enter = scaleIn(tween(900), initialScale = 0.3f) + fadeIn(tween(900))) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.clickable { greet() }) {
                         BootRings(stage < 5 || talking)
                         SiriOrb(190.dp, if (talking) 0.5f else 0.1f, if (talking) 3 else if (stage < 5) 2 else 0)
