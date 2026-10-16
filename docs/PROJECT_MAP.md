@@ -1,8 +1,19 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 22:01 · 152 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 22:15 · 154 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
+- Complete.md
+- Pending.md
+- Planning.md
+- Task.md
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
+- app/src/main/java/com/jarvis/app/ui/components/Components.kt
+- app/src/main/java/com/jarvis/app/ui/screens/UiStyleScreen.kt
+- app/src/main/java/com/jarvis/app/ui/styles/IfaceCatalog.kt
+- app/src/main/java/com/jarvis/app/ui/styles/StyleKit.kt
+- app/src/main/java/com/jarvis/app/ui/theme/Color.kt
+- docs/CHANGES_20261017_interfaces-50.md
 - docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
@@ -45,7 +56,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ModelCatalog.kt` · 109 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog
 - `ModelRouter.kt` · 138 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 115 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 126 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
 - `Voices.kt` · 20 · Gender of each Gemini prebuilt voice + the language rule that keeps grammar matching the v · Voices
@@ -93,30 +104,31 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ProvidersScreen.kt` · 257 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, Prefs.kt
 - `SkillsScreen.kt` · 86 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, SkillEditor · uses: Skills.kt, AppLog.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt
-- `UiStyleScreen.kt` · 105 · Pick the whole design of the app. Everything changes at once: layout, navigation, icons, c · StyleInfo, STYLES, UiStyleScreen, Mini · uses: Prefs.kt
+- `UiStyleScreen.kt` · 143 · 50 interface styles: 25 native-Android premium and 25 iOS premium. · StyleInfo, STYLES, UiStyleScreen, StyleRow, Mini, MiniModern · uses: Prefs.kt, IfaceCatalog.kt
 - `VoiceScreen.kt` · 241 · - · VOICES, VoiceScreen, VoiceCard, AddVoiceDialog · uses: AppLog.kt, PcmPlayer.kt, Speaker.kt, Prefs.kt, Langs.kt, Voices.kt
 - `WelcomeScreen.kt` · 45 · - · WelcomeScreen
 
 ### ui/styles/
 - `AuroraScreens.kt` · 226 · AURORA · Home: one big hero card with the orb and a "Talk now" pill, quick chips, ring gau · AuroraHome, AuroraControl, AuroraSlider, AuroraSettings · uses: Device.kt, Prefs.kt, JarvisAccessibilityService.kt
 - `FolioScreens.kt` · 197 · FOLIO: a warm, paper-like magazine. Serif headlines, navigation as text tabs at the TOP (n · FolioTabs, FolioHeader, Figure, FolioHome, FolioControl, FolioLevel, FolioSettings · uses: Device.kt, Prefs.kt, JarvisAccessibilityService.kt
+- `IfaceCatalog.kt` · 107 · One extra interface style. [engine] picks which layout engine draws it: · IfaceDef, IfaceCatalog · uses: Color.kt
 - `NovaScreens.kt` · 207 · NOVA · Home: search-style "Ask" bar, a tonal assistant card, circular quick actions and a  · NovaHome, NovaControl, NovaSlider, NovaSettings · uses: Device.kt, Prefs.kt, JarvisAccessibilityService.kt
 - `PulseScreens.kt` · 264 · PULSE: pure-black HUD look. Monospace text, sharp corners, a raised center "talk" button,  · PText, Sharp4, PulseNav, PulseTab, PulseHeader, PulseHome, Card · uses: Device.kt, Prefs.kt
 - `StyleKit.kt` · 201 · What the Home screen controller hands to every interface style. · HomeUi, Warn, gemStatus, AuroraNav, NovaNav, AuroraHeader, NovaHeader · uses: ModelCatalog.kt, Prefs.kt, Device.kt, Components.kt
 
 ### ui/theme/
-- `Color.kt` · 125 · 50 color styles. The first one is the original Figma "Royal Gold". · Palette, Palettes, Bg
+- `Color.kt` · 130 · 50 color styles. The first one is the original Figma "Royal Gold". · Palette, Palettes, Bg
 - `Theme.kt` · 33 · - · JarvisTheme
 - `Type.kt` · 10 · Figma uses Playfair Display (headings) and Inter (body). · JarvisSerif, JarvisSans
 
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 12 lines
+- `Complete.md` · 13 lines
 - `FEATURES.md` · 22 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 8 lines
-- `Planning.md` · 20 lines
+- `Pending.md` · 9 lines
+- `Planning.md` · 21 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
 - `Task.md` · 11 lines
@@ -158,10 +170,11 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261016_smart-router-phase3.md` · 49 lines
 - `docs/CHANGES_20261016_task-state-resume-phase2.md` · 44 lines
 - `docs/CHANGES_20261017_build-fixes.md` · 19 lines
+- `docs/CHANGES_20261017_interfaces-50.md` · 24 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
-- `docs/HANDOFF_STATE.md` · 18 lines
+- `docs/HANDOFF_STATE.md` · 19 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
