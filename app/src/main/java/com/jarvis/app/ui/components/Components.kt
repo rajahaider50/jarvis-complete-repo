@@ -45,7 +45,7 @@ fun JText(
     modifier: Modifier = Modifier
 ) = Text(
     text = text, modifier = modifier, color = color, fontSize = size.sp, fontWeight = weight,
-    fontFamily = if (serif && (Palettes.style == 0 || Palettes.style == 4)) JarvisSerif else JarvisSans, letterSpacing = ls.sp,
+    fontFamily = if (serif && Palettes.serif) JarvisSerif else JarvisSans, letterSpacing = ls.sp,
     lineHeight = if (lh > 0) lh.sp else TextUnit.Unspecified, textAlign = align
 )
 
@@ -98,7 +98,7 @@ fun GoldIconBox(icon: ImageVector, box: Int = 42, iconSize: Int = 22, radius: In
 @Composable
 fun ScreenScaffold(current: String?, onNav: (String) -> Unit, content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.fillMaxSize().background(Bg).systemBarsPadding()) {
-        if (Palettes.style == 4 && current != null) com.jarvis.app.ui.styles.FolioTabs(current, onNav)
+        if (Palettes.engine == 4 && current != null) com.jarvis.app.ui.styles.FolioTabs(current, onNav)
         Column(Modifier.weight(1f).fillMaxWidth(), content = content)
         if (current != null) BottomNav(current, onNav)
     }
@@ -106,7 +106,7 @@ fun ScreenScaffold(current: String?, onNav: (String) -> Unit, content: @Composab
 
 /** The bottom bar follows the chosen interface style. */
 @Composable
-fun BottomNav(current: String, onNav: (String) -> Unit) = when (Palettes.style) {
+fun BottomNav(current: String, onNav: (String) -> Unit) = when (Palettes.engine) {
     1 -> com.jarvis.app.ui.styles.AuroraNav(current, onNav)
     2 -> com.jarvis.app.ui.styles.NovaNav(current, onNav)
     3 -> com.jarvis.app.ui.styles.PulseNav(current, onNav)
@@ -148,7 +148,7 @@ private fun ClassicBottomNav(current: String, onNav: (String) -> Unit) {
 }
 
 @Composable
-fun SubHeader(title: String, onBack: () -> Unit) = when (Palettes.style) {
+fun SubHeader(title: String, onBack: () -> Unit) = when (Palettes.engine) {
     1 -> com.jarvis.app.ui.styles.AuroraHeader(title, onBack)
     2 -> com.jarvis.app.ui.styles.NovaHeader(title, onBack)
     3 -> com.jarvis.app.ui.styles.PulseHeader(title, onBack)

@@ -1,19 +1,20 @@
 # PLANNING (active task only)
-Task: 50 -> 100 orbs (new iOS/premium) + 15 -> 50 themes.
+Task: interface styles 5 -> 50 (25 native + 25 iOS premium).
 
 ## Approach
-- `Color.kt`: append 35 `Palette(...)` entries to `Palettes.all` (dark premium palettes). First entry (index 0) unchanged. No API/UI change.
-- `SiriOrb.kt`:
-  - `ORB_STYLES`: add 50 names (indexes 50..99).
-  - `when (style.coerceIn(0, 49))` -> `coerceIn(0, 99)`, add cases 50..99 (`else` keeps 99).
-  - Append 50 `DrawScope` draw functions using only existing primitives/brushes/theme colours.
-- ThemeScreen already dynamic -> no edits.
+- Decouple routing from `Palettes.style` by adding `Palettes.engine` (layout engine) + `Palettes.serif`.
+  For styles 0..4 engine == style; for 5..49 engine comes from the new catalog.
+- New `IfaceCatalog` (styles package): 45 `IfaceDef(name, about, palette, engine, serif)`.
+  Native set uses 20 dark Material palettes (from `Palettes.all[15..34]`); iOS set uses 25 dedicated light/dark palettes.
+- Route BottomNav/SubHeader/ScreenScaffold/StyledHome/Control/Settings and JText serif through `engine`/`serif`.
+- `Prefs.applyTheme()`: for `uiStyle >= 5` use the catalog palette/engine/serif; else keep old logic.
+- `UiStyleScreen`: list 50, two group headers, mini preview (custom for 0..4, palette-based for 5..49).
 
 ## Safety
-- Append-only, so existing indices remain valid; `Prefs.applyTheme` and orb render both clamp indices.
-- Colours drawn via `Gold/GoldLight/GoldDark/warm()/Color.White` (existing helpers) to match each theme automatically.
-- No new imports.
+- Append-only indexes; old behaviour identical because engine == style for 0..4.
+- New styles reuse the existing 4 layout engines, so no new draw/render code can crash.
+- Guard against `forStyle` returning null -> fall back to old path.
 
 ## Risk / check
-- Watch array sizes in drawing loops (fixed `plasmaOrb` colour list length).
-- Verify via GitHub Actions "Build APK".
+- `Palettes.engine` must be set before first composition (done in `Prefs.init` -> `applyTheme`).
+- Verify with GitHub Actions "Build APK".

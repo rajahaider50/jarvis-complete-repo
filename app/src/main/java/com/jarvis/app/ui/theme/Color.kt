@@ -106,9 +106,14 @@ object Palettes {
         Palette("Folio Plum", 0xFF6B3E75, 0xFFB896C0, 0xFF4B2753, 0xFFF9F5FA, 0xFFF0E9F2, 0xFFE3D8E6, 0xFF271B2B, 0xFF706478, true)
     )
 
-    /** 0 = Classic Gold, 1 = Aurora, 2 = Nova, 3 = Pulse, 4 = Folio. Set by Prefs. */
+    /** 0 = Classic Gold, 1 = Aurora, 2 = Nova, 3 = Pulse, 4 = Folio, 5+ = extra interface styles. Set by Prefs. */
     var style by mutableStateOf(0)
     fun list(): List<Palette> = when (style) { 1 -> aurora; 2 -> nova; 3 -> pulse; 4 -> folio; else -> all }
+
+    /** Which layout engine draws the app for the current style (0 Classic, 1 Aurora, 2 Nova, 3 Pulse, 4 Folio). */
+    var engine by mutableStateOf(0)
+    /** Titles use the serif face (Classic/Folio, or a serif interface style). */
+    var serif by mutableStateOf(true)
 
     var current by mutableStateOf(all[0])
 }

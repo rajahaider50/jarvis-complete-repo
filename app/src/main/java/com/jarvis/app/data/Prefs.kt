@@ -93,6 +93,17 @@ object Prefs {
 
     fun applyTheme() {
         Palettes.style = uiStyle
+        if (uiStyle >= 5) {
+            val d = com.jarvis.app.ui.styles.IfaceCatalog.forStyle(uiStyle)
+            if (d != null) {
+                Palettes.engine = d.engine
+                Palettes.serif = d.serif
+                Palettes.current = d.palette
+                return
+            }
+        }
+        Palettes.engine = uiStyle
+        Palettes.serif = uiStyle == 0 || uiStyle == 4
         val l = Palettes.list()
         Palettes.current = l[theme.coerceIn(0, l.lastIndex)]
     }

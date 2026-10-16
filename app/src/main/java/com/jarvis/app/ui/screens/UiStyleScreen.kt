@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.ui.components.*
+import com.jarvis.app.ui.styles.IfaceCatalog
 import com.jarvis.app.ui.theme.*
 
 private class StyleInfo(val name: String, val about: String, val bg: Long, val card: Long, val accent: Long)
@@ -29,37 +30,47 @@ private val STYLES = listOf(
     StyleInfo("Folio", "A warm paper magazine: serif headlines, navigation as text tabs at the top, key figures, accordion settings.", 0xFFFAF6EF, 0xFFF1EADD, 0xFFC2410C)
 )
 
-/** Pick the whole design of the app. Everything changes at once: layout, navigation, icons, colors, settings structure. */
+/** 50 interface styles: 25 native-Android premium and 25 iOS premium. */
 @Composable
 fun UiStyleScreen(onBack: () -> Unit) {
     ScreenScaffold(null, {}) {
         SubHeader("Interface style", onBack)
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            JText("Tap one to switch the whole app. More interface styles will be added here.", 12, Muted)
-            STYLES.forEachIndexed { i, st ->
-                val sel = Prefs.uiStyle == i
-                val shape = RoundedCornerShape(24.dp)
-                Row(
-                    Modifier.fillMaxWidth().clip(shape).background(Surface1).border(if (sel) 2.dp else 1.dp, Gold.copy(alpha = if (sel) 0.9f else 0.18f), shape)
-                        .clickable { Prefs.uiStyle = i; Prefs.theme = 0; Prefs.applyTheme(); Prefs.save() }.padding(14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Mini(i, st)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            JText(st.name, 17, Ivory, FontWeight.SemiBold)
-                            if (sel) Box(Modifier.clip(RoundedCornerShape(8.dp)).background(Gold.copy(alpha = 0.2f)).padding(horizontal = 8.dp, vertical = 2.dp)) { JText("Active", 10, Gold, FontWeight.Medium) }
-                        }
-                        JText(st.about, 12, Muted, lh = 17)
-                    }
-                }
-            }
+            JText("Tap one to switch the whole app. 50 styles: 25 native Android + 25 iOS, all premium.", 12, Muted)
+            JText("NATIVE ANDROID · PREMIUM", 11, Gold, FontWeight.Medium, ls = 2.2f)
+            for (i in 0..24) StyleRow(i)
+            JText("iOS · PREMIUM", 11, Gold, FontWeight.Medium, ls = 2.2f)
+            for (i in 25..49) StyleRow(i)
             Spacer(Modifier.height(12.dp))
         }
     }
 }
 
-/** A tiny phone drawing of each style (fixed colors, so it always shows the real look). */
+@Composable
+private fun StyleRow(i: Int) {
+    val sel = Prefs.uiStyle == i
+    val name: String
+    val about: String
+    if (i < STYLES.size) { name = STYLES[i].name; about = STYLES[i].about }
+    else { val d = IfaceCatalog.forStyle(i); name = d?.name ?: "Style $i"; about = d?.about ?: "" }
+    val shape = RoundedCornerShape(24.dp)
+    Row(
+        Modifier.fillMaxWidth().clip(shape).background(Surface1).border(if (sel) 2.dp else 1.dp, Gold.copy(alpha = if (sel) 0.9f else 0.18f), shape)
+            .clickable { Prefs.uiStyle = i; Prefs.theme = 0; Prefs.applyTheme(); Prefs.save() }.padding(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (i < STYLES.size) Mini(i, STYLES[i]) else MiniModern(i)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                JText(name, 17, Ivory, FontWeight.SemiBold)
+                if (sel) Box(Modifier.clip(RoundedCornerShape(8.dp)).background(Gold.copy(alpha = 0.2f)).padding(horizontal = 8.dp, vertical = 2.dp)) { JText("Active", 10, Gold, FontWeight.Medium) }
+            }
+            JText(about, 12, Muted, lh = 17)
+        }
+    }
+}
+
+/** A tiny phone drawing of each of the 5 built-in styles (fixed colors, so it always shows the real look). */
 @Composable
 private fun Mini(index: Int, st: StyleInfo) {
     val accent = Color(st.accent)
@@ -98,6 +109,33 @@ private fun Mini(index: Int, st: StyleInfo) {
                 Box(Modifier.fillMaxWidth().height(26.dp).clip(RoundedCornerShape(8.dp)).background(accent.copy(alpha = 0.15f)))
                 Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) { repeat(3) { Box(Modifier.size(12.dp).background(accent.copy(alpha = 0.3f), CircleShape)) } }
                 repeat(2) { Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(card)) }
+            }
+        }
+    }
+}
+
+/** A tiny phone drawing of an extra interface style, using its own palette so it shows the real look. */
+@Composable
+private fun MiniModern(index: Int) {
+    val d = IfaceCatalog.forStyle(index) ?: return
+    val p = d.palette
+    val bg = Color(p.bg)
+    val card = Color(p.s1)
+    val accent = Color(p.accent)
+    val text = Color(p.text)
+    Box(Modifier.size(64.dp, 112.dp).clip(RoundedCornerShape(12.dp)).background(bg).border(1.dp, accent.copy(alpha = 0.4f), RoundedCornerShape(12.dp)).padding(6.dp)) {
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Box(Modifier.fillMaxWidth(0.62f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(text.copy(alpha = 0.7f)))
+            Box(Modifier.fillMaxWidth().height(34.dp).clip(RoundedCornerShape(10.dp)).background(accent.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(18.dp).background(accent, CircleShape))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+                repeat(2) { Box(Modifier.weight(1f).height(20.dp).clip(RoundedCornerShape(6.dp)).background(card).border(1.dp, accent.copy(alpha = 0.3f), RoundedCornerShape(6.dp))) }
+            }
+            Spacer(Modifier.weight(1f))
+            if (d.engine == 1) Box(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)).background(accent))
+            else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                repeat(4) { Box(Modifier.size(11.dp).background(if (it == 0) accent else accent.copy(alpha = 0.3f), CircleShape)) }
             }
         }
     }

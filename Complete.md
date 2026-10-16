@@ -1,4 +1,5 @@
 # COMPLETE (newest first: date - what - files)
+- 2026-10-17 - Interface styles 5 -> 50 (25 native Android premium + 25 iOS premium) - ui/styles/IfaceCatalog.kt, ui/theme/Color.kt, data/Prefs.kt, ui/components/Components.kt, ui/styles/StyleKit.kt, ui/screens/UiStyleScreen.kt
 - 2026-10-17 - Voice orb styles 50 -> 100 (+50 iOS/premium) and colour themes 15 -> 50 (+35) - ui/components/SiriOrb.kt, ui/theme/Color.kt
 - 2026-10-17 - Voice orb styles expanded 16 -> 50 (34 new professional/premium styles) - ui/components/SiriOrb.kt
 - 2026-10-17 - First clean GitHub Actions build (v8): fixed all compile errors - data/CustomProviders.kt (ProviderModel/eligibleModels), live/LiveClient.kt, ui/screens/HomeScreen.kt, live/WakeService.kt, overlay/Overlay.kt
