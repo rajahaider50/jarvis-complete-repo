@@ -22,7 +22,6 @@ import com.jarvis.app.code.Skills
 import com.jarvis.app.data.AppLog
 import com.jarvis.app.ui.components.*
 import com.jarvis.app.ui.theme.*
-import kotlinx.coroutines.launch
 
 /** Teach the agent new skills: short instruction packs it opens when a task needs them. */
 @Composable
@@ -54,40 +53,8 @@ private fun ColumnScope.SkillList(onEdit: (Skills.Skill) -> Unit, onAdd: () -> U
             }
         }
         GoldButton("Add a skill", Icons.Outlined.Add, { onAdd() }, Modifier.fillMaxWidth())
-        SkillImportBox()
         OutlineButton("Restore built-in skills", Icons.Outlined.Restore, { Skills.restoreDefaults() }, Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
-    }
-}
-
-@Composable
-private fun ColumnScope.SkillImportBox() {
-    val ctx = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var url by remember { mutableStateOf("") }
-    var preview by remember { mutableStateOf<Skills.ImportPreview?>(null) }
-    var busy by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Surface1).border(1.dp, Gold.copy(alpha = 0.22f), RoundedCornerShape(18.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        JText("IMPORT FROM GITHUB", 11, Gold, FontWeight.Medium, ls = 2f)
-        JText("Paste a raw SKILL.md, GitHub folder/repository, or HTTPS zip URL. Downloaded files are untrusted text and never executed.", 11, Muted, lh = 16)
-        JField(url, { url = it }, "https://github.com/owner/repo/tree/main/skill", Modifier.fillMaxWidth())
-        if (preview == null) {
-            OutlineButton(if (busy) "Downloading…" else "Preview skill", Icons.Outlined.Download, {
-                if (!busy && url.isNotBlank()) scope.launch {
-                    busy = true
-                    try { preview = Skills.preview(url) }
-                    catch (e: Exception) { AppLog.w(e); Toast.makeText(ctx, e.message ?: "Could not import skill", Toast.LENGTH_LONG).show() }
-                    finally { busy = false }
-                }
-            }, Modifier.fillMaxWidth())
-        } else {
-            JText(preview!!.name, 15, Ivory, FontWeight.SemiBold)
-            JText(preview!!.description, 12, Muted, lh = 16)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                GoldButton("Save imported skill", Icons.Outlined.Check, { Skills.saveImported(preview!!); preview = null; url = "" }, Modifier.weight(1f))
-                OutlineButton("Cancel", Icons.Outlined.Close, { preview = null }, Modifier.weight(1f))
-            }
-        }
     }
 }
 

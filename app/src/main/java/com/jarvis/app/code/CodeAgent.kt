@@ -1,8 +1,6 @@
 package com.jarvis.app.code
 
 import android.content.Context
-import android.content.Intent
-import android.os.Build
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -12,18 +10,15 @@ import com.jarvis.app.data.CustomProvider
 import com.jarvis.app.data.CustomProviders
 import com.jarvis.app.data.GeminiClient
 import com.jarvis.app.data.ModelCatalog
-import com.jarvis.app.data.ModelRouter
 import com.jarvis.app.data.OpenAiCompat
 import com.jarvis.app.data.Prefs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
@@ -38,13 +33,13 @@ object CodeAgent {
         var detail by mutableStateOf("")
     }
 
-    class Run(val project: Workspace.Project, val prompt: String, val taskId: String, val resumed: Boolean = false) {
+    class Run(val project: Workspace.Project, val prompt: String) {
         val steps = mutableStateListOf<Step>()
         val notes = mutableStateListOf<String>()
         var thought by mutableStateOf("")
         var summary by mutableStateOf("")
         var error by mutableStateOf("")
-        var status by mutableStateOf(0)         // 0 working, 1 done, 2 failed, 3 stopped, 4 waiting for network
+        var status by mutableStateOf(0)         // 0 working, 1 done, 2 failed, 3 stopped
         var model by mutableStateOf("")
         var editorPath by mutableStateOf("")
         var editorText by mutableStateOf("")
@@ -121,8 +116,7 @@ object CodeAgent {
     // ------------------------------------------------------------------ custom provider (OpenAI-compatible)
     private class ProviderBackend(val p: CustomProvider) : Backend {
         private val msgs = JSONArray()
-        private var model: String = CustomProviders.modelCandidates(p).firstOrNull() ?: p.modelId
-        override val label: String get() = p.name + " · " + model
+        override val label: String get() = p.name + " · " + p.modelId
 
         override suspend fun begin(system: String, user: String) {
             msgs.put(JSONObject().put("role", "system").put("content", system)); say(user)
@@ -133,42 +127,27 @@ object CodeAgent {
         }
 
         override suspend fun step(onThought: (String) -> Unit): Turn {
-            val routes = ModelRouter.rank(p, ModelRouter.Task.CODING, (msgs.toString().length / 4).coerceAtLeast(1), true)
-            var last: Exception? = null
-            for (route in routes) {
-                val started = System.currentTimeMillis()
-                try {
-                    model = route.model.id
-                    val active = route.provider
-                    val body = JSONObject().put("model", model.trim()).put("messages", msgs).put("tools", AgentTools.openAi()).put("tool_choice", "auto").put("stream", false)
-                    active.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
-                    val j = OpenAiCompat.completions(active, body)
-                    val m = j.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
-                    if (!m.isNull("reasoning_content")) onThought(m.optString("reasoning_content"))
-                    else if (!m.isNull("reasoning")) onThought(m.optString("reasoning"))
-                    val calls = ArrayList<Call>()
-                    val tc = m.optJSONArray("tool_calls")
-                    if (tc != null) for (k in 0 until tc.length()) {
-                        val o = tc.getJSONObject(k); val f = o.getJSONObject("function")
-                        val args = try { JSONObject(f.optString("arguments").ifBlank { "{}" }) } catch (e: Exception) { JSONObject() }
-                        calls.add(Call(o.optString("id", "c$k"), f.getString("name"), args))
-                    }
-                    msgs.put(m)
-                    ModelRouter.markSuccess(route, System.currentTimeMillis() - started, msgs.toString().length / 4)
-                    val text = if (m.isNull("content")) "" else m.optString("content")
-                    return Turn(text, calls)
-                } catch (e: Exception) {
-                    last = e
-                    if (e.message?.contains("HTTP 4") == true && e.message?.contains("tool", true) == true)
-                        last = IOException("${p.name}: this model does not support tool calling, which the code agent needs. Choose another model in Chat.")
-                    if (ModelRouter.markFailure(route, e)) {
-                        AppLog.i("Router", "${route.provider.name} · ${route.model.id} failed for coding; switching to next scored model")
-                        continue
-                    }
-                    throw last
-                }
+            val body = JSONObject().put("model", p.modelId.trim()).put("messages", msgs).put("tools", AgentTools.openAi()).put("tool_choice", "auto").put("stream", false)
+            p.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
+            val j = try { OpenAiCompat.completions(p, body) }
+            catch (e: IOException) {
+                if (e.message?.contains("HTTP 4") == true && e.message?.contains("tool", true) == true)
+                    throw IOException("${p.name}: this model does not support tool calling, which the code agent needs. Choose another model in Chat.")
+                throw e
             }
-            throw last ?: IOException("No eligible coding model is available; wait for cooldown or refresh providers.")
+            val m = j.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
+            if (!m.isNull("reasoning_content")) onThought(m.optString("reasoning_content"))
+            else if (!m.isNull("reasoning")) onThought(m.optString("reasoning"))
+            val calls = ArrayList<Call>()
+            val tc = m.optJSONArray("tool_calls")
+            if (tc != null) for (k in 0 until tc.length()) {
+                val o = tc.getJSONObject(k); val f = o.getJSONObject("function")
+                val args = try { JSONObject(f.optString("arguments").ifBlank { "{}" }) } catch (e: Exception) { JSONObject() }
+                calls.add(Call(o.optString("id", "c$k"), f.getString("name"), args))
+            }
+            msgs.put(m)
+            val text = if (m.isNull("content")) "" else m.optString("content")
+            return Turn(text, calls)
         }
     }
 
@@ -177,22 +156,7 @@ object CodeAgent {
     var current by mutableStateOf<Run?>(null)
     val busy: Boolean get() = current?.status == 0
     private var job: Job? = null
-    private var appContext: Context? = null
-    private var networkPauseRequested = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-
-    private class NetworkUnavailableException : IOException("Network unavailable")
-
-    fun init(ctx: Context) { appContext = ctx.applicationContext }
-
-    fun onNetworkChanged(connected: Boolean) {
-        if (!connected && busy) {
-            networkPauseRequested = true
-            job?.cancel()
-        } else if (connected && current?.status == 4 && !busy) {
-            resume()
-        }
-    }
 
     private fun systemPrompt(p: Workspace.Project): String =
         "You are a coding and document agent inside a phone app. You work in the project \"${p.name}\" with tools, and the user watches an editor, not a chat.\n" +
@@ -202,8 +166,7 @@ object CodeAgent {
             "4. For PDF, PNG, DOCX, XLSX or PPTX call use_skill documents first, then make_document. For csv, md, txt, html, svg, json and code use write_file.\n" +
             "5. Every file, import, link, script, style and image you reference must exist. When all files are written call verify_project and fix every problem.\n" +
             "6. End with finish(summary, deliver): deliver=zip for projects with many files, file (+file_path) for one deliverable, none if nothing is to be downloaded. Write the summary in the user's language, 2-4 lines, naming the files and how to use them.\n" +
-            "7. Do not invent facts. If the task is vague, choose sensible defaults and mention them in the summary.\n" +
-            "8. Memory tools store only durable facts explicitly stated by the user. Never save API keys, passwords, tokens, guesses or temporary task chatter. Use memory_list/read before updating an existing topic.\n" + Skills.promptBlock()
+            "7. Do not invent facts. If the task is vague, choose sensible defaults and mention them in the summary.\n" + Skills.promptBlock()
 
     private suspend fun makeBackend(): Backend {
         CustomProviders.selected()?.let { return ProviderBackend(it) }
@@ -218,70 +181,28 @@ object CodeAgent {
     fun start(prompt: String, attached: List<String>) {
         val p = Workspace.current ?: return
         if (busy || prompt.isBlank()) return
-        startInternal(p, prompt.trim(), attached, null)
-    }
-
-    fun resume() {
-        val saved = TaskStateStore.pending ?: return
-        val p = Workspace.projects.firstOrNull { it.id == saved.projectId } ?: return
-        if (busy) return
-        Workspace.current = p
-        startInternal(p, saved.originalGoal, emptyList(), saved)
-    }
-
-    private fun startInternal(p: Workspace.Project, prompt: String, attached: List<String>, saved: TaskStateStore.State?) {
-        networkPauseRequested = false
-        val state = saved ?: TaskStateStore.begin(p, prompt)
-        if (saved != null) TaskStateStore.resume(saved)
-        val run = Run(p, prompt, state.taskId, saved != null)
+        val run = Run(p, prompt.trim())
         runs.add(run); current = run
-        if (!NetworkMonitor.online) {
-            run.status = 4; run.error = "Waiting for network…"
-            job = scope.launch { TaskStateStore.waitForNetwork(state, p, "Task queued while network is unavailable") }
-            return
-        }
-        keepAlive()
         job = scope.launch {
-            try { execute(run, attached, state) }
-            catch (e: CancellationException) {
-                if (networkPauseRequested || !NetworkMonitor.online) {
-                    run.status = 4; run.error = "Waiting for network…"; withContext(NonCancellable) { TaskStateStore.waitForNetwork(state, p, "Network lost; task paused safely") }
-                } else { run.status = 3; withContext(NonCancellable) { TaskStateStore.pause(state, p, "Stopped before completion") } }
-                stopKeepAlive()
-            }
-            catch (e: Exception) {
-                if (!NetworkMonitor.online) { run.status = 4; run.error = "Waiting for network…"; withContext(NonCancellable) { TaskStateStore.waitForNetwork(state, p, "Network lost during request") } }
-                else { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2; withContext(NonCancellable) { TaskStateStore.pause(state, p, run.error) } }
-                stopKeepAlive()
-            }
+            try { execute(run, attached) }
+            catch (e: CancellationException) { run.status = 3; throw e }
+            catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2 }
         }
     }
 
-    fun stop() { networkPauseRequested = false; job?.cancel(); current?.let { if (it.status == 0) it.status = 3 } }
+    fun stop() { job?.cancel(); current?.let { if (it.status == 0) it.status = 3 } }
 
-    private fun keepAlive() {
-        val c = appContext ?: return
-        try { if (Build.VERSION.SDK_INT >= 26) c.startForegroundService(Intent(c, CodeTaskService::class.java)) else c.startService(Intent(c, CodeTaskService::class.java)) }
-        catch (e: Exception) { AppLog.w(e) }
-    }
-
-    private fun stopKeepAlive() { try { val c = appContext ?: return; c.stopService(Intent(c, CodeTaskService::class.java)) } catch (e: Exception) { AppLog.w(e) } }
-
-    private suspend fun execute(run: Run, attached: List<String>, state: TaskStateStore.State) {
+    private suspend fun execute(run: Run, attached: List<String>) {
         val p = run.project
         val backend = makeBackend()
         run.model = backend.label
         val files = Workspace.tree(p).take(60).joinToString(", ") { it.path }.ifBlank { "(empty)" }
-        val goal = if (run.resumed) TaskStateStore.resumePrompt(state) else run.prompt
-        backend.begin(systemPrompt(p), goal + (if (attached.isNotEmpty()) "\n\nThe user added these files to the project: ${attached.joinToString()}" else "") + "\n\nProject files now: $files")
-        TaskStateStore.record(state, p, if (run.resumed) "Resumed task" else "Started task", run.editorPath, run.editorText)
+        backend.begin(systemPrompt(p), run.prompt + (if (attached.isNotEmpty()) "\n\nThe user added these files to the project: ${attached.joinToString()}" else "") + "\n\nProject files now: $files")
         var fixRounds = 0; var done = false; var empty = 0
         for (round in 1..45) {
-            if (!NetworkMonitor.online) throw NetworkUnavailableException()
             val t = backend.step { run.thought += it }
             run.model = backend.label
             if (t.text.isNotBlank()) run.notes.add(t.text.trim().take(400))
-            TaskStateStore.record(state, p, t.text, run.editorPath, run.editorText)
             if (t.calls.isEmpty()) {
                 if (t.text.isBlank() && ++empty < 2) { backend.say("Continue: use the tools to do the work and call finish when everything is done."); continue }
                 if (run.summary.isBlank()) run.summary = t.text.trim()
@@ -298,7 +219,6 @@ object CodeAgent {
                 step.state = if (r.startsWith("ERROR") || r.startsWith("NOT FINISHED")) 2 else 1
                 step.detail = r.take(240)
                 results.add(c to r)
-                TaskStateStore.record(state, p, "${c.name}: ${r.take(400)}", run.editorPath, run.editorText)
             }
             backend.results(results)
             if (done) break
@@ -306,8 +226,6 @@ object CodeAgent {
         if (run.summary.isBlank()) run.summary = if (done) "Done." else "The work stopped before the agent said it was finished. Everything written so far is in the project."
         if (!done && run.outputs.isEmpty()) deliver(run, JSONObject().put("deliver", "zip"))
         run.status = 1
-        TaskStateStore.complete(state)
-        stopKeepAlive()
     }
 
     /** Puts the result where you can view / download it: a single file, or a zip of the project. */

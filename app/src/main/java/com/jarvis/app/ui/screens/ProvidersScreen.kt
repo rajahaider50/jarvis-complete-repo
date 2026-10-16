@@ -25,7 +25,6 @@ import com.jarvis.app.data.CustomProviders
 import com.jarvis.app.data.GeminiClient
 import com.jarvis.app.data.OpenAiCompat
 import com.jarvis.app.data.Prefs
-import com.jarvis.app.data.ProviderModel
 import com.jarvis.app.ui.components.*
 import com.jarvis.app.ui.theme.*
 import kotlinx.coroutines.launch
@@ -56,29 +55,10 @@ private fun ColumnScope.ProviderList(onEdit: (CustomProvider) -> Unit) {
                     if (p.fallback) JText("backup", 10, Gold)
                     if (sel) JText("in use", 10, Gold)
                 }
-                val visible = CustomProviders.eligibleModels(p)
-                val unknown = CustomProviders.unverifiedModels(p)
-                JText(if (p.modelId.isBlank()) "AUTO · ${visible.size} eligible models" else p.modelId, 13, GoldLight)
+                JText(p.modelId, 13, GoldLight)
                 JText(p.baseUrl, 11, Muted)
-                if (p.models.isNotEmpty() || p.modelIds.isNotEmpty()) {
-                    JText("${if (p.freeOnly) "FREE MODELS" else "MODELS"} · tap Auto or one model", 10, Gold, FontWeight.Medium, ls = 1.5f)
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (p.modelId.isBlank()) Gold.copy(alpha = 0.22f) else Surface2)
-                            .border(1.dp, Gold.copy(alpha = if (p.modelId.isBlank()) 0.9f else 0.3f), RoundedCornerShape(16.dp))
-                            .clickable { CustomProviders.upsert(p.copy(modelId = "")); if (Prefs.manualModel != "custom:${p.id}") { Prefs.manualModel = "custom:${p.id}"; Prefs.save() } }
-                            .padding(horizontal = 12.dp, vertical = 7.dp)) { JText("Auto", 12, if (p.modelId.isBlank()) GoldLight else Ivory) }
-                        visible.take(80).forEach { m ->
-                            val id = m.id
-                            Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (p.modelId == id) Gold.copy(alpha = 0.22f) else Surface2)
-                                .border(1.dp, Gold.copy(alpha = if (p.modelId == id) 0.9f else 0.3f), RoundedCornerShape(16.dp))
-                                .clickable { CustomProviders.upsert(p.copy(modelId = id)); Prefs.manualModel = "custom:${p.id}"; Prefs.save() }
-                                .padding(horizontal = 12.dp, vertical = 7.dp)) { JText(id, 12, if (p.modelId == id) GoldLight else Ivory) }
-                        }
-                    }
-                    if (unknown.isNotEmpty()) JText("UNVERIFIED · ${unknown.size} hidden by Free only", 10, Muted)
-                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlineButton(if (sel) "Use Gemini Auto" else "Use in chat", null, { Prefs.manualModel = if (sel) "" else "custom:${p.id}"; Prefs.save() }, Modifier.weight(1f))
+                    OutlineButton(if (sel) "Use Auto" else "Use in chat", null, { Prefs.manualModel = if (sel) "" else "custom:${p.id}"; Prefs.save() }, Modifier.weight(1f))
                     OutlineButton("Edit", Icons.Outlined.Edit, { onEdit(p) }, Modifier.weight(1f))
                 }
                 val sp = CustomProviders.speechOf(p)
@@ -133,17 +113,10 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
     var result by remember { mutableStateOf("") }
     var ok by remember { mutableStateOf<Boolean?>(null) }
     var busy by remember { mutableStateOf(false) }
-    var found by remember { mutableStateOf(start.models.ifEmpty { start.modelIds.map { ProviderModel(it, source = "cache") } }) }
-    var freeOnly by remember { mutableStateOf(start.freeOnly) }
-    var manualId by remember { mutableStateOf("") }
-    var manualContext by remember { mutableStateOf("") }
-    var manualTools by remember { mutableStateOf(true) }
-    var manualFree by remember { mutableStateOf(true) }
-    var manualTier by remember { mutableStateOf("") }
-    var dailyLimit by remember { mutableStateOf(if (start.dailyLimitTokens > 0) start.dailyLimitTokens.toString() else "") }
+    var found by remember { mutableStateOf(listOf<String>()) }
     val exists = CustomProviders.list.any { it.id == start.id }
 
-    fun current(models: List<ProviderModel> = found) = CustomProvider(start.id, name.trim().ifBlank { "My provider" }, url.trim(), key.trim(), model.trim(), headers, system, temp, vision, backup, tools, stt.trim(), ttsM.trim(), voices, voice, borrow, models.map { it.id }, freeOnly, models, dailyLimit.toLongOrNull()?.coerceAtLeast(0L) ?: 0L)
+    fun current() = CustomProvider(start.id, name.trim().ifBlank { "My provider" }, url.trim(), key.trim(), model.trim(), headers, system, temp, vision, backup, tools, stt.trim(), ttsM.trim(), voices, voice, borrow)
 
     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         JText("START FROM", 11, Gold, FontWeight.Medium, ls = 2.2f)
@@ -165,40 +138,22 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
             Icon(Icons.Outlined.Visibility, "Show", tint = if (showKey) Gold else Muted, modifier = Modifier.size(20.dp).clickable { showKey = !showKey })
         })
         Field("MODEL ID", model, { model = it }, "e.g. gpt-4o-mini")
-        SwitchRow("Free models only (unknown prices stay unverified)", freeOnly) { freeOnly = it }
-        Field("DAILY TOKEN LIMIT (OPTIONAL)", dailyLimit, { dailyLimit = it.filter(Char::isDigit) }, "0 = unlimited")
         OutlineButton(if (busy) "Please wait…" else "Fetch the model list from this server", Icons.Outlined.Refresh, {
             if (!busy) scope.launch {
                 busy = true; result = ""; ok = null
-                try { found = OpenAiCompat.fetchModelCatalog(current()); if (model !in found.map { it.id }) model = ""; result = "${found.size} models found. Free: ${found.count { it.isFree == true }} · Unverified: ${found.count { it.isFree == null }}"; ok = true }
+                try { found = OpenAiCompat.fetchModels(current()); result = "${found.size} models found. Tap one to use it."; ok = true }
                 catch (e: Exception) { AppLog.w(e); result = e.message ?: "Could not read the list"; ok = false }
                 busy = false
             }
         }, Modifier.fillMaxWidth())
         if (found.isNotEmpty()) {
-            val shown = found.filter { !freeOnly || it.isFree == true }
-            JText("FREE · ${found.count { it.isFree == true }}", 10, Gold, FontWeight.Medium, ls = 1.5f)
-            ModelChips(shown, model) { model = it }
-            val unverified = found.filter { it.isFree == null }
-            if (unverified.isNotEmpty()) {
-                JText("UNVERIFIED · ${unverified.size} (shown when Free only is off)", 10, Muted, FontWeight.Medium, ls = 1.2f)
-                if (!freeOnly) ModelChips(unverified, model) { model = it }
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                found.take(80).forEach { id ->
+                    Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (id == model) Gold.copy(alpha = 0.22f) else Surface1).border(1.dp, Gold.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                        .clickable { model = id }.padding(horizontal = 12.dp, vertical = 7.dp)) { JText(id, 12, if (id == model) GoldLight else Ivory) }
+                }
             }
         }
-        JText("MANUAL MODEL OVERRIDE", 11, Gold, FontWeight.Medium, ls = 2.2f)
-        Field("MODEL ID", manualId, { manualId = it }, "provider/model-id")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Field("CONTEXT", manualContext, { manualContext = it }, "tokens", Modifier.weight(1f))
-            Field("QUALITY 1-5", manualTier, { manualTier = it }, "unknown", Modifier.weight(1f))
-        }
-        SwitchRow("Manual model is free", manualFree) { manualFree = it }
-        SwitchRow("Manual model supports tools", manualTools) { manualTools = it }
-        OutlineButton("Add manual model", Icons.Outlined.Add, {
-            if (manualId.isNotBlank()) {
-                found = (found.filterNot { it.id == manualId.trim() } + ProviderModel(manualId.trim(), manualFree, manualContext.toIntOrNull(), manualTools, manualTier.toIntOrNull()?.coerceIn(1, 5), "manual", System.currentTimeMillis())).sortedBy { it.id }
-                model = manualId.trim(); manualId = ""
-            }
-        }, Modifier.fillMaxWidth())
         JText("VOICE CALLS", 11, Gold, FontWeight.Medium, ls = 2.2f)
         JText("To call this model by voice it must hear you and speak. Fill the provider's own speech models, or borrow them from another provider. Without a speech-to-text model Gemini is used to hear you; without a voice model Gemini's voice speaks.", 11, Muted, lh = 15)
         Field("SPEECH-TO-TEXT MODEL", stt, { stt = it }, "whisper-1  /  whisper-large-v3-turbo")
@@ -252,21 +207,8 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
                 busy = false
             }
         }, Modifier.fillMaxWidth())
-        GoldButton(if (busy) "Saving…" else "Save", Icons.Outlined.Check, {
-            if (!busy && url.isNotBlank()) scope.launch {
-                busy = true; result = ""; ok = null
-                val base = current()
-                try {
-                    found = OpenAiCompat.fetchModelCatalog(base)
-                    if (model.isNotBlank() && model !in found.map { it.id }) model = ""
-                    val saved = current(found)
-                    if (saved.modelId.isBlank() && found.isEmpty()) throw IllegalStateException("No models returned. Add a manual Model ID or check the server.")
-                    CustomProviders.upsert(saved); result = "Saved. ${found.size} models cached for this provider."; ok = true; onDone()
-                } catch (e: Exception) {
-                    AppLog.w(e); CustomProviders.upsert(base); result = e.message ?: "Saved, but the model list could not be read."; ok = false
-                }
-                busy = false
-            }
+        GoldButton("Save", Icons.Outlined.Check, {
+            if (url.isNotBlank() && model.isNotBlank()) { CustomProviders.upsert(current()); onDone() } else { result = "Base URL and Model ID are required."; ok = false }
         }, Modifier.fillMaxWidth())
         if (exists) OutlineButton("Delete this provider", Icons.Outlined.Delete, { CustomProviders.delete(start.id); onDone() }, Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
@@ -274,23 +216,10 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
 }
 
 @Composable
-private fun ModelChips(models: List<ProviderModel>, selected: String, onSelect: (String) -> Unit) {
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        models.take(80).forEach { m ->
-            Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (m.id == selected) Gold.copy(alpha = 0.22f) else Surface1)
-                .border(1.dp, Gold.copy(alpha = if (m.id == selected) 0.8f else 0.3f), RoundedCornerShape(16.dp))
-                .clickable { onSelect(m.id) }.padding(horizontal = 12.dp, vertical = 7.dp)) {
-                JText(m.id, 12, if (m.id == selected) GoldLight else Ivory)
-            }
-        }
-    }
-}
-
-@Composable
-private fun Field(label: String, value: String, onChange: (String) -> Unit, hint: String, modifier: Modifier = Modifier, singleLine: Boolean = true) {
+private fun Field(label: String, value: String, onChange: (String) -> Unit, hint: String, singleLine: Boolean = true) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         JText(label, 11, Gold, FontWeight.Medium, ls = 2.2f)
-        JField(value, onChange, hint, modifier.fillMaxWidth(), singleLine = singleLine, minHeight = if (singleLine) 0.dp else 72.dp)
+        JField(value, onChange, hint, Modifier.fillMaxWidth(), singleLine = singleLine, minHeight = if (singleLine) 0.dp else 72.dp)
     }
 }
 

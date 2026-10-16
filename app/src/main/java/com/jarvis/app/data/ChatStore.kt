@@ -147,9 +147,6 @@ object ChatStore {
 
     private fun fail(m: String) { lastError = m; messages.add(Msg(m, false, true)) }
 
-    private fun providerCode(e: Throwable): Int? = Regex("HTTP (\\d+)").find(e.message.orEmpty())?.groupValues?.get(1)?.toIntOrNull()
-    private fun retryableProvider(e: Throwable): Boolean = providerCode(e)?.let { it == 402 || it == 408 || it == 409 || it == 425 || it == 429 || it in 500..599 } == true
-
     /**
      * Adds the user message and answers it:
      *  1. the model you chose (a Gemini model or one of your custom providers), or Auto = best Gemini model for the task
@@ -178,26 +175,10 @@ object ChatStore {
             var used = ""
             var lastErr = ""
             if (custom != null) {
-                val routes = ModelRouter.rank(custom, ModelRouter.Task.CHAT, ModelRouter.estimateTokens(turns, text), image != null)
-                for (route in routes) {
-                    if (reply != null) break
-                    lastModel = route.provider.name + " · " + route.model.id; thinking = ""; streaming = ""
-                    val started = System.currentTimeMillis()
-                    try {
-                        val active = route.provider.copy(modelId = route.model.id)
-                        reply = OpenAiCompat.chatStream(active, system, turns, { thinking += it }, { streaming += it })
-                        used = route.provider.name + " · " + route.model.id
-                        ModelRouter.markSuccess(route, System.currentTimeMillis() - started, ModelRouter.estimateTokens(turns, reply ?: ""))
-                    } catch (e: CancellationException) { throw e }
-                    catch (e: Exception) {
-                        AppLog.w(e); lastErr = e.message ?: "Request failed"
-                        if (ModelRouter.markFailure(route, e)) {
-                            AppLog.i("Router", "${route.provider.name} · ${route.model.id} failed (${ModelRouter.httpCode(e) ?: "network"}); switching to next scored model")
-                            thinking = "Switched model after a temporary failure…"
-                        } else break
-                    }
-                }
-                if (routes.isEmpty()) lastErr = "No eligible provider model is available; refresh the model list or wait for cooldowns."
+                lastModel = custom.name
+                try { reply = OpenAiCompat.chatStream(custom, system, turns, { thinking += it }, { streaming += it }); used = custom.name + " · " + custom.modelId }
+                catch (e: CancellationException) { throw e }
+                catch (e: Exception) { AppLog.w(e); lastErr = e.message ?: "Request failed" }
             } else if (gemKey.isNotBlank()) {
                 if (!ModelCatalog.ready) ModelCatalog.refresh()
                 val candidates = ModelCatalog.chatCandidates(ModelCatalog.taskFor(text, image != null)).take(10)
@@ -234,20 +215,12 @@ object ChatStore {
                 }
             }
             if (reply == null) {
-                val routes = if (custom == null) ModelRouter.rank(null, ModelRouter.Task.CHAT, ModelRouter.estimateTokens(turns, text), image != null) else emptyList()
-                for (route in routes) {
-                    if (reply != null) break
-                    lastModel = route.provider.name + " · " + route.model.id
-                    val started = System.currentTimeMillis()
-                    try {
-                        reply = OpenAiCompat.chat(route.provider.copy(modelId = route.model.id), system, turns)
-                        used = route.provider.name + " · " + route.model.id
-                        ModelRouter.markSuccess(route, System.currentTimeMillis() - started, ModelRouter.estimateTokens(turns, reply ?: ""))
-                    } catch (e: CancellationException) { throw e }
-                    catch (e: Exception) {
-                        AppLog.w(e); lastErr = e.message ?: "Request failed"
-                        if (ModelRouter.markFailure(route, e)) AppLog.i("Router", "${route.provider.name} · ${route.model.id} failed; switching to next scored model") else break
-                    }
+                for (p in CustomProviders.fallbacks()) {
+                    if (p.id == custom?.id) continue
+                    lastModel = p.name
+                    try { reply = OpenAiCompat.chat(p, system, turns); used = p.name + " · " + p.modelId; break }
+                    catch (e: CancellationException) { throw e }
+                    catch (e: Exception) { AppLog.w(e); lastErr = e.message ?: "Request failed" }
                 }
             }
             val r = reply

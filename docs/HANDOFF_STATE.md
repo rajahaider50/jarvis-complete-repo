@@ -1,25 +1,13 @@
-# HANDOFF STATE (every AI adds a line when it finishes; the next account starts here)
+# HANDOFF STATE (newest entry on top; each AI adds one entry when it finishes)
 
-## Current version
-v8: workspace agent + documents + skills, real phone facts, chat actions + streaming thinking, 5 interface styles, custom providers + provider voice calls, system control tools, console, offline wake word. AI-workflow docs, tracking files and tools added (v8.1).
-
-## Done (newest first)
-- v8.1 AI workflow: AI_GUIDE, ARCHITECTURE, skills, tracking files (Task/Planning/Roadmap/Pending/Complete/Goal), tools (make_map, make_pack, apply_edits) + workflows (map, pack, apply-edits).
-- v8 Workspace (code agent, Files/Output, DocGen), Skills, RealFacts + weather, chat message actions + thinking card.
-- v7 System control: end/answer call, lock screen, power menu, screen share by voice, settings intents.
-- v6 Gemini error diagnosis + model fallback, provider voice calls.
-- v5 Custom providers, Pulse + Folio styles, Vosk offline wake phrase.
-
-## Known open points
-- Check the first GitHub Actions build log; fix compile errors only.
-- PPTX output should be opened once in PowerPoint/Google Slides.
-- Vosk / Porcupine / jna dependency versions may need a bump if Gradle cannot resolve them.
+## Current state
+- App version: workspace + documents update (zip `figma-screen-v8-workspace-documents`). Never compiled by the authoring AIs: expect small compile errors; the owner pastes the GitHub Actions log and the AI fixes only those errors.
+- AI workflow v9 + tracking files (Task, Planning, Roadmap, Pending, Complete, Goal) + docs/skills + docs/START_PROMPT.md are in the repo.
+- Done: 5 interface styles, Gemini chat/live with model fallback, custom providers (chat + voice calls), console, accessibility tools, floating call bubble, wake word (vosk/porcupine/basic), device admin lock, code & documents workspace with skills, real phone facts, chat actions + live thinking.
+- Open ideas (not started): Figma frames for the new screens (Figma MCP quota was exhausted), chat/live layouts per interface style, Urdu wake word.
 
 ## Next step
-- Done: custom provider save now fetches and persists the complete `/models` catalog; Chat and Code use provider Auto/model selection with retries for transient HTTP errors.
-- Done: provider discovery phase 1 adds API pricing/context/tools metadata, Free only filtering, Unverified grouping, manual model metadata, cached provider catalogs, and Chat eligibility; GitHub Actions build passed on run 38932098213.
-- Done: Phase 2 adds durable JSON task state, original-goal pinning, SHA-256 file checkpoints, stop/error preservation, startup loading and Code screen Resume action; build passed on run 38934731149.
-- Done: Phase 3 adds scored custom-provider routing for Chat and Code, context/tools eligibility, per-model cooldown/backoff, latency/success health, daily token usage limits, and Router console logging; build passed on run 38936841893.
-- Done: Phase 4 adds ConnectivityManager monitoring, `waiting_network` checkpoints, clean network cancellation, reconnect auto-resume, offline task queue, Code screen Continue status, and a foreground data-sync service; corrected build passed on run 38938269693.
-- Done: Phase 5 adds safe GitHub/raw/zip `SKILL.md` preview/import with source metadata, and app-private topic markdown memory tools with path traversal/secret rejection; build passed on run 38939373696.
-- Next step: manual-test Phase 4/5 on a phone, then define the next feature rather than assuming a Phase 6.
+(the next AI writes it here)
+
+## Log
+- 2026-10-16: merged AI workflow kit (v9) with tracking files, skills and start prompts. No app code changed. Next: first clean GitHub Actions build.

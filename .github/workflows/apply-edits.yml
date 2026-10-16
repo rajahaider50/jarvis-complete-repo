@@ -2,9 +2,7 @@ name: Apply AI edits
 on:
   workflow_dispatch:
     inputs:
-      file:
-        description: "Path of the edits file, e.g. docs/edits/001.json"
-        required: true
+      file: { description: "Path of the edits JSON you uploaded, e.g. docs/edits/001.json", required: true }
 permissions:
   contents: write
 jobs:
@@ -12,10 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/apply_edits.py "${{ github.event.inputs.file }}"
-      - name: Commit
-        run: |
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.x" }
+      - run: python tools/apply_edits.py "${{ github.event.inputs.file }}"
+      - run: |
           git config user.name "edit-bot"
           git config user.email "edit-bot@users.noreply.github.com"
           git add -A
-          git diff --cached --quiet || (git commit -m "Apply AI edits ${{ github.event.inputs.file }}" && git push)
+          git diff --cached --quiet || (git commit -m "Apply AI edits from ${{ github.event.inputs.file }}" && git push)

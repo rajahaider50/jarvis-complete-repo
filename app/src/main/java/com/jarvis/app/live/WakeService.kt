@@ -42,7 +42,7 @@ import java.io.File
  */
 class WakeService : Service() {
     companion object {
-        @JvmField @Volatile var paused = false
+        @Volatile var paused = false
         @Volatile var running = false
         @Volatile var engineError: String? = null      // shown in Assistant settings
         @Volatile var engineName: String = ""

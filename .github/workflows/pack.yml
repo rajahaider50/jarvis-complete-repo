@@ -2,19 +2,32 @@ name: Pack context for an AI
 on:
   workflow_dispatch:
     inputs:
-      goal:
-        description: "Goal in 1-2 sentences"
-        required: true
-      keywords:
-        description: "Area words, e.g. chat bubble"
-        required: true
+      goal: { description: "What do you want the AI to do? (one or two sentences)", required: false, default: "" }
+      keywords: { description: "Words that describe the area, e.g. chat bubble   (separate with spaces)", required: false, default: "" }
+      files: { description: "Exact file names if you know them, e.g. LiveClient.kt CallHost.kt", required: false, default: "" }
+      module: { description: "A folder, e.g. live or ui/styles", required: false, default: "" }
+      deps: { description: "Also include the files they import? (yes/no)", required: false, default: "yes" }
 jobs:
   pack:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/make_pack.py "${{ github.event.inputs.goal }}" "${{ github.event.inputs.keywords }}"
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.x" }
+      - run: python tools/make_map.py
+      - name: Build the pack
+        env:
+          GOAL: ${{ github.event.inputs.goal }}
+          KEYWORDS: ${{ github.event.inputs.keywords }}
+          FILES: ${{ github.event.inputs.files }}
+          MODULE: ${{ github.event.inputs.module }}
+          DEPS: ${{ github.event.inputs.deps }}
+        run: |
+          ARGS=(--out context-pack.zip --goal "$GOAL" --build)
+          [ -n "$KEYWORDS" ] && ARGS+=(--keywords $KEYWORDS)
+          [ -n "$FILES" ] && ARGS+=(--files $FILES)
+          [ -n "$MODULE" ] && ARGS+=(--module "$MODULE")
+          [ "$DEPS" = "yes" ] && ARGS+=(--deps)
+          python tools/pack_context.py "${ARGS[@]}"
       - uses: actions/upload-artifact@v4
-        with:
-          name: context-pack
-          path: context-pack.zip
+        with: { name: context-pack, path: context-pack.zip }

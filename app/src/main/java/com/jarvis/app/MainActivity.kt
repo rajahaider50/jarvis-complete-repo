@@ -19,13 +19,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jarvis.app.audio.Speaker
-import com.jarvis.app.code.CodeAgent
-import com.jarvis.app.code.MemoryStore
-import com.jarvis.app.code.NetworkMonitor
 import com.jarvis.app.data.ChatStore
 import com.jarvis.app.data.DeviceControl
 import com.jarvis.app.data.ModelCatalog
-import com.jarvis.app.data.ModelRouter
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.live.CallHost
 import com.jarvis.app.live.WakeService
@@ -43,14 +39,8 @@ class MainActivity : ComponentActivity() {
         Prefs.init(this)
         AppLog.init(this)
         CustomProviders.init(this)
-        ModelRouter.init(this)
         com.jarvis.app.data.RealFacts.init(this)
         com.jarvis.app.code.Workspace.init(this)
-        com.jarvis.app.code.TaskStateStore.init(this)
-        MemoryStore.init(this)
-        CodeAgent.init(this)
-        NetworkMonitor.init(this)
-        NetworkMonitor.addListener { CodeAgent.onNetworkChanged(it) }
         com.jarvis.app.code.Skills.init(this)
         Speaker.init(this)
         ChatStore.init(this)

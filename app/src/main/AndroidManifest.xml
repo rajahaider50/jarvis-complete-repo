@@ -6,7 +6,6 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -63,10 +62,6 @@
             android:name=".live.WakeService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
-        <service
-            android:name=".code.CodeTaskService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
         <service
             android:name=".live.CallService"
             android:exported="false"

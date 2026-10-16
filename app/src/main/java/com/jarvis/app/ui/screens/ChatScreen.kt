@@ -95,10 +95,7 @@ fun ChatScreen(onNav: (String) -> Unit) {
                     Row(Modifier.clickable { menu = true }, horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(6.dp).background(Gold, CircleShape))
                         JText(
-                            if (Prefs.manualModel.startsWith("custom:")) {
-                                val p = CustomProviders.selected()
-                                "${p?.name ?: "Custom"} · ${p?.modelId?.ifBlank { "Auto" } ?: "?"}"
-                            }
+                            if (Prefs.manualModel.startsWith("custom:")) "Custom · " + (CustomProviders.selected()?.name ?: "?")
                             else if (Prefs.manualModel.isNotBlank()) Prefs.manualModel
                             else "Auto · ${ChatStore.lastModel.ifBlank { "best model for each task" }}", 11, GoldLight
                         )
@@ -110,17 +107,7 @@ fun ChatScreen(onNav: (String) -> Unit) {
                             DropdownMenuItem(text = { JText(m.id, 13, if (Prefs.manualModel == m.id) Gold else Ivory) }, onClick = { Prefs.manualModel = m.id; Prefs.save(); menu = false })
                         }
                         CustomProviders.list.forEach { p ->
-                            val eligible = CustomProviders.eligibleModels(p)
-                            DropdownMenuItem(text = { JText("★ ${p.name} · Auto (${eligible.size} eligible)", 13, if (Prefs.manualModel == "custom:${p.id}" && p.modelId.isBlank()) Gold else Ivory) }, onClick = {
-                                CustomProviders.upsert(p.copy(modelId = "")); Prefs.manualModel = "custom:${p.id}"; Prefs.save(); menu = false
-                            })
-                            eligible.forEach { m ->
-                                val id = m.id
-                                DropdownMenuItem(text = { JText("   ${p.name} · $id", 13, if (Prefs.manualModel == "custom:${p.id}" && p.modelId == id) Gold else Ivory) }, onClick = {
-                                    CustomProviders.upsert(p.copy(modelId = id)); Prefs.manualModel = "custom:${p.id}"; Prefs.save(); menu = false
-                                })
-                            }
-                            if (eligible.isEmpty() && p.modelId.isNotBlank()) DropdownMenuItem(text = { JText("★ ${p.name} · ${p.modelId}", 13, if (Prefs.manualModel == "custom:${p.id}") Gold else Ivory) }, onClick = { Prefs.manualModel = "custom:${p.id}"; Prefs.save(); menu = false })
+                            DropdownMenuItem(text = { JText("★ ${p.name} · ${p.modelId}", 13, if (Prefs.manualModel == "custom:${p.id}") Gold else Ivory) }, onClick = { Prefs.manualModel = "custom:${p.id}"; Prefs.save(); menu = false })
                         }
                     }
                 }

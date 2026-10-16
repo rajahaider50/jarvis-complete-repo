@@ -101,12 +101,12 @@ fun HomeScreen(onNav: (String) -> Unit) {
             }
             // ---- animated boot: orb + rotating rings ----
             Box(Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
-                androidx.compose.animation.AnimatedVisibility(visible = stage >= 1, enter = scaleIn(tween(900), initialScale = 0.3f) + fadeIn(tween(900)), content = {
+                AnimatedVisibility(stage >= 1, enter = scaleIn(tween(900), initialScale = 0.3f) + fadeIn(tween(900))) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.clickable { greet() }) {
                         BootRings(stage < 5 || talking)
-                        SiriOrb(190.dp, if (talking) 0.5f else 0.1f, if (stage < 5) 2 else 0)
+                        SiriOrb(190.dp, if (talking) 0.5f else 0.1f, if (talking) 3 else if (stage < 5) 2 else 0)
                     }
-                })
+                }
             }
             AnimatedVisibility(stage >= 2, enter = fadeIn(tween(600)) + slideInVertically(tween(600)) { it / 4 }) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {

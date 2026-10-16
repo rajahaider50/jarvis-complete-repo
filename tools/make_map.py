@@ -1,80 +1,119 @@
 #!/usr/bin/env python3
-"""Generates docs/PROJECT_MAP.md (one line per source file). Run: python3 tools/make_map.py"""
-import os, re, json, hashlib, datetime, sys
+"""Builds docs/PROJECT_MAP.md: a small map of the whole project (one line per file) so an AI never has to read everything.
+Run:  python tools/make_map.py        (also runs by itself on GitHub after every push, see .github/workflows/map.yml)"""
+import hashlib, json, os, re, sys, datetime
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = "app/src/main/java/com/jarvis/app/"
-STATE = os.path.join(ROOT, "docs", ".map_state.json")
-OUT = os.path.join(ROOT, "docs", "PROJECT_MAP.md")
-DECL = re.compile(r'^(?:@\w+[ \t]+)*(?:(?:private|internal|public|data|sealed|enum|abstract|open)[ \t]+)*(?:class|object|interface|fun|val|var)[ \t]+(?:<[^>]*>[ \t]*)?(?:\w+\.)?(\w+)', re.M)
+SKIP_DIRS = {".git", "build", ".gradle", ".idea", "node_modules", "__pycache__"}
+SKIP_FILES = {"docs/PROJECT_MAP.md", "docs/.map_state.json"}
+BIN_EXT = {".png", ".jpg", ".jpeg", ".webp", ".zip", ".jar", ".ttf", ".otf", ".woff", ".woff2", ".apk", ".ico", ".pdf"}
+DECL = re.compile(r"^(?:@\w+(?:\([^)]*\))?\s+)*(?:(?:private|internal|public|abstract|open|data|sealed|enum|inline|suspend|const)\s+)*(class|object|interface|fun|val|var)\s+(?:<[^>]+>\s*)?(?:[\w.]+\.)?(\w+)")
+
 
 def files():
+    for d, dirs, fs in os.walk(ROOT):
+        dirs[:] = sorted(x for x in dirs if x not in SKIP_DIRS)
+        for f in sorted(fs):
+            p = os.path.relpath(os.path.join(d, f), ROOT).replace("\\", "/")
+            if p in SKIP_FILES or os.path.splitext(f)[1].lower() in BIN_EXT:
+                continue
+            yield p
+
+
+def read(p):
+    try:
+        return open(os.path.join(ROOT, p), encoding="utf-8").read()
+    except Exception:
+        return ""
+
+
+def kt_info(text):
+    decls, summary, pending = [], "", ""
+    for line in text.split("\n"):
+        s = line.strip()
+        if s.startswith("/**") or s.startswith("/*"):
+            pending = s.strip("/* ").rstrip("*/ ").strip()
+        elif s.startswith("*") and not pending:
+            pending = s.lstrip("* ").strip()
+        elif s.startswith("//") and not pending:
+            pending = s.lstrip("/ ").strip()
+        m = DECL.match(line) if line and not line[0].isspace() else None
+        if m:
+            if not summary and pending:
+                summary = pending
+            if m.group(1) in ("class", "object", "interface", "fun") or len(decls) < 3:
+                decls.append(m.group(2))
+            pending = ""
+        elif s and not s.startswith(("*", "/", "@", "import", "package")) and not line[0].isspace():
+            pending = ""
+    return decls, summary
+
+
+def main():
+    prev = {}
+    state = os.path.join(ROOT, "docs/.map_state.json")
+    if os.path.exists(state):
+        try: prev = json.load(open(state))
+        except Exception: prev = {}
+    cur, rows, owner = {}, [], {}
+    for p in files():
+        t = read(p)
+        cur[p] = hashlib.sha1(t.encode("utf-8", "ignore")).hexdigest()
+        n = t.count("\n") + 1 if t else 0
+        if p.endswith(".kt"):
+            decls, summ = kt_info(t)
+            rel = p[len(BASE):] if p.startswith(BASE) else p
+            for d in decls:
+                owner.setdefault(d, rel)
+            rows.append((p, n, summ, decls, t))
+        else:
+            rows.append((p, n, "", [], t))
     out = []
-    for d, _, fs in os.walk(os.path.join(ROOT, "app", "src")):
-        for f in fs:
-            p = os.path.join(d, f)
-            out.append(os.path.relpath(p, ROOT).replace(os.sep, "/"))
-    return sorted(out)
+    changed = [p for p in cur if prev and prev.get(p) != cur[p]]
+    gone = [p for p in prev if p not in cur]
+    out.append("# PROJECT MAP (generated: do not edit by hand)\n")
+    out.append(f"Updated {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} · {len(cur)} files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.\n")
+    if prev:
+        out.append("## Changed since the previous map\n" + ("\n".join(f"- {p}" for p in (changed + [g + ' (deleted)' for g in gone])[:60]) or "- nothing") + "\n")
+    out.append("## Kotlin source (`" + BASE + "`)\nformat: `path` · lines · what it is · declares · uses (other project files)\n")
+    last = None
+    for p, n, summ, decls, t in rows:
+        if not p.startswith(BASE):
+            continue
+        rel = p[len(BASE):]
+        folder = rel.rsplit("/", 1)[0] if "/" in rel else "(root)"
+        if folder != last:
+            out.append(f"\n### {folder}/")
+            last = folder
+        uses = []
+        for m in re.finditer(r"^import com\.jarvis\.app\.([\w.]+)", t, re.M):
+            name = m.group(1).split(".")[-1]
+            f = owner.get(name)
+            if f and f != rel and f.rsplit("/", 1)[-1] not in uses:
+                uses.append(f.rsplit("/", 1)[-1])
+        out.append(f"- `{rel.rsplit('/', 1)[-1]}` · {n} · {summ[:90] or '-'} · {', '.join(decls[:7])}" + (f" · uses: {', '.join(uses[:6])}" if uses else ""))
+    out.append("\n## Resources, manifest, build, CI, docs\n")
+    groups = {}
+    for p, n, _, _, _ in rows:
+        if p.startswith(BASE):
+            continue
+        key = "app/src/main/res/" + p.split("res/")[1].split("/")[0] if "/res/" in p else None
+        if key and p.split("/")[-1].startswith("ic_"):
+            groups.setdefault(key + "/ic_*", []).append(p)
+        else:
+            out.append(f"- `{p}` · {n} lines")
+    for k, v in groups.items():
+        out.append(f"- `{k}` · {len(v)} icon files")
+    open(os.path.join(ROOT, "docs/PROJECT_MAP.md"), "w", encoding="utf-8").write("\n".join(out) + "\n")
+    json.dump(cur, open(state, "w"))
+    # check that every path named in ARCHITECTURE.md exists
+    arch = read("docs/ARCHITECTURE.md")
+    bad = [m for m in re.findall(r"`([\w/]+\.kt)`", arch) if not os.path.exists(os.path.join(ROOT, BASE, m))]
+    print(f"map written: {len(cur)} files, {len(changed)} changed, {len(gone)} deleted")
+    if bad:
+        print("WARNING: ARCHITECTURE.md names files that do not exist:", ", ".join(bad))
 
-def h(p):
-    return hashlib.md5(open(os.path.join(ROOT, p), "rb").read()).hexdigest()
 
-def summary(txt):
-    m = re.search(r'/\*\*(.*?)\*/', txt, re.S)
-    if not m:
-        m = re.search(r'^//\s*(.+)$', txt, re.M)
-        return (m.group(1).strip() if m else "-")[:90]
-    s = " ".join(l.strip(" *") for l in m.group(1).strip().splitlines()).strip()
-    return s[:90] or "-"
-
-allf = files()
-old = json.load(open(STATE)) if os.path.exists(STATE) else {}
-new = {p: h(p) for p in allf}
-changed = [p for p in new if old.get(p) != new[p]] if old else []
-deleted = [p for p in old if p not in new]
-
-kt = [p for p in allf if p.endswith(".kt")]
-decls = {}
-for p in kt:
-    txt = open(os.path.join(ROOT, p), encoding="utf-8", errors="ignore").read()
-    top = [m.group(1) for m in DECL.finditer(txt)]
-    decls[p] = (txt, list(dict.fromkeys(top))[:6])
-
-sym = {}
-for p, (_, names) in decls.items():
-    for n in names:
-        if len(n) > 4 and n[0].isupper():
-            sym.setdefault(n, p)
-
-L = ["# PROJECT MAP (generated: do not edit by hand)", "",
-     f"Updated {datetime.datetime.now(datetime.timezone.utc):%Y-%m-%d %H:%M} UTC · {len(allf)} files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.", "",
-     "## Changed since the previous map"]
-L += [f"- {p}" for p in changed[:30]] or ["- nothing"]
-if deleted: L += [f"- deleted: {p}" for p in deleted]
-L += ["", f"## Kotlin source (`{BASE}`)", "format: `path` · lines · what it is · declares · uses (other project files)", ""]
-cur = None
-for p in kt:
-    rel = p[len(BASE):] if p.startswith(BASE) else p
-    d = os.path.dirname(rel) or "(root)"
-    if d != cur:
-        L += ["", f"### {d}/"]; cur = d
-    txt, names = decls[p]
-    uses = sorted({sym[n] for n in set(re.findall(r'\b[A-Z]\w{4,}\b', txt)) if n in sym and sym[n] != p})
-    uses = [os.path.basename(u) for u in uses][:8]
-    L.append(f"- `{os.path.basename(p)}` · {txt.count(chr(10))+1} · {summary(txt)} · {', '.join(names) or '-'}" + (f" · uses: {', '.join(uses)}" if uses else ""))
-L += ["", "## Other files"]
-for p in allf:
-    if not p.endswith(".kt"):
-        L.append(f"- `{p[len('app/src/main/'):] if p.startswith('app/src/main/') else p}`")
-other = [x for x in ("app/build.gradle.kts", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", ".github/workflows", "design/DESIGN_SPEC.md") if os.path.exists(os.path.join(ROOT, x))]
-L += ["", "## Build / design files", *[f"- `{x}`" for x in other]]
-open(OUT, "w", encoding="utf-8").write("\n".join(L) + "\n")
-json.dump(new, open(STATE, "w"), indent=0)
-
-arch = os.path.join(ROOT, "docs", "ARCHITECTURE.md")
-if os.path.exists(arch):
-    missing = []
-    for n in set(re.findall(r'`([\w/]+\.kt)`', open(arch, encoding="utf-8").read())):
-        if not (os.path.exists(os.path.join(ROOT, BASE, n)) or os.path.exists(os.path.join(ROOT, n))):
-            missing.append(n)
-    if missing: print("WARNING: ARCHITECTURE.md names files that do not exist:", ", ".join(sorted(missing)))
-print(f"map written: {len(allf)} files, {len(changed)} changed, {len(deleted)} deleted")
+if __name__ == "__main__":
+    main()

@@ -24,11 +24,6 @@ object AgentTools {
         T("search_text", "Find text in all files (shows file:line)", listOf(s("query"))),
         T("make_document", "Create a PDF, PNG, DOCX, XLSX or PPTX file from a JSON description. Call use_skill documents first to learn the format", listOf(s("path"), s("kind"), s("spec"))),
         T("use_skill", "Open the full instructions of a skill", listOf(s("name"))),
-        T("memory_list", "List local topic-based markdown memory files"),
-        T("memory_read", "Read one local memory topic markdown file", listOf(s("path"))),
-        T("memory_write", "Write a durable non-sensitive fact to a local memory topic", listOf(s("path"), s("content"))),
-        T("memory_append", "Append a durable non-sensitive fact to a local memory topic", listOf(s("path"), s("content"))),
-        T("memory_str_replace", "Replace one exact memory line or passage", listOf(s("path"), s("old_text"), s("new_text"))),
         T("verify_project", "Check the project for missing files, broken links and imports, bad JSON and unbalanced brackets"),
         T("finish", "Finish the work. deliver: zip (many files), file (one file, give file_path) or none", listOf(s("summary"), s("deliver", false), s("file_path", false)))
     )
@@ -72,11 +67,6 @@ object AgentTools {
         "search_text" -> "Searching for \"${a.optString("query").take(30)}\""
         "make_document" -> "Creating ${a.optString("kind").uppercase()} ${a.optString("path")}"
         "use_skill" -> "Using skill ${a.optString("name")}"
-        "memory_list" -> "Listing local memory"
-        "memory_read" -> "Reading memory/${a.optString("path")}"
-        "memory_write" -> "Saving memory/${a.optString("path")}"
-        "memory_append" -> "Adding to memory/${a.optString("path")}"
-        "memory_str_replace" -> "Editing memory/${a.optString("path")}"
         "verify_project" -> "Checking that all files are connected"
         "finish" -> "Finishing"
         else -> name
@@ -117,11 +107,6 @@ object AgentTools {
                 "Created ${a.getString("path")} (${f.length() / 1000} KB)"
             }
             "use_skill" -> Skills.find(a.getString("name"))?.instructions ?: "No skill called \"${a.getString("name")}\". " + Skills.promptBlock()
-            "memory_list" -> MemoryStore.list()
-            "memory_read" -> MemoryStore.read(a.getString("path"))
-            "memory_write" -> MemoryStore.write(a.getString("path"), a.getString("content"))
-            "memory_append" -> MemoryStore.append(a.getString("path"), a.getString("content"))
-            "memory_str_replace" -> MemoryStore.replace(a.getString("path"), a.getString("old_text"), a.getString("new_text"))
             "verify_project" -> Workspace.verify(p).let { if (it.isEmpty()) "No problems found." else "Problems:\n" + it.joinToString("\n") }
             else -> "ERROR: unknown tool $name"
         }

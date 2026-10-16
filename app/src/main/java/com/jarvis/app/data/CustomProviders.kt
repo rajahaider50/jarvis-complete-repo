@@ -14,30 +14,6 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-private fun JSONArray?.modelStrings(): List<String> = if (this == null) emptyList() else
-    (0 until length()).mapNotNull { optString(it).takeIf(String::isNotBlank) }
-
-private fun JSONArray?.modelRecords(): List<ProviderModel> = if (this == null) emptyList() else
-    (0 until length()).mapNotNull { i -> optJSONObject(i)?.let { o ->
-        ProviderModel(o.optString("id"), if (o.isNull("free")) null else o.optBoolean("free"),
-            o.optInt("ctx", 0).takeIf { it > 0 }, if (o.isNull("tools")) null else o.optBoolean("tools"),
-            o.optInt("tier", 0).takeIf { it > 0 }, o.optString("src", "cache"), o.optLong("at", 0L))
-    }?.takeIf { it.id.isNotBlank() } }
-
-private fun modelJson(m: ProviderModel) = JSONObject().put("id", m.id)
-    .put("free", m.isFree).put("ctx", m.contextWindow).put("tools", m.supportsTools)
-    .put("tier", m.qualityTier).put("src", m.source).put("at", m.lastVerifiedAt)
-
-data class ProviderModel(
-    val id: String,
-    val isFree: Boolean? = null,
-    val contextWindow: Int? = null,
-    val supportsTools: Boolean? = null,
-    val qualityTier: Int? = null,
-    val source: String = "api",
-    val lastVerifiedAt: Long = 0L
-)
-
 /** An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRouter, Groq, DeepSeek, Mistral, Together, Ollama, LM Studio ...). */
 data class CustomProvider(
     val id: String,
@@ -55,11 +31,7 @@ data class CustomProvider(
     val ttsModel: String = "",        // text-to-speech model, e.g. tts-1
     val ttsVoices: String = "",       // the provider's own voices, comma separated
     val ttsVoice: String = "",        // the voice in use
-    val speechFrom: String = "",       // take speech-to-text / voices from another provider (its id)
-    val modelIds: List<String> = emptyList(), // legacy ids; blank modelId means provider Auto
-    val freeOnly: Boolean = true,
-    val models: List<ProviderModel> = emptyList(),
-    val dailyLimitTokens: Long = 0L
+    val speechFrom: String = ""       // take speech-to-text / voices from another provider (its id)
 ) {
     fun voiceList(): List<String> = ttsVoices.split(',', '\n').map { it.trim() }.filter { it.isNotEmpty() }
 }
@@ -89,12 +61,9 @@ object CustomProviders {
                 val a = JSONArray(f.readText())
                 for (i in 0 until a.length()) {
                     val o = a.getJSONObject(i)
-                    val ids = o.optJSONArray("ms").modelStrings()
-                    val cached = o.optJSONArray("mc").modelRecords()
                     list.add(CustomProvider(o.getString("id"), o.getString("n"), o.getString("u"), o.optString("k"), o.getString("m"),
                         o.optString("h"), o.optString("s"), o.optString("t"), o.optBoolean("v"), o.optBoolean("f"),
-                        o.optBoolean("tl", true), o.optString("stt"), o.optString("tts"), o.optString("tvs"), o.optString("tv"), o.optString("sf"), ids,
-                        o.optBoolean("fo", true), cached.ifEmpty { ids.map { ProviderModel(it, source = "cache") } }, o.optLong("dl", 0L)))
+                        o.optBoolean("tl", true), o.optString("stt"), o.optString("tts"), o.optString("tvs"), o.optString("tv"), o.optString("sf")))
                 }
             }
         } catch (e: Exception) { AppLog.w(e) }
@@ -104,9 +73,7 @@ object CustomProviders {
         val a = JSONArray()
         list.forEach { a.put(JSONObject().put("id", it.id).put("n", it.name).put("u", it.baseUrl).put("k", it.apiKey).put("m", it.modelId)
             .put("h", it.headers).put("s", it.systemPrompt).put("t", it.temperature).put("v", it.vision).put("f", it.fallback)
-            .put("tl", it.tools).put("stt", it.sttModel).put("tts", it.ttsModel).put("tvs", it.ttsVoices).put("tv", it.ttsVoice).put("sf", it.speechFrom)
-            .put("ms", JSONArray(it.modelIds)).put("fo", it.freeOnly)
-            .put("mc", JSONArray().also { models -> it.models.forEach { m -> models.put(modelJson(m)) } }).put("dl", it.dailyLimitTokens)) }
+            .put("tl", it.tools).put("stt", it.sttModel).put("tts", it.ttsModel).put("tvs", it.ttsVoices).put("tv", it.ttsVoice).put("sf", it.speechFrom)) }
         try { file?.writeText(a.toString()) } catch (e: Exception) { AppLog.w(e) }
     }
 
@@ -125,18 +92,6 @@ object CustomProviders {
     /** The provider chosen in the chat model menu, or null when a Gemini model (or Auto) is selected. */
     fun selected(): CustomProvider? =
         if (Prefs.manualModel.startsWith("custom:")) list.firstOrNull { it.id == Prefs.manualModel.removePrefix("custom:") } else null
-
-    /** The selected model first; blank modelId means Auto, so cycle the server's catalog. */
-    fun modelCandidates(p: CustomProvider): List<String> =
-        (if (p.modelId.isNotBlank()) listOf(p.modelId) else eligibleModels(p).map { it.id })
-            .map { it.trim() }.filter { it.isNotBlank() }.distinct()
-
-    fun eligibleModels(p: CustomProvider): List<ProviderModel> =
-        p.models.ifEmpty { p.modelIds.map { ProviderModel(it, source = "cache") } }
-            .filter { !p.freeOnly || it.isFree == true }
-
-    fun unverifiedModels(p: CustomProvider): List<ProviderModel> =
-        p.models.ifEmpty { p.modelIds.map { ProviderModel(it, source = "cache") } }.filter { it.isFree == null }
 
     fun fallbacks(): List<CustomProvider> = list.filter { it.fallback }
 
@@ -264,10 +219,9 @@ object OpenAiCompat {
         p: CustomProvider, system: String, turns: List<GeminiClient.Turn>, exec: (String, JSONObject) -> String
     ): String = withContext(Dispatchers.IO) {
         val msgs = buildMessages(p, system, turns)
-        val model = CustomProviders.modelCandidates(p).firstOrNull() ?: p.modelId.trim()
         var useTools = p.tools
         repeat(6) {
-            val body = JSONObject().put("model", model).put("messages", msgs).put("stream", false)
+            val body = JSONObject().put("model", p.modelId.trim()).put("messages", msgs).put("stream", false)
             if (useTools) body.put("tools", PhoneTools.openAi()).put("tool_choice", "auto")
             p.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
             val c = open(p, "/chat/completions", true, 90000)
@@ -325,31 +279,10 @@ object OpenAiCompat {
         WavUtil.toPcm24k(c.inputStream.use { it.readBytes() })
     }
 
-    /** Asks the server which models it offers and keeps only metadata supplied by the server. */
-    suspend fun fetchModelCatalog(p: CustomProvider): List<ProviderModel> = withContext(Dispatchers.IO) {
+    /** Asks the server which model ids it offers, so you can pick one instead of typing it. */
+    suspend fun fetchModels(p: CustomProvider): List<String> = withContext(Dispatchers.IO) {
         val j = JSONObject(read(open(p, "/models", false, 20000), p))
         val arr = j.optJSONArray("data") ?: JSONArray()
-        val now = System.currentTimeMillis()
-        (0 until arr.length()).mapNotNull { i ->
-            val o = arr.optJSONObject(i) ?: return@mapNotNull null
-            val id = o.optString("id").trim().takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            val pricing = o.optJSONObject("pricing")
-            val prompt = pricing?.optString("prompt")?.toDoubleOrNull()
-            val completion = pricing?.optString("completion")?.toDoubleOrNull()
-            val free = when {
-                id.endsWith(":free", true) -> true
-                prompt != null && completion != null -> prompt == 0.0 && completion == 0.0
-                else -> null
-            }
-            val params = o.optJSONArray("supported_parameters")
-            val tools = if (params == null) null else (0 until params.length()).any { k ->
-                params.optString(k).lowercase().let { it == "tools" || it == "tool_choice" }
-            }
-            ProviderModel(id, free, o.optInt("context_length", 0).takeIf { it > 0 }, tools,
-                null, if (pricing != null || id.endsWith(":free", true)) "api" else "unknown", now)
-        }.distinctBy { it.id }.sortedBy { it.id }
+        (0 until arr.length()).mapNotNull { arr.optJSONObject(it)?.optString("id")?.takeIf { s -> s.isNotBlank() } }.sorted()
     }
-
-    /** Backward-compatible id-only view used by older screens and callers. */
-    suspend fun fetchModels(p: CustomProvider): List<String> = fetchModelCatalog(p).map { it.id }
 }
