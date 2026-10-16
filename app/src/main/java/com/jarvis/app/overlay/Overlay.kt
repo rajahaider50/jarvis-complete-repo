@@ -51,7 +51,7 @@ object Overlay {
     private var popup: DragLayout? = null
     private var lastX = -1
     private var lastY = -1
-    private val collapseTask = Runnable { setExpanded(false) }
+    private val collapseTask = Runnable { applyExpanded(false) }
 
     // ---------- helpers ----------
     private fun ensure(ctx: Context) {
@@ -133,7 +133,7 @@ object Overlay {
         var startY = 0
         root.onDragStart = {
             startX = lp.x; startY = lp.y
-            setExpanded(false)
+            applyExpanded(false)
             closeVisible = true
         }
         root.onDrag = { dx, dy ->
@@ -163,11 +163,11 @@ object Overlay {
     }
 
     private fun toggle() {
-        setExpanded(!expanded)
+        applyExpanded(!expanded)
         if (expanded) main.postDelayed(collapseTask, 5000)
     }
 
-    private fun setExpanded(v: Boolean) {
+    private fun applyExpanded(v: Boolean) {
         main.removeCallbacks(collapseTask)
         if (expanded == v) return
         expanded = v

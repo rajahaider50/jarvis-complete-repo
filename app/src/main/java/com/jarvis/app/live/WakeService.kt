@@ -42,7 +42,7 @@ import java.io.File
  */
 class WakeService : Service() {
     companion object {
-        @Volatile var paused = false
+        @Volatile var pausedState = false
         @Volatile var running = false
         @Volatile var engineError: String? = null      // shown in Assistant settings
         @Volatile var engineName: String = ""
@@ -50,7 +50,7 @@ class WakeService : Service() {
 
         /** Pause = release the microphone right now (used by the live call and the assistant panel). */
         fun setPaused(p: Boolean) {
-            paused = p
+            pausedState = p
             if (p) inst?.let { s -> s.main.post { s.destroyRec(); s.pausePm(); s.schedule(1000) } }
         }
 
@@ -149,7 +149,7 @@ class WakeService : Service() {
     }
 
     private fun voskTick() {
-        val shouldRun = Prefs.wakeEnabled && !paused && !foreignMic && !inPhoneCall()
+        val shouldRun = Prefs.wakeEnabled && !pausedState && !foreignMic && !inPhoneCall()
         try {
             if (shouldRun && !voskActive) { vosk?.startListening(voskListener); voskActive = true }
             if (!shouldRun && voskActive) { vosk?.stop(); voskActive = false }
@@ -187,7 +187,7 @@ class WakeService : Service() {
     }
 
     private fun porcupineTick() {
-        val shouldRun = Prefs.wakeEnabled && !paused && !foreignMic && !inPhoneCall()
+        val shouldRun = Prefs.wakeEnabled && !pausedState && !foreignMic && !inPhoneCall()
         try {
             if (shouldRun && !pmActive) { pm?.start(); pmActive = true }
             if (!shouldRun && pmActive) { pm?.stop(); pmActive = false }
@@ -263,7 +263,7 @@ class WakeService : Service() {
         if (!running) return
         if (usingVosk) { voskTick(); return }
         if (usingPorcupine) { porcupineTick(); return }
-        if (paused || foreignMic || inPhoneCall() || !Prefs.wakeEnabled || Prefs.wakePhrase.isBlank()) { destroyRec(); schedule(1500); return }
+        if (pausedState || foreignMic || inPhoneCall() || !Prefs.wakeEnabled || Prefs.wakePhrase.isBlank()) { destroyRec(); schedule(1500); return }
         destroyRec()
         muteBeeps(1100)
         val r = SpeechRecognizer.createSpeechRecognizer(this)
@@ -302,8 +302,8 @@ class WakeService : Service() {
     private fun restart(delay: Long) { destroyRec(); schedule(delay) }
 
     private fun trigger() {
-        if (paused) return
-        paused = true
+        if (pausedState) return
+        pausedState = true
         destroyRec()
         pausePm()
         AppLog.i("WakeService", "Wake word heard")
@@ -324,7 +324,7 @@ class WakeService : Service() {
         } catch (e: Exception) { AppLog.w(e); }
         // if Android blocked the background start, do not stay deaf: resume listening
         main.postDelayed({
-            if (!AssistantActivity.alive) { paused = false; restart(300) }
+            if (!AssistantActivity.alive) { pausedState = false; restart(300) }
         }, 3500)
     }
 
