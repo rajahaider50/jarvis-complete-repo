@@ -16,4 +16,5 @@ v8: workspace agent + documents + skills, real phone facts, chat actions + strea
 - Vosk / Porcupine / jna dependency versions may need a bump if Gradle cannot resolve them.
 
 ## Next step
-(the next AI writes here what is next)
+- Done: custom provider save now fetches and persists the complete `/models` catalog; Chat and Code use provider Auto/model selection with retries for transient HTTP errors.
+- Next step: run the first GitHub Actions build and phone-test provider model fetching, Auto selection, and 402/429/5xx retry behavior.

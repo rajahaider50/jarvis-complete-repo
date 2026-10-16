@@ -147,6 +147,9 @@ object ChatStore {
 
     private fun fail(m: String) { lastError = m; messages.add(Msg(m, false, true)) }
 
+    private fun providerCode(e: Throwable): Int? = Regex("HTTP (\\d+)").find(e.message.orEmpty())?.groupValues?.get(1)?.toIntOrNull()
+    private fun retryableProvider(e: Throwable): Boolean = providerCode(e)?.let { it == 402 || it == 408 || it == 409 || it == 425 || it == 429 || it in 500..599 } == true
+
     /**
      * Adds the user message and answers it:
      *  1. the model you chose (a Gemini model or one of your custom providers), or Auto = best Gemini model for the task
@@ -175,10 +178,29 @@ object ChatStore {
             var used = ""
             var lastErr = ""
             if (custom != null) {
-                lastModel = custom.name
-                try { reply = OpenAiCompat.chatStream(custom, system, turns, { thinking += it }, { streaming += it }); used = custom.name + " · " + custom.modelId }
-                catch (e: CancellationException) { throw e }
-                catch (e: Exception) { AppLog.w(e); lastErr = e.message ?: "Request failed" }
+                val models = CustomProviders.modelCandidates(custom)
+                var attempts = 0
+                for (model in models) {
+                    while (attempts < 8 && reply == null) {
+                        attempts++; lastModel = custom.name + " · " + model; thinking = ""; streaming = ""
+                        try {
+                            val active = custom.copy(modelId = model)
+                            reply = OpenAiCompat.chatStream(active, system, turns, { thinking += it }, { streaming += it })
+                            used = custom.name + " · " + model
+                        } catch (e: CancellationException) { throw e }
+                        catch (e: Exception) {
+                            AppLog.w(e); lastErr = e.message ?: "Request failed"
+                            val retry = retryableProvider(e) && attempts < 8
+                            if (retry) {
+                                val wait = (attempts * 1200L).coerceAtMost(8000L)
+                                thinking = "Server unavailable (${providerCode(e) ?: "error"}). Retrying $attempts/8…"
+                                delay(wait)
+                            } else break
+                        }
+                    }
+                    if (reply != null || attempts >= 8) break
+                }
+                if (models.isEmpty()) lastErr = "Fetch this provider's model list first, then choose Auto or a model."
             } else if (gemKey.isNotBlank()) {
                 if (!ModelCatalog.ready) ModelCatalog.refresh()
                 val candidates = ModelCatalog.chatCandidates(ModelCatalog.taskFor(text, image != null)).take(10)
@@ -218,7 +240,8 @@ object ChatStore {
                 for (p in CustomProviders.fallbacks()) {
                     if (p.id == custom?.id) continue
                     lastModel = p.name
-                    try { reply = OpenAiCompat.chat(p, system, turns); used = p.name + " · " + p.modelId; break }
+                    val model = CustomProviders.modelCandidates(p).firstOrNull() ?: continue
+                    try { reply = OpenAiCompat.chat(p.copy(modelId = model), system, turns); used = p.name + " · " + model; break }
                     catch (e: CancellationException) { throw e }
                     catch (e: Exception) { AppLog.w(e); lastErr = e.message ?: "Request failed" }
                 }

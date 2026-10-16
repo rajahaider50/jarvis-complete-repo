@@ -55,10 +55,25 @@ private fun ColumnScope.ProviderList(onEdit: (CustomProvider) -> Unit) {
                     if (p.fallback) JText("backup", 10, Gold)
                     if (sel) JText("in use", 10, Gold)
                 }
-                JText(p.modelId, 13, GoldLight)
+                JText(if (p.modelId.isBlank()) "AUTO · ${p.modelIds.size} available models" else p.modelId, 13, GoldLight)
                 JText(p.baseUrl, 11, Muted)
+                if (p.modelIds.isNotEmpty()) {
+                    JText("MODELS · tap Auto or one model", 10, Gold, FontWeight.Medium, ls = 1.5f)
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (p.modelId.isBlank()) Gold.copy(alpha = 0.22f) else Surface2)
+                            .border(1.dp, Gold.copy(alpha = if (p.modelId.isBlank()) 0.9f else 0.3f), RoundedCornerShape(16.dp))
+                            .clickable { CustomProviders.upsert(p.copy(modelId = "")); if (Prefs.manualModel != "custom:${p.id}") { Prefs.manualModel = "custom:${p.id}"; Prefs.save() } }
+                            .padding(horizontal = 12.dp, vertical = 7.dp)) { JText("Auto", 12, if (p.modelId.isBlank()) GoldLight else Ivory) }
+                        p.modelIds.forEach { id ->
+                            Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (p.modelId == id) Gold.copy(alpha = 0.22f) else Surface2)
+                                .border(1.dp, Gold.copy(alpha = if (p.modelId == id) 0.9f else 0.3f), RoundedCornerShape(16.dp))
+                                .clickable { CustomProviders.upsert(p.copy(modelId = id)); Prefs.manualModel = "custom:${p.id}"; Prefs.save() }
+                                .padding(horizontal = 12.dp, vertical = 7.dp)) { JText(id, 12, if (p.modelId == id) GoldLight else Ivory) }
+                        }
+                    }
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlineButton(if (sel) "Use Auto" else "Use in chat", null, { Prefs.manualModel = if (sel) "" else "custom:${p.id}"; Prefs.save() }, Modifier.weight(1f))
+                    OutlineButton(if (sel) "Use Gemini Auto" else "Use in chat", null, { Prefs.manualModel = if (sel) "" else "custom:${p.id}"; Prefs.save() }, Modifier.weight(1f))
                     OutlineButton("Edit", Icons.Outlined.Edit, { onEdit(p) }, Modifier.weight(1f))
                 }
                 val sp = CustomProviders.speechOf(p)
@@ -113,10 +128,10 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
     var result by remember { mutableStateOf("") }
     var ok by remember { mutableStateOf<Boolean?>(null) }
     var busy by remember { mutableStateOf(false) }
-    var found by remember { mutableStateOf(listOf<String>()) }
+    var found by remember { mutableStateOf(start.modelIds) }
     val exists = CustomProviders.list.any { it.id == start.id }
 
-    fun current() = CustomProvider(start.id, name.trim().ifBlank { "My provider" }, url.trim(), key.trim(), model.trim(), headers, system, temp, vision, backup, tools, stt.trim(), ttsM.trim(), voices, voice, borrow)
+    fun current(models: List<String> = found) = CustomProvider(start.id, name.trim().ifBlank { "My provider" }, url.trim(), key.trim(), model.trim(), headers, system, temp, vision, backup, tools, stt.trim(), ttsM.trim(), voices, voice, borrow, models)
 
     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         JText("START FROM", 11, Gold, FontWeight.Medium, ls = 2.2f)
@@ -141,7 +156,7 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
         OutlineButton(if (busy) "Please wait…" else "Fetch the model list from this server", Icons.Outlined.Refresh, {
             if (!busy) scope.launch {
                 busy = true; result = ""; ok = null
-                try { found = OpenAiCompat.fetchModels(current()); result = "${found.size} models found. Tap one to use it."; ok = true }
+                try { found = OpenAiCompat.fetchModels(current()); if (model !in found) model = ""; result = "${found.size} models found. Tap one to use it."; ok = true }
                 catch (e: Exception) { AppLog.w(e); result = e.message ?: "Could not read the list"; ok = false }
                 busy = false
             }
@@ -207,8 +222,21 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
                 busy = false
             }
         }, Modifier.fillMaxWidth())
-        GoldButton("Save", Icons.Outlined.Check, {
-            if (url.isNotBlank() && model.isNotBlank()) { CustomProviders.upsert(current()); onDone() } else { result = "Base URL and Model ID are required."; ok = false }
+        GoldButton(if (busy) "Saving…" else "Save", Icons.Outlined.Check, {
+            if (!busy && url.isNotBlank()) scope.launch {
+                busy = true; result = ""; ok = null
+                val base = current()
+                try {
+                    found = OpenAiCompat.fetchModels(base)
+                    if (model.isNotBlank() && model !in found) model = ""
+                    val saved = current(found)
+                    if (saved.modelId.isBlank() && found.isEmpty()) throw IllegalStateException("No models returned. Enter a Model ID manually or check the server.")
+                    CustomProviders.upsert(saved); result = "Saved. ${found.size} models available in this provider."; ok = true; onDone()
+                } catch (e: Exception) {
+                    AppLog.w(e); CustomProviders.upsert(base); result = e.message ?: "Saved, but the model list could not be read."; ok = false
+                }
+                busy = false
+            }
         }, Modifier.fillMaxWidth())
         if (exists) OutlineButton("Delete this provider", Icons.Outlined.Delete, { CustomProviders.delete(start.id); onDone() }, Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))

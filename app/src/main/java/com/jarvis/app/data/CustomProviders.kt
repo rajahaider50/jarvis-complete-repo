@@ -14,6 +14,9 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
+private fun JSONArray?.modelStrings(): List<String> = if (this == null) emptyList() else
+    (0 until length()).mapNotNull { optString(it).takeIf(String::isNotBlank) }
+
 /** An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRouter, Groq, DeepSeek, Mistral, Together, Ollama, LM Studio ...). */
 data class CustomProvider(
     val id: String,
@@ -31,7 +34,8 @@ data class CustomProvider(
     val ttsModel: String = "",        // text-to-speech model, e.g. tts-1
     val ttsVoices: String = "",       // the provider's own voices, comma separated
     val ttsVoice: String = "",        // the voice in use
-    val speechFrom: String = ""       // take speech-to-text / voices from another provider (its id)
+    val speechFrom: String = "",       // take speech-to-text / voices from another provider (its id)
+    val modelIds: List<String> = emptyList() // models returned by /models; blank modelId means provider Auto
 ) {
     fun voiceList(): List<String> = ttsVoices.split(',', '\n').map { it.trim() }.filter { it.isNotEmpty() }
 }
@@ -63,7 +67,7 @@ object CustomProviders {
                     val o = a.getJSONObject(i)
                     list.add(CustomProvider(o.getString("id"), o.getString("n"), o.getString("u"), o.optString("k"), o.getString("m"),
                         o.optString("h"), o.optString("s"), o.optString("t"), o.optBoolean("v"), o.optBoolean("f"),
-                        o.optBoolean("tl", true), o.optString("stt"), o.optString("tts"), o.optString("tvs"), o.optString("tv"), o.optString("sf")))
+                        o.optBoolean("tl", true), o.optString("stt"), o.optString("tts"), o.optString("tvs"), o.optString("tv"), o.optString("sf"), o.optJSONArray("ms").modelStrings()))
                 }
             }
         } catch (e: Exception) { AppLog.w(e) }
@@ -73,7 +77,8 @@ object CustomProviders {
         val a = JSONArray()
         list.forEach { a.put(JSONObject().put("id", it.id).put("n", it.name).put("u", it.baseUrl).put("k", it.apiKey).put("m", it.modelId)
             .put("h", it.headers).put("s", it.systemPrompt).put("t", it.temperature).put("v", it.vision).put("f", it.fallback)
-            .put("tl", it.tools).put("stt", it.sttModel).put("tts", it.ttsModel).put("tvs", it.ttsVoices).put("tv", it.ttsVoice).put("sf", it.speechFrom)) }
+            .put("tl", it.tools).put("stt", it.sttModel).put("tts", it.ttsModel).put("tvs", it.ttsVoices).put("tv", it.ttsVoice).put("sf", it.speechFrom)
+            .put("ms", JSONArray(it.modelIds))) }
         try { file?.writeText(a.toString()) } catch (e: Exception) { AppLog.w(e) }
     }
 
@@ -92,6 +97,11 @@ object CustomProviders {
     /** The provider chosen in the chat model menu, or null when a Gemini model (or Auto) is selected. */
     fun selected(): CustomProvider? =
         if (Prefs.manualModel.startsWith("custom:")) list.firstOrNull { it.id == Prefs.manualModel.removePrefix("custom:") } else null
+
+    /** The selected model first; blank modelId means Auto, so cycle the server's catalog. */
+    fun modelCandidates(p: CustomProvider): List<String> =
+        (if (p.modelId.isNotBlank()) listOf(p.modelId) else p.modelIds)
+            .map { it.trim() }.filter { it.isNotBlank() }.distinct()
 
     fun fallbacks(): List<CustomProvider> = list.filter { it.fallback }
 
@@ -219,9 +229,10 @@ object OpenAiCompat {
         p: CustomProvider, system: String, turns: List<GeminiClient.Turn>, exec: (String, JSONObject) -> String
     ): String = withContext(Dispatchers.IO) {
         val msgs = buildMessages(p, system, turns)
+        val model = CustomProviders.modelCandidates(p).firstOrNull() ?: p.modelId.trim()
         var useTools = p.tools
         repeat(6) {
-            val body = JSONObject().put("model", p.modelId.trim()).put("messages", msgs).put("stream", false)
+            val body = JSONObject().put("model", model).put("messages", msgs).put("stream", false)
             if (useTools) body.put("tools", PhoneTools.openAi()).put("tool_choice", "auto")
             p.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
             val c = open(p, "/chat/completions", true, 90000)

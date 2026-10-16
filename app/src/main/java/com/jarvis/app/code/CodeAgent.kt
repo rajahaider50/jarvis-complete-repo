@@ -116,7 +116,8 @@ object CodeAgent {
     // ------------------------------------------------------------------ custom provider (OpenAI-compatible)
     private class ProviderBackend(val p: CustomProvider) : Backend {
         private val msgs = JSONArray()
-        override val label: String get() = p.name + " · " + p.modelId
+        private val model: String get() = CustomProviders.modelCandidates(p).firstOrNull() ?: p.modelId
+        override val label: String get() = p.name + " · " + model
 
         override suspend fun begin(system: String, user: String) {
             msgs.put(JSONObject().put("role", "system").put("content", system)); say(user)
@@ -127,7 +128,7 @@ object CodeAgent {
         }
 
         override suspend fun step(onThought: (String) -> Unit): Turn {
-            val body = JSONObject().put("model", p.modelId.trim()).put("messages", msgs).put("tools", AgentTools.openAi()).put("tool_choice", "auto").put("stream", false)
+            val body = JSONObject().put("model", model.trim()).put("messages", msgs).put("tools", AgentTools.openAi()).put("tool_choice", "auto").put("stream", false)
             p.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
             val j = try { OpenAiCompat.completions(p, body) }
             catch (e: IOException) {
