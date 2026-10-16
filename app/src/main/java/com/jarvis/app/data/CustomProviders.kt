@@ -58,7 +58,8 @@ data class CustomProvider(
     val speechFrom: String = "",       // take speech-to-text / voices from another provider (its id)
     val modelIds: List<String> = emptyList(), // legacy ids; blank modelId means provider Auto
     val freeOnly: Boolean = true,
-    val models: List<ProviderModel> = emptyList()
+    val models: List<ProviderModel> = emptyList(),
+    val dailyLimitTokens: Long = 0L
 ) {
     fun voiceList(): List<String> = ttsVoices.split(',', '\n').map { it.trim() }.filter { it.isNotEmpty() }
 }
@@ -93,7 +94,7 @@ object CustomProviders {
                     list.add(CustomProvider(o.getString("id"), o.getString("n"), o.getString("u"), o.optString("k"), o.getString("m"),
                         o.optString("h"), o.optString("s"), o.optString("t"), o.optBoolean("v"), o.optBoolean("f"),
                         o.optBoolean("tl", true), o.optString("stt"), o.optString("tts"), o.optString("tvs"), o.optString("tv"), o.optString("sf"), ids,
-                        o.optBoolean("fo", true), cached.ifEmpty { ids.map { ProviderModel(it, source = "cache") } }))
+                        o.optBoolean("fo", true), cached.ifEmpty { ids.map { ProviderModel(it, source = "cache") } }, o.optLong("dl", 0L)))
                 }
             }
         } catch (e: Exception) { AppLog.w(e) }
@@ -105,7 +106,7 @@ object CustomProviders {
             .put("h", it.headers).put("s", it.systemPrompt).put("t", it.temperature).put("v", it.vision).put("f", it.fallback)
             .put("tl", it.tools).put("stt", it.sttModel).put("tts", it.ttsModel).put("tvs", it.ttsVoices).put("tv", it.ttsVoice).put("sf", it.speechFrom)
             .put("ms", JSONArray(it.modelIds)).put("fo", it.freeOnly)
-            .put("mc", JSONArray().also { models -> it.models.forEach { m -> models.put(modelJson(m)) } })) }
+            .put("mc", JSONArray().also { models -> it.models.forEach { m -> models.put(modelJson(m)) } }).put("dl", it.dailyLimitTokens)) }
         try { file?.writeText(a.toString()) } catch (e: Exception) { AppLog.w(e) }
     }
 

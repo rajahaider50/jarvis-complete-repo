@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
         Prefs.init(this)
         AppLog.init(this)
         CustomProviders.init(this)
+        ModelRouter.init(this)
         com.jarvis.app.data.RealFacts.init(this)
         com.jarvis.app.code.Workspace.init(this)
         com.jarvis.app.code.TaskStateStore.init(this)

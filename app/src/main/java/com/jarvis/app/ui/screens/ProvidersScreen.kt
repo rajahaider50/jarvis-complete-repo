@@ -140,9 +140,10 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
     var manualTools by remember { mutableStateOf(true) }
     var manualFree by remember { mutableStateOf(true) }
     var manualTier by remember { mutableStateOf("") }
+    var dailyLimit by remember { mutableStateOf(if (start.dailyLimitTokens > 0) start.dailyLimitTokens.toString() else "") }
     val exists = CustomProviders.list.any { it.id == start.id }
 
-    fun current(models: List<ProviderModel> = found) = CustomProvider(start.id, name.trim().ifBlank { "My provider" }, url.trim(), key.trim(), model.trim(), headers, system, temp, vision, backup, tools, stt.trim(), ttsM.trim(), voices, voice, borrow, models.map { it.id }, freeOnly, models)
+    fun current(models: List<ProviderModel> = found) = CustomProvider(start.id, name.trim().ifBlank { "My provider" }, url.trim(), key.trim(), model.trim(), headers, system, temp, vision, backup, tools, stt.trim(), ttsM.trim(), voices, voice, borrow, models.map { it.id }, freeOnly, models, dailyLimit.toLongOrNull()?.coerceAtLeast(0L) ?: 0L)
 
     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         JText("START FROM", 11, Gold, FontWeight.Medium, ls = 2.2f)
@@ -165,6 +166,7 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
         })
         Field("MODEL ID", model, { model = it }, "e.g. gpt-4o-mini")
         SwitchRow("Free models only (unknown prices stay unverified)", freeOnly) { freeOnly = it }
+        Field("DAILY TOKEN LIMIT (OPTIONAL)", dailyLimit, { dailyLimit = it.filter(Char::isDigit) }, "0 = unlimited")
         OutlineButton(if (busy) "Please wait…" else "Fetch the model list from this server", Icons.Outlined.Refresh, {
             if (!busy) scope.launch {
                 busy = true; result = ""; ok = null

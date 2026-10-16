@@ -116,7 +116,7 @@ object CodeAgent {
     // ------------------------------------------------------------------ custom provider (OpenAI-compatible)
     private class ProviderBackend(val p: CustomProvider) : Backend {
         private val msgs = JSONArray()
-        private val model: String get() = CustomProviders.modelCandidates(p).firstOrNull() ?: p.modelId
+        private var model: String = CustomProviders.modelCandidates(p).firstOrNull() ?: p.modelId
         override val label: String get() = p.name + " · " + model
 
         override suspend fun begin(system: String, user: String) {
@@ -128,27 +128,42 @@ object CodeAgent {
         }
 
         override suspend fun step(onThought: (String) -> Unit): Turn {
-            val body = JSONObject().put("model", model.trim()).put("messages", msgs).put("tools", AgentTools.openAi()).put("tool_choice", "auto").put("stream", false)
-            p.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
-            val j = try { OpenAiCompat.completions(p, body) }
-            catch (e: IOException) {
-                if (e.message?.contains("HTTP 4") == true && e.message?.contains("tool", true) == true)
-                    throw IOException("${p.name}: this model does not support tool calling, which the code agent needs. Choose another model in Chat.")
-                throw e
+            val routes = ModelRouter.rank(p, ModelRouter.Task.CODING, (msgs.toString().length / 4).coerceAtLeast(1), true)
+            var last: Exception? = null
+            for (route in routes) {
+                val started = System.currentTimeMillis()
+                try {
+                    model = route.model.id
+                    val active = route.provider
+                    val body = JSONObject().put("model", model.trim()).put("messages", msgs).put("tools", AgentTools.openAi()).put("tool_choice", "auto").put("stream", false)
+                    active.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
+                    val j = OpenAiCompat.completions(active, body)
+                    val m = j.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
+                    if (!m.isNull("reasoning_content")) onThought(m.optString("reasoning_content"))
+                    else if (!m.isNull("reasoning")) onThought(m.optString("reasoning"))
+                    val calls = ArrayList<Call>()
+                    val tc = m.optJSONArray("tool_calls")
+                    if (tc != null) for (k in 0 until tc.length()) {
+                        val o = tc.getJSONObject(k); val f = o.getJSONObject("function")
+                        val args = try { JSONObject(f.optString("arguments").ifBlank { "{}" }) } catch (e: Exception) { JSONObject() }
+                        calls.add(Call(o.optString("id", "c$k"), f.getString("name"), args))
+                    }
+                    msgs.put(m)
+                    ModelRouter.markSuccess(route, System.currentTimeMillis() - started, msgs.toString().length / 4)
+                    val text = if (m.isNull("content")) "" else m.optString("content")
+                    return Turn(text, calls)
+                } catch (e: Exception) {
+                    last = e
+                    if (e.message?.contains("HTTP 4") == true && e.message?.contains("tool", true) == true)
+                        last = IOException("${p.name}: this model does not support tool calling, which the code agent needs. Choose another model in Chat.")
+                    if (ModelRouter.markFailure(route, e)) {
+                        AppLog.i("Router", "${route.provider.name} · ${route.model.id} failed for coding; switching to next scored model")
+                        continue
+                    }
+                    throw last
+                }
             }
-            val m = j.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
-            if (!m.isNull("reasoning_content")) onThought(m.optString("reasoning_content"))
-            else if (!m.isNull("reasoning")) onThought(m.optString("reasoning"))
-            val calls = ArrayList<Call>()
-            val tc = m.optJSONArray("tool_calls")
-            if (tc != null) for (k in 0 until tc.length()) {
-                val o = tc.getJSONObject(k); val f = o.getJSONObject("function")
-                val args = try { JSONObject(f.optString("arguments").ifBlank { "{}" }) } catch (e: Exception) { JSONObject() }
-                calls.add(Call(o.optString("id", "c$k"), f.getString("name"), args))
-            }
-            msgs.put(m)
-            val text = if (m.isNull("content")) "" else m.optString("content")
-            return Turn(text, calls)
+            throw last ?: IOException("No eligible coding model is available; wait for cooldown or refresh providers.")
         }
     }
 
