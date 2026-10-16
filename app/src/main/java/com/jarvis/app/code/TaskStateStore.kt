@@ -47,7 +47,7 @@ object TaskStateStore {
             pending = State(
                 o.getString("id"), o.getString("pid"), o.getString("pn"), o.getString("goal"),
                 o.optString("status", "paused"), o.optString("current"), o.optString("partial"),
-                o.optJSONArray("plan").strings(), o.optJSONArray("files").fileStates(),
+                o.optJSONArray("plan").strings().toMutableList(), o.optJSONArray("files").fileStates(),
                 o.optJSONObject("decisions").stringsMap(), o.optJSONArray("conversation").strings().toMutableList(),
                 o.optLong("updated", System.currentTimeMillis())
             )

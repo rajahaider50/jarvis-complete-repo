@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jarvis.app.code.CodeAgent
+import com.jarvis.app.code.TaskStateStore
 import com.jarvis.app.code.Workspace
 import com.jarvis.app.data.AppLog
 import com.jarvis.app.data.CustomProviders
