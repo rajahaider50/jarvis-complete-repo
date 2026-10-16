@@ -1,9 +1,15 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 17:19 UTC · 97 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 17:23 UTC · 98 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- nothing
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/code/AgentTools.kt
+- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
+- app/src/main/java/com/jarvis/app/code/MemoryStore.kt
+- app/src/main/java/com/jarvis/app/code/Skills.kt
+- app/src/main/java/com/jarvis/app/ui/screens/MemoryScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/SkillsScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -11,7 +17,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: MainActivity.kt, AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt, Components.kt
-- `MainActivity.kt` · 136 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AssistantActivity.kt, Speaker.kt, CodeAgent.kt, NetworkMonitor.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt
+- `MainActivity.kt` · 138 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AssistantActivity.kt, Speaker.kt, CodeAgent.kt, MemoryStore.kt, NetworkMonitor.kt, Skills.kt, TaskStateStore.kt, Workspace.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt, AppLog.kt
@@ -24,12 +30,13 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `WavUtil.kt` · 60 · Small helpers to move audio between phone PCM and the WAV files that speech servers use. · WavUtil
 
 ### code/
-- `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: CodeAgent.kt, DocGen.kt, Skills.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
-- `CodeAgent.kt` · 328 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, CodeTaskService.kt, NetworkMonitor.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
+- `AgentTools.kt` · 133 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: CodeAgent.kt, DocGen.kt, MemoryStore.kt, Skills.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
+- `CodeAgent.kt` · 329 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, CodeTaskService.kt, NetworkMonitor.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
 - `CodeTaskService.kt` · 34 · Keeps the app process at foreground priority while a coding task is running. · CodeTaskService
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen · uses: CustomProviders.kt
+- `MemoryStore.kt` · 62 · Topic-based markdown memory. It never runs content and rejects obvious secret material. · MemoryStore
 - `NetworkMonitor.kt` · 57 · Process-level network state used by coding mode; callbacks are delivered on the main threa · NetworkMonitor · uses: AppLog.kt
-- `Skills.kt` · 100 · Skills are short instruction packs. The agent sees only each skill's name and one line; wh · Skills · uses: AppLog.kt, CustomProviders.kt
+- `Skills.kt` · 189 · Skills are short instruction packs. The agent sees only each skill's name and one line; wh · Skills · uses: AppLog.kt, CustomProviders.kt
 - `TaskStateStore.kt` · 122 · Crash-safe local state for the one coding task that may need to resume. · TaskStateStore · uses: Workspace.kt, AppLog.kt, CustomProviders.kt
 - `Workspace.kt` · 236 · Projects on the phone: folders of real files that you and the AI can create, edit, delete, · Workspace · uses: AppLog.kt, CustomProviders.kt
 
@@ -86,11 +93,11 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt, Components.kt, Color.kt
 - `HomeScreen.kt` · 216 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt, Voices.kt, Components.kt, SiriOrb.kt
 - `LiveVoiceScreen.kt` · 290 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AudioRouter.kt, Speaker.kt, AppLog.kt, CustomProviders.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
-- `MemoryScreen.kt` · 99 · - · MemoryScreen · uses: ChatStore.kt, Prefs.kt, Components.kt, Color.kt
+- `MemoryScreen.kt` · 105 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt, Components.kt, Color.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt, Components.kt, Color.kt
 - `ProfileScreen.kt` · 127 · - · ProfileScreen, PrefRowV, PrefRow · uses: Skills.kt, ModelCatalog.kt, Prefs.kt, Components.kt, AccessScreen.kt, Color.kt
 - `ProvidersScreen.kt` · 305 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, ModelChips, Field, SwitchRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, Prefs.kt, Components.kt, VoiceScreen.kt, Color.kt
-- `SkillsScreen.kt` · 86 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, SkillEditor · uses: Skills.kt, AppLog.kt, Components.kt, Color.kt
+- `SkillsScreen.kt` · 119 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, SkillImportBox, SkillEditor · uses: Skills.kt, AppLog.kt, Components.kt, Color.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt, Components.kt, SiriOrb.kt, Color.kt
 - `UiStyleScreen.kt` · 105 · Pick the whole design of the app. Everything changes at once: layout, navigation, icons, c · StyleInfo, STYLES, UiStyleScreen, Mini · uses: Prefs.kt, Components.kt, Color.kt
 - `VoiceScreen.kt` · 241 · - · VOICES, VoiceScreen, VoiceCard, AddVoiceDialog · uses: PcmPlayer.kt, Speaker.kt, AppLog.kt, Langs.kt, Prefs.kt, Voices.kt, Components.kt, SiriOrb.kt
