@@ -1,9 +1,14 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 16:51 UTC · 94 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 17:02 UTC · 95 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- nothing
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
+- app/src/main/java/com/jarvis/app/data/ChatStore.kt
+- app/src/main/java/com/jarvis/app/data/CustomProviders.kt
+- app/src/main/java/com/jarvis/app/data/ModelRouter.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -11,7 +16,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: MainActivity.kt, AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt, Components.kt
-- `MainActivity.kt` · 129 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AssistantActivity.kt, Speaker.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
+- `MainActivity.kt` · 130 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AssistantActivity.kt, Speaker.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt, AppLog.kt
@@ -25,7 +30,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### code/
 - `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: CodeAgent.kt, DocGen.kt, Skills.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
-- `CodeAgent.kt` · 267 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt
+- `CodeAgent.kt` · 282 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen · uses: CustomProviders.kt
 - `Skills.kt` · 100 · Skills are short instruction packs. The agent sees only each skill's name and one line; wh · Skills · uses: AppLog.kt, CustomProviders.kt
 - `TaskStateStore.kt` · 118 · Crash-safe local state for the one coding task that may need to resume. · TaskStateStore · uses: Workspace.kt, AppLog.kt, CustomProviders.kt
@@ -33,13 +38,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### data/
 - `AppLog.kt` · 130 · The app-wide console. Every handled error (every catch block), every crash and the importa · AppLog · uses: CustomProviders.kt
-- `ChatStore.kt` · 255 · Throws the last answer away and asks the same question again. · Msg, SessionMeta, ChatStore · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, Prefs.kt, RealFacts.kt, Voices.kt
-- `CustomProviders.kt` · 355 · An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRout · JSONArray, modelJson, ProviderModel, CustomProvider, CustomProviders, OpenAiCompat · uses: WavUtil.kt, AppLog.kt, GeminiClient.kt, Prefs.kt, PhoneTools.kt
+- `ChatStore.kt` · 259 · Throws the last answer away and asks the same question again. · Msg, SessionMeta, ChatStore · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, ModelRouter.kt, Prefs.kt, RealFacts.kt, Voices.kt
+- `CustomProviders.kt` · 356 · An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRout · JSONArray, modelJson, ProviderModel, CustomProvider, CustomProviders, OpenAiCompat · uses: WavUtil.kt, AppLog.kt, GeminiClient.kt, Prefs.kt, PhoneTools.kt
 - `Device.kt` · 142 · Real phone controls. Android does not let apps flip Wi-Fi/Bluetooth/Airplane directly, so  · Stats, DeviceStats, DeviceControl · uses: AppLog.kt
 - `GeminiClient.kt` · 255 · Minimal Gemini API client (REST, v1beta). No model names are hard-coded: the list of usabl · GeminiClient · uses: AppLog.kt, CustomProviders.kt
 - `ImageUtil.kt` · 31 · - · ImageUtil · uses: AppLog.kt
 - `Langs.kt` · 45 · Sample sentence for voice previews, with grammar that matches the voice's gender. · Lang, Langs
 - `ModelCatalog.kt` · 109 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog · uses: Speaker.kt, AppLog.kt, GeminiClient.kt, Prefs.kt
+- `ModelRouter.kt` · 138 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: DeviceAdmin.kt, AppLog.kt, JarvisAccessibilityService.kt, AccessScreen.kt
 - `Prefs.kt` · 115 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: AppLog.kt, CustomProviders.kt, Color.kt
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts · uses: AppLog.kt, Device.kt, Weather.kt
@@ -86,7 +92,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `MemoryScreen.kt` · 99 · - · MemoryScreen · uses: ChatStore.kt, Prefs.kt, Components.kt, Color.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt, Components.kt, Color.kt
 - `ProfileScreen.kt` · 127 · - · ProfileScreen, PrefRowV, PrefRow · uses: Skills.kt, ModelCatalog.kt, Prefs.kt, Components.kt, AccessScreen.kt, Color.kt
-- `ProvidersScreen.kt` · 303 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, ModelChips, Field, SwitchRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, Prefs.kt, Components.kt, VoiceScreen.kt, Color.kt
+- `ProvidersScreen.kt` · 305 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, ModelChips, Field, SwitchRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, Prefs.kt, Components.kt, VoiceScreen.kt, Color.kt
 - `SkillsScreen.kt` · 86 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, SkillEditor · uses: Skills.kt, AppLog.kt, Components.kt, Color.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt, Components.kt, SiriOrb.kt, Color.kt
 - `UiStyleScreen.kt` · 105 · Pick the whole design of the app. Everything changes at once: layout, navigation, icons, c · StyleInfo, STYLES, UiStyleScreen, Mini · uses: Prefs.kt, Components.kt, Color.kt
