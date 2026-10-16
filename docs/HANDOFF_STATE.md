@@ -18,4 +18,5 @@ v8: workspace agent + documents + skills, real phone facts, chat actions + strea
 ## Next step
 - Done: custom provider save now fetches and persists the complete `/models` catalog; Chat and Code use provider Auto/model selection with retries for transient HTTP errors.
 - Done: provider discovery phase 1 adds API pricing/context/tools metadata, Free only filtering, Unverified grouping, manual model metadata, cached provider catalogs, and Chat eligibility; GitHub Actions build passed on run 38932098213.
-- Next step: phone-test provider discovery, then implement the guide's task-state/checkpoint phase before scored routing and network resume.
+- Done: Phase 2 adds durable JSON task state, original-goal pinning, SHA-256 file checkpoints, stop/error preservation, startup loading and Code screen Resume action; build passed on run 38934731149.
+- Next step: phone-test forced-stop/resume behavior, then implement Phase 3 scored cross-provider router and usage/cooldown tracking.
