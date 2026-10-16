@@ -202,7 +202,8 @@ object CodeAgent {
             "4. For PDF, PNG, DOCX, XLSX or PPTX call use_skill documents first, then make_document. For csv, md, txt, html, svg, json and code use write_file.\n" +
             "5. Every file, import, link, script, style and image you reference must exist. When all files are written call verify_project and fix every problem.\n" +
             "6. End with finish(summary, deliver): deliver=zip for projects with many files, file (+file_path) for one deliverable, none if nothing is to be downloaded. Write the summary in the user's language, 2-4 lines, naming the files and how to use them.\n" +
-            "7. Do not invent facts. If the task is vague, choose sensible defaults and mention them in the summary.\n" + Skills.promptBlock()
+            "7. Do not invent facts. If the task is vague, choose sensible defaults and mention them in the summary.\n" +
+            "8. Memory tools store only durable facts explicitly stated by the user. Never save API keys, passwords, tokens, guesses or temporary task chatter. Use memory_list/read before updating an existing topic.\n" + Skills.promptBlock()
 
     private suspend fun makeBackend(): Backend {
         CustomProviders.selected()?.let { return ProviderBackend(it) }

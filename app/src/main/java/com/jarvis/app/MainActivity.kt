@@ -20,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jarvis.app.audio.Speaker
 import com.jarvis.app.code.CodeAgent
+import com.jarvis.app.code.MemoryStore
 import com.jarvis.app.code.NetworkMonitor
 import com.jarvis.app.data.ChatStore
 import com.jarvis.app.data.DeviceControl
@@ -46,6 +47,7 @@ class MainActivity : ComponentActivity() {
         com.jarvis.app.data.RealFacts.init(this)
         com.jarvis.app.code.Workspace.init(this)
         com.jarvis.app.code.TaskStateStore.init(this)
+        MemoryStore.init(this)
         CodeAgent.init(this)
         NetworkMonitor.init(this)
         NetworkMonitor.addListener { CodeAgent.onNetworkChanged(it) }

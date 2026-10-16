@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jarvis.app.data.ChatStore
+import com.jarvis.app.code.MemoryStore
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.ui.components.*
 import com.jarvis.app.ui.theme.*
@@ -67,6 +68,11 @@ fun MemoryScreen(onBack: () -> Unit) {
                 JText("CUSTOM INSTRUCTIONS", 11, Gold, FontWeight.Medium, ls = 2.2f)
                 JField(instr, { instr = it }, "e.g. Always be concise. Reply in Urdu unless I speak English.",
                     Modifier.fillMaxWidth(), singleLine = false, minHeight = 110.dp)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                JText("AGENT MEMORY FILES", 11, Gold, FontWeight.Medium, ls = 2.2f)
+                JText("The coding agent can keep durable, non-sensitive facts in topic-based .md files. API keys, passwords and guesses are rejected.", 11, Muted, lh = 16)
+                JText(MemoryStore.list(), 12, Ivory, lh = 18)
             }
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Surface1)

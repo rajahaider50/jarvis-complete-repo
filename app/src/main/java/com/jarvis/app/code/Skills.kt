@@ -6,16 +6,24 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.jarvis.app.data.AppLog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.zip.ZipInputStream
 
 /**
  * Skills are short instruction packs. The agent sees only each skill's name and one line; when a task needs one it opens the full
  * instructions with use_skill. You can teach it new skills in Settings > Skills.
  */
 object Skills {
-    class Skill(val id: String, name: String, description: String, instructions: String, enabled: Boolean = true) {
+    data class ImportPreview(val name: String, val description: String, val instructions: String, val sourceUrl: String)
+    class Skill(val id: String, name: String, description: String, instructions: String, enabled: Boolean = true, val sourceUrl: String = "") {
         var name by mutableStateOf(name)
         var description by mutableStateOf(description)
         var instructions by mutableStateOf(instructions)
@@ -70,19 +78,100 @@ For csv, md, txt, html, svg, json, xml and code files use write_file instead.
         try {
             if (f.exists()) {
                 val a = JSONArray(f.readText())
-                for (i in 0 until a.length()) { val o = a.getJSONObject(i); list.add(Skill(o.getString("id"), o.getString("n"), o.optString("d"), o.optString("i"), o.optBoolean("e", true))) }
+                for (i in 0 until a.length()) { val o = a.getJSONObject(i); list.add(Skill(o.getString("id"), o.getString("n"), o.optString("d"), o.optString("i"), o.optBoolean("e", true), o.optString("src"))) }
             }
         } catch (e: Exception) { AppLog.w(e) }
         if (list.isEmpty()) { list.addAll(builtins()); save() }
     }
 
     fun save() {
-        val a = JSONArray(); list.forEach { a.put(JSONObject().put("id", it.id).put("n", it.name).put("d", it.description).put("i", it.instructions).put("e", it.enabled)) }
+        val a = JSONArray(); list.forEach { a.put(JSONObject().put("id", it.id).put("n", it.name).put("d", it.description).put("i", it.instructions).put("e", it.enabled).put("src", it.sourceUrl)) }
         try { file?.writeText(a.toString()) } catch (e: Exception) { AppLog.w(e) }
     }
 
     fun add(name: String, description: String, instructions: String) {
         list.add(Skill("c" + System.currentTimeMillis(), name.trim().ifBlank { "My skill" }, description.trim(), instructions.trim())); save()
+    }
+
+    suspend fun preview(url: String): ImportPreview = withContext(Dispatchers.IO) {
+        val source = url.trim(); if (!source.startsWith("http://") && !source.startsWith("https://")) throw IOException("Use a GitHub, raw URL or HTTPS zip link")
+        val text = downloadSkill(source)
+        val parsed = parseSkill(text)
+        ImportPreview(parsed.first, parsed.second, parsed.third, source)
+    }
+
+    fun saveImported(preview: ImportPreview): Skill {
+        val skill = Skill("imported-" + System.currentTimeMillis(), preview.name, preview.description, preview.instructions, true, preview.sourceUrl)
+        list.add(skill); save(); return skill
+    }
+
+    private fun downloadSkill(source: String): String {
+        val requestUrl = githubApiUrl(source)
+        val conn = URL(requestUrl).openConnection() as HttpURLConnection
+        conn.instanceFollowRedirects = true; conn.connectTimeout = 15000; conn.readTimeout = 30000
+        conn.setRequestProperty("User-Agent", "Jarvis-Skill-Importer"); conn.setRequestProperty("Accept", "application/vnd.github+json")
+        val code = conn.responseCode
+        if (code !in 200..299) throw IOException("Skill download failed: HTTP $code")
+        val bytes = conn.inputStream.use { it.readBytes().also { b -> if (b.size > 2_000_000) throw IOException("Skill download is too large") } }
+        val path = source.lowercase()
+        if (path.endsWith(".zip")) return unzipSkill(bytes)
+        val text = bytes.toString(Charsets.UTF_8)
+        if (text.trimStart().startsWith("{") || text.trimStart().startsWith("[")) {
+            val json = JSONArray(if (text.trimStart().startsWith("[")) text else "[$text]")
+            for (i in 0 until json.length()) {
+                val o = json.optJSONObject(i) ?: continue
+                val name = o.optString("name")
+                val download = o.optString("download_url")
+                if (name.equals("SKILL.md", true) && download.isNotBlank()) return downloadSkill(download)
+                if (o.optString("type") == "file" && name.endsWith("SKILL.md", true)) return downloadSkill(o.optString("download_url"))
+                if (o.optString("type") == "dir" && name.isNotBlank()) {
+                    val base = source.substringBefore('?').trimEnd('/') + "/" + name
+                    try { return downloadSkill(base + source.substringAfter('?', "").let { if (it.isBlank()) "" else "?$it" }) } catch (_: IOException) { /* inspect the next folder */ }
+                }
+            }
+            throw IOException("This GitHub folder has no SKILL.md")
+        }
+        return text
+    }
+
+    private fun unzipSkill(bytes: ByteArray): String {
+        ZipInputStream(ByteArrayInputStream(bytes)).use { z ->
+            var e = z.nextEntry
+            while (e != null) {
+                if (!e.isDirectory && e.name.substringAfterLast('/').equals("SKILL.md", true)) return z.readBytes().toString(Charsets.UTF_8)
+                e = z.nextEntry
+            }
+        }
+        throw IOException("The zip has no SKILL.md")
+    }
+
+    private fun githubApiUrl(source: String): String {
+        if (source.contains("api.github.com/", true) || source.contains("raw.githubusercontent.com/", true)) return source
+        val m = Regex("https?://github\\.com/([^/]+)/([^/#]+)(?:/(blob|tree)/([^/]+)(?:/(.*))?)?", RegexOption.IGNORE_CASE).find(source) ?: return source
+        val owner = m.groupValues[1]; val repo = m.groupValues[2]; val kind = m.groupValues[3]; val ref = m.groupValues[4]; val path = m.groupValues[5]
+        return if (kind.equals("blob", true)) "https://raw.githubusercontent.com/$owner/$repo/$ref/$path"
+        else "https://api.github.com/repos/$owner/$repo/contents" + if (kind.equals("tree", true) && path.isNotBlank()) "/$path?ref=$ref" else ""
+    }
+
+    private fun parseSkill(raw: String): Triple<String, String, String> {
+        val text = raw.removePrefix("\uFEFF").trim()
+        if (text.isBlank() || text.length > 200_000) throw IOException("SKILL.md is empty or too large")
+        var name = ""; var description = ""; var body = text
+        if (text.startsWith("---")) {
+            val end = text.indexOf("\n---", 3)
+            if (end < 0) throw IOException("SKILL.md front matter is not closed")
+            text.substring(3, end).lines().forEach { line ->
+                val i = line.indexOf(':'); if (i > 0) when (line.substring(0, i).trim().lowercase()) {
+                    "name" -> name = line.substring(i + 1).trim().trim('"', '\'')
+                    "description" -> description = line.substring(i + 1).trim().trim('"', '\'')
+                }
+            }
+            body = text.substring(end + 4).trim()
+        }
+        if (name.isBlank()) name = body.lineSequence().firstOrNull { it.trimStart().startsWith("#") }?.trim()?.trimStart('#')?.trim()?.ifBlank { "Imported skill" } ?: "Imported skill"
+        if (description.isBlank()) description = body.lineSequence().firstOrNull { it.isNotBlank() && !it.trimStart().startsWith("#") }?.trim()?.take(180).orEmpty()
+        if (body.isBlank()) throw IOException("SKILL.md has no instructions")
+        return Triple(name.take(100), description.take(240), body.take(120_000))
     }
 
     fun delete(s: Skill) { list.remove(s); save() }
