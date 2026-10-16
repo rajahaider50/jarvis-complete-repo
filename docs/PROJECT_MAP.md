@@ -1,13 +1,10 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 13:41 UTC · 93 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 13:44 UTC · 93 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
-- app/src/main/java/com/jarvis/app/data/ChatStore.kt
-- app/src/main/java/com/jarvis/app/data/CustomProviders.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ChatScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
+- app/src/main/java/com/jarvis/app/live/LiveClient.kt
+- app/src/main/java/com/jarvis/app/ui/screens/HomeScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
