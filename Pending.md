@@ -4,3 +4,4 @@
 - [ ] Phone test of both call engines (Gemini Live and provider pipeline).
 - [ ] Figma frames for updates 3-8 (design spec says "pending").
 - [ ] Phone test: import a provider .json in Custom providers and confirm all models appear.
+- [ ] Phone test: Appearance shows "VOICE ORB STYLE · 50" and each of the 34 new orbs animates/reacts to voice.
