@@ -21,4 +21,5 @@ v8: workspace agent + documents + skills, real phone facts, chat actions + strea
 - Done: Phase 2 adds durable JSON task state, original-goal pinning, SHA-256 file checkpoints, stop/error preservation, startup loading and Code screen Resume action; build passed on run 38934731149.
 - Done: Phase 3 adds scored custom-provider routing for Chat and Code, context/tools eligibility, per-model cooldown/backoff, latency/success health, daily token usage limits, and Router console logging; build passed on run 38936841893.
 - Done: Phase 4 adds ConnectivityManager monitoring, `waiting_network` checkpoints, clean network cancellation, reconnect auto-resume, offline task queue, Code screen Continue status, and a foreground data-sync service; corrected build passed on run 38938269693.
-- Next step: phone-test Phase 2/3/4 behavior, then implement Phase 5 GitHub skill import and file-based memory tools.
+- Done: Phase 5 adds safe GitHub/raw/zip `SKILL.md` preview/import with source metadata, and app-private topic markdown memory tools with path traversal/secret rejection; build passed on run 38939373696.
+- Next step: manual-test Phase 4/5 on a phone, then define the next feature rather than assuming a Phase 6.

@@ -16,4 +16,6 @@ Updated 2026-10-16.
 | Durable task checkpoints/resume | active in v8.4 phase 2 | `code/TaskStateStore.kt`, `code/CodeAgent.kt` |
 | Cross-provider scored router and usage limits | active in v8.5 phase 3 | `data/ModelRouter.kt`, `data/ChatStore.kt` |
 | Network/power-loss auto-resume | active in v8.6 phase 4 | `code/NetworkMonitor.kt`, `code/CodeTaskService.kt`, `code/CodeAgent.kt` |
+| GitHub/raw/zip skill import with preview and lifecycle | active in v8.7 phase 5 | `code/Skills.kt`, `ui/screens/SkillsScreen.kt` |
+| File-based non-sensitive agent memory tools | active in v8.7 phase 5 | `code/MemoryStore.kt`, `code/AgentTools.kt`, `ui/screens/MemoryScreen.kt` |
 | GitHub skill import and file-based memory tools | planned | JARVIS update guide Phase 5 |
