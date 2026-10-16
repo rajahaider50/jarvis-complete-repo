@@ -1,4 +1,5 @@
 # COMPLETE (newest first: date - what - files)
+- 2026-10-17 - Custom providers: import a provider .json file to add all models at once - ui/screens/ProvidersScreen.kt, data/CustomProviders.kt
 - 2026-10-16 - AI workflow system: AI_GUIDE, ARCHITECTURE, skills, tracking files, tools and workflows - docs/, tools/, .github/workflows/
 - v8 - Workspace code agent + documents (PDF/PNG/DOCX/XLSX/PPTX), in-app Skills, real phone facts + weather, chat actions + thinking card
 - v7 - System control tools: end/answer call, lock screen, power menu, screen share by voice, settings intents

@@ -36,6 +36,9 @@ data class CustomProvider(
     fun voiceList(): List<String> = ttsVoices.split(',', '\n').map { it.trim() }.filter { it.isNotEmpty() }
 }
 
+/** What an imported provider .json file gave us. */
+data class ImportSummary(val providerName: String, val baseUrl: String, val count: Int)
+
 object CustomProviders {
     val list = mutableStateListOf<CustomProvider>()
     private var file: File? = null
@@ -87,6 +90,66 @@ object CustomProviders {
         list.removeAll { it.id == id }
         if (Prefs.manualModel == "custom:$id") { Prefs.manualModel = ""; Prefs.save() }
         save()
+    }
+
+    /**
+     * Reads a provider .json file and adds one provider per model in it (all models at once).
+     * Accepts our own export shape (`{ "provider": { "name","baseURL","apiKey" }, "models": [ ... ] }`),
+     * an OpenAI `/v1/models` reply (`{ "data": [ ... ] }`), or a plain array of models.
+     * Each model may be a string (the id) or an object with `id`/`name` + optional `capabilities`.
+     */
+    fun importJson(text: String): ImportSummary {
+        val trimmed = text.trim()
+        val root: JSONObject? = try { JSONObject(trimmed) } catch (e: Exception) { null }
+        val providerObj = root?.optJSONObject("provider") ?: root
+        val baseUrl = firstString(providerObj, "baseURL", "baseUrl", "base_url", "url", "endpoint")
+        val apiKey = firstString(providerObj, "apiKey", "api_key", "key", "token")
+        val providerName = firstString(providerObj, "name", "providerName").ifBlank { "Imported" }
+
+        val arr: JSONArray = if (root == null) {
+            try { JSONArray(trimmed) } catch (e: Exception) { throw IllegalArgumentException("That file is not valid JSON.") }
+        } else {
+            root.optJSONArray("models") ?: root.optJSONArray("data") ?: JSONArray()
+        }
+        if (baseUrl.isBlank()) throw IllegalArgumentException("The file has no base URL (baseURL).")
+        if (arr.length() == 0) throw IllegalArgumentException("The file has no models.")
+
+        var n = 0
+        for (i in 0 until arr.length()) {
+            val item = arr.opt(i)
+            val id: String
+            val display: String
+            var vision = false
+            var tools = true
+            when (item) {
+                is String -> { id = item.trim(); display = id }
+                is JSONObject -> {
+                    id = firstString(item, "id", "model", "modelId", "slug").ifBlank { firstString(item, "name", "display_name") }
+                    display = firstString(item, "name", "display_name", "displayName").ifBlank { id }
+                    val caps = item.optJSONObject("capabilities")
+                    vision = caps?.optBoolean("vision", false) ?: item.optBoolean("vision", false)
+                    tools = caps?.optBoolean("tools", true) ?: item.optBoolean("tools", true)
+                    val input = item.optJSONObject("modalities")?.optJSONArray("input")
+                    if (input != null && (0 until input.length()).any { input.optString(it).contains("image", true) }) vision = true
+                }
+                else -> continue
+            }
+            if (id.isBlank()) continue
+            val stableId = "imp" + (baseUrl.trim().trimEnd('/') + "|" + id).hashCode().toString().replace("-", "n")
+            val p = CustomProvider(stableId, (providerName + " · " + display).take(60), baseUrl.trim(), apiKey.trim(), id, vision = vision, tools = tools)
+            val at = list.indexOfFirst { it.id == stableId }
+            if (at >= 0) list[at] = p else list.add(p)
+            n++
+        }
+        if (n == 0) throw IllegalArgumentException("No models could be read from the file.")
+        save()
+        return ImportSummary(providerName, baseUrl.trim(), n)
+    }
+
+    private fun firstString(o: JSONObject?, vararg keys: String): String {
+        if (o == null) return ""
+        for (k in keys) { val v = o.optString(k); if (v.isNotBlank() && v != "null") return v }
+        return ""
     }
 
     /** The provider chosen in the chat model menu, or null when a Gemini model (or Auto) is selected. */

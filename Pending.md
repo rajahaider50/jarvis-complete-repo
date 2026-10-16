@@ -4,3 +4,4 @@
 - [ ] Check Vosk / Porcupine / jna dependency versions resolve in Gradle.
 - [ ] Phone test of both call engines (Gemini Live and provider pipeline).
 - [ ] Figma frames for updates 3-8 (design spec says "pending").
+- [ ] Phone test: import a provider .json in Custom providers and confirm all models appear.

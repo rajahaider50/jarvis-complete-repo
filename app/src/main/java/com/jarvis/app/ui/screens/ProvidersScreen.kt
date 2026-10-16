@@ -1,5 +1,7 @@
 package com.jarvis.app.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jarvis.app.audio.PcmPlayer
@@ -27,7 +30,9 @@ import com.jarvis.app.data.OpenAiCompat
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.ui.components.*
 import com.jarvis.app.ui.theme.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Add models from any other AI provider. Anything that offers an OpenAI-compatible API works. */
 @Composable
@@ -45,6 +50,19 @@ private fun ColumnScope.ProviderList(onEdit: (CustomProvider) -> Unit) {
     val card = RoundedCornerShape(18.dp)
     val scope = rememberCoroutineScope()
     var note by remember { mutableStateOf("") }
+    var importMsg by remember { mutableStateOf("") }
+    var importOk by remember { mutableStateOf<Boolean?>(null) }
+    val ctx = LocalContext.current
+    val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) scope.launch {
+            importMsg = ""; importOk = null
+            try {
+                val text = withContext(Dispatchers.IO) { ctx.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } ?: "" }
+                val s = CustomProviders.importJson(text)
+                importMsg = "${s.count} models imported from ${s.providerName}."; importOk = true
+            } catch (e: Exception) { AppLog.w(e); importMsg = e.message ?: "Could not import that file"; importOk = false }
+        }
+    }
     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         JText("Add a model from any other AI website. Pick it from the model menu in Chat, or mark it as a backup that is used automatically when Gemini fails. Voice and live calls always use Gemini.", 12, Muted, lh = 17)
         CustomProviders.list.forEach { p ->
@@ -86,6 +104,11 @@ private fun ColumnScope.ProviderList(onEdit: (CustomProvider) -> Unit) {
             }
         }
         if (note.isNotEmpty()) JText(note, 12, Color(0xFFE0665C), lh = 17)
+        if (importMsg.isNotEmpty()) JText(importMsg, 12, if (importOk == true) Gold else Color(0xFFE0665C), lh = 17)
+        OutlineButton("Import models from .json", Icons.Outlined.FileOpen, {
+            importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream", "*/*"))
+        }, Modifier.fillMaxWidth())
+        JText("Pick a provider .json file (with baseURL, apiKey and a models list). Every model in it is added at once, ready to use in Chat.", 11, Muted, lh = 15)
         GoldButton("Add provider", Icons.Outlined.Add, { onEdit(CustomProvider(System.currentTimeMillis().toString(), "", "https://", "", "")) }, Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
     }

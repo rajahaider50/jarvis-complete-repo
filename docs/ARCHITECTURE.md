@@ -12,7 +12,7 @@ Android app "Jarvis": Kotlin 1.9.24, Jetpack Compose (BOM 2024.09, compiler 1.5.
 | Home / Control / Profile tabs | `ui/screens/HomeScreen.kt`, `ui/screens/ControlScreen.kt`, `ui/screens/ProfileScreen.kt` (classic) + the `Styled*` functions in `ui/styles/StyleKit.kt` |
 | Text chat + history + actions | `ui/screens/ChatScreen.kt`, `data/ChatStore.kt` |
 | Gemini REST (chat, stream, TTS, probe) | `data/GeminiClient.kt`, `data/ModelCatalog.kt` |
-| Other AI providers (OpenAI-compatible: chat, tools, STT, TTS) | `data/CustomProviders.kt` (holds `OpenAiCompat`), `ui/screens/ProvidersScreen.kt`, `ui/screens/ApiScreen.kt` |
+| Other AI providers (OpenAI-compatible: chat, tools, STT, TTS) | `data/CustomProviders.kt` (holds `OpenAiCompat`; `CustomProviders.importJson(text)` parses a provider .json with baseURL/apiKey + a models list and adds one provider per model), `ui/screens/ProvidersScreen.kt`, `ui/screens/ApiScreen.kt` |
 | Voices (Gemini TTS) | `audio/Speaker.kt`, `audio/PcmPlayer.kt`, `audio/WavUtil.kt`, `ui/screens/VoiceScreen.kt`, `data/Voices.kt`, `data/Langs.kt` |
 | Voice call, Gemini Live (WebSocket) | `live/LiveClient.kt`, `live/CallEngine.kt`, `live/CallHost.kt`, `live/CallService.kt`, `ui/screens/LiveVoiceScreen.kt` |
 | Voice call with any provider (STT -> chat -> TTS) | `live/PipelineClient.kt`, `data/CustomProviders.kt` |
