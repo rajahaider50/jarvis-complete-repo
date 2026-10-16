@@ -1,14 +1,10 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 17:02 UTC · 95 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 17:04 UTC · 95 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
 - app/src/main/java/com/jarvis/app/MainActivity.kt
 - app/src/main/java/com/jarvis/app/code/CodeAgent.kt
-- app/src/main/java/com/jarvis/app/data/ChatStore.kt
-- app/src/main/java/com/jarvis/app/data/CustomProviders.kt
-- app/src/main/java/com/jarvis/app/data/ModelRouter.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -16,7 +12,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: MainActivity.kt, AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt, Components.kt
-- `MainActivity.kt` · 130 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AssistantActivity.kt, Speaker.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
+- `MainActivity.kt` · 131 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AssistantActivity.kt, Speaker.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt, AppLog.kt
@@ -30,7 +26,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### code/
 - `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: CodeAgent.kt, DocGen.kt, Skills.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
-- `CodeAgent.kt` · 282 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt
+- `CodeAgent.kt` · 283 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen · uses: CustomProviders.kt
 - `Skills.kt` · 100 · Skills are short instruction packs. The agent sees only each skill's name and one line; wh · Skills · uses: AppLog.kt, CustomProviders.kt
 - `TaskStateStore.kt` · 118 · Crash-safe local state for the one coding task that may need to resume. · TaskStateStore · uses: Workspace.kt, AppLog.kt, CustomProviders.kt

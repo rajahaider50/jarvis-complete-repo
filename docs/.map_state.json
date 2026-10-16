@@ -1,7 +1,7 @@
 {
 "app/src/main/AndroidManifest.xml": "02a6d138f58ac820162b9a6b2d68335d",
 "app/src/main/java/com/jarvis/app/AssistantActivity.kt": "8ce63e495137a1a883c5830098d52326",
-"app/src/main/java/com/jarvis/app/MainActivity.kt": "e21b97bd2e68bc982ba9f9f4924481c9",
+"app/src/main/java/com/jarvis/app/MainActivity.kt": "732393ac82ee5a23360d2f0c2e5ecd82",
 "app/src/main/java/com/jarvis/app/assistant/Assistant.kt": "1b70ad9cb099aefcba34d22fc1536eb5",
 "app/src/main/java/com/jarvis/app/assistant/DeviceAdmin.kt": "425795d4b9e4fec73473faf0b4d72180",
 "app/src/main/java/com/jarvis/app/audio/AudioRouter.kt": "4293db9b8ef131022cb9f363d1781475",
@@ -9,7 +9,7 @@
 "app/src/main/java/com/jarvis/app/audio/Speaker.kt": "b56fdb59da7277d9d88a55972f573e8e",
 "app/src/main/java/com/jarvis/app/audio/WavUtil.kt": "27945c717479b97ab884452391cfa78f",
 "app/src/main/java/com/jarvis/app/code/AgentTools.kt": "7e8e422d2984c7cc5c577f9f1b440dc1",
-"app/src/main/java/com/jarvis/app/code/CodeAgent.kt": "0086e29e1075d2907cc998a3dda7663c",
+"app/src/main/java/com/jarvis/app/code/CodeAgent.kt": "e2969936b00d60f7fd15e62425234e29",
 "app/src/main/java/com/jarvis/app/code/DocGen.kt": "a558798e352ecc87ad54faf85d0cac16",
 "app/src/main/java/com/jarvis/app/code/Skills.kt": "e858d5a872077c3abb059a5fe65b658c",
 "app/src/main/java/com/jarvis/app/code/TaskStateStore.kt": "58f1a3885a9383597a9391231205f2a7",
