@@ -20,4 +20,5 @@ v8: workspace agent + documents + skills, real phone facts, chat actions + strea
 - Done: provider discovery phase 1 adds API pricing/context/tools metadata, Free only filtering, Unverified grouping, manual model metadata, cached provider catalogs, and Chat eligibility; GitHub Actions build passed on run 38932098213.
 - Done: Phase 2 adds durable JSON task state, original-goal pinning, SHA-256 file checkpoints, stop/error preservation, startup loading and Code screen Resume action; build passed on run 38934731149.
 - Done: Phase 3 adds scored custom-provider routing for Chat and Code, context/tools eligibility, per-model cooldown/backoff, latency/success health, daily token usage limits, and Router console logging; build passed on run 38936841893.
-- Next step: phone-test Phase 2/3 behavior, then implement Phase 4 network/power-loss resilience and auto-resume.
+- Done: Phase 4 adds ConnectivityManager monitoring, `waiting_network` checkpoints, clean network cancellation, reconnect auto-resume, offline task queue, Code screen Continue status, and a foreground data-sync service; corrected build passed on run 38938269693.
+- Next step: phone-test Phase 2/3/4 behavior, then implement Phase 5 GitHub skill import and file-based memory tools.
