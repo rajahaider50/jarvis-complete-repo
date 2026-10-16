@@ -1,12 +1,10 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 20:25 · 150 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 20:31 · 150 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/data/CustomProviders.kt
-- app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/ui/screens/HomeScreen.kt
-- docs/CHANGES_20261017_build-fixes.md
+- app/src/main/java/com/jarvis/app/live/WakeService.kt
+- app/src/main/java/com/jarvis/app/overlay/Overlay.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
