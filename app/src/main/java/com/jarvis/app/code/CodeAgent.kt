@@ -33,7 +33,7 @@ object CodeAgent {
         var detail by mutableStateOf("")
     }
 
-    class Run(val project: Workspace.Project, val prompt: String) {
+    class Run(val project: Workspace.Project, val prompt: String, val taskId: String, val resumed: Boolean = false) {
         val steps = mutableStateListOf<Step>()
         val notes = mutableStateListOf<String>()
         var thought by mutableStateOf("")
@@ -182,28 +182,45 @@ object CodeAgent {
     fun start(prompt: String, attached: List<String>) {
         val p = Workspace.current ?: return
         if (busy || prompt.isBlank()) return
-        val run = Run(p, prompt.trim())
+        startInternal(p, prompt.trim(), attached, null)
+    }
+
+    fun resume() {
+        val saved = TaskStateStore.pending ?: return
+        val p = Workspace.projects.firstOrNull { it.id == saved.projectId } ?: return
+        if (busy) return
+        Workspace.current = p
+        startInternal(p, saved.originalGoal, emptyList(), saved)
+    }
+
+    private fun startInternal(p: Workspace.Project, prompt: String, attached: List<String>, saved: TaskStateStore.State?) {
+        val state = saved ?: TaskStateStore.begin(p, prompt)
+        if (saved != null) TaskStateStore.resume(saved)
+        val run = Run(p, prompt, state.taskId, saved != null)
         runs.add(run); current = run
         job = scope.launch {
-            try { execute(run, attached) }
-            catch (e: CancellationException) { run.status = 3; throw e }
-            catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2 }
+            try { execute(run, attached, state) }
+            catch (e: CancellationException) { run.status = 3; TaskStateStore.pause(state, p, "Stopped before completion"); throw e }
+            catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2; TaskStateStore.pause(state, p, run.error) }
         }
     }
 
     fun stop() { job?.cancel(); current?.let { if (it.status == 0) it.status = 3 } }
 
-    private suspend fun execute(run: Run, attached: List<String>) {
+    private suspend fun execute(run: Run, attached: List<String>, state: TaskStateStore.State) {
         val p = run.project
         val backend = makeBackend()
         run.model = backend.label
         val files = Workspace.tree(p).take(60).joinToString(", ") { it.path }.ifBlank { "(empty)" }
-        backend.begin(systemPrompt(p), run.prompt + (if (attached.isNotEmpty()) "\n\nThe user added these files to the project: ${attached.joinToString()}" else "") + "\n\nProject files now: $files")
+        val goal = if (run.resumed) TaskStateStore.resumePrompt(state) else run.prompt
+        backend.begin(systemPrompt(p), goal + (if (attached.isNotEmpty()) "\n\nThe user added these files to the project: ${attached.joinToString()}" else "") + "\n\nProject files now: $files")
+        TaskStateStore.record(state, p, if (run.resumed) "Resumed task" else "Started task", run.editorPath, run.editorText)
         var fixRounds = 0; var done = false; var empty = 0
         for (round in 1..45) {
             val t = backend.step { run.thought += it }
             run.model = backend.label
             if (t.text.isNotBlank()) run.notes.add(t.text.trim().take(400))
+            TaskStateStore.record(state, p, t.text, run.editorPath, run.editorText)
             if (t.calls.isEmpty()) {
                 if (t.text.isBlank() && ++empty < 2) { backend.say("Continue: use the tools to do the work and call finish when everything is done."); continue }
                 if (run.summary.isBlank()) run.summary = t.text.trim()
@@ -220,6 +237,7 @@ object CodeAgent {
                 step.state = if (r.startsWith("ERROR") || r.startsWith("NOT FINISHED")) 2 else 1
                 step.detail = r.take(240)
                 results.add(c to r)
+                TaskStateStore.record(state, p, "${c.name}: ${r.take(400)}", run.editorPath, run.editorText)
             }
             backend.results(results)
             if (done) break
@@ -227,6 +245,7 @@ object CodeAgent {
         if (run.summary.isBlank()) run.summary = if (done) "Done." else "The work stopped before the agent said it was finished. Everything written so far is in the project."
         if (!done && run.outputs.isEmpty()) deliver(run, JSONObject().put("deliver", "zip"))
         run.status = 1
+        TaskStateStore.complete(state)
     }
 
     /** Puts the result where you can view / download it: a single file, or a zip of the project. */

@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
         CustomProviders.init(this)
         com.jarvis.app.data.RealFacts.init(this)
         com.jarvis.app.code.Workspace.init(this)
+        com.jarvis.app.code.TaskStateStore.init(this)
         com.jarvis.app.code.Skills.init(this)
         Speaker.init(this)
         ChatStore.init(this)
