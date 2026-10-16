@@ -39,10 +39,17 @@ val ORB_STYLES = listOf(
     "Rose Window", "Spirograph", "Nebula", "Pendulum", "Barcode Ring", "Wavelength", "Kaleidoscope", "Sonic Rings",
     "Crystal Core", "Aurora Ribbon", "Quantum Dots", "Infinity Loop", "Gear Ring", "Facet Diamond", "Particle Storm", "Liquid Metal",
     "Pulse Grid", "Star Lattice", "Halo Orbits", "Vortex", "Ripple Mesh", "Aurora Curtains", "Obsidian", "Golden Spiral",
-    "Prism Sweep", "Supernova"
+    "Prism Sweep", "Supernova",
+    "iOS Blur", "Siri Wave", "Liquid Glass", "Prism Ring", "Soft Gradient", "Bokeh", "Fluid Mesh", "Aurora Silk",
+    "Spectrum Bar", "Halo Pulse", "Neon Grid", "Chromatic", "Particle Mist", "Orbit Glow", "Glass Ring", "Waveform",
+    "Stardust", "Mobius", "Solar Flare", "Ice Crystal", "Plasma Orb", "Radial Blur", "Liquid Ripple", "Light Sweep",
+    "Aurora Bloom", "Pulse Web", "Glow Trail", "Nebula Cloud", "Prism Flare", "Kinetic Dots", "Bubbles", "Sonic Bloom",
+    "Chrome Ball", "Helix", "Pendulum Wave", "Spiral Glow", "Conic Wheel", "Ripple Grid", "Star Field", "Plasma Web",
+    "Glow Orbits", "Soft Blob", "Fireflies", "Vortex Ring", "Aurora Curtain", "Prism Dots", "Glass Sweep", "Quantum Field",
+    "Galaxy Core", "Liquid Aurora"
 )
 
-/** mode: 0 idle, 1 listening (reacts to level), 2 thinking, 3 speaking. style: 0..49 (see ORB_STYLES). */
+/** mode: 0 idle, 1 listening (reacts to level), 2 thinking, 3 speaking. style: 0..99 (see ORB_STYLES). */
 @Composable
 fun SiriOrb(diameter: Dp, level: Float, mode: Int, style: Int = Prefs.orbStyle) {
     val inf = rememberInfiniteTransition(label = "orb")
@@ -59,7 +66,7 @@ fun SiriOrb(diameter: Dp, level: Float, mode: Int, style: Int = Prefs.orbStyle) 
         val r = size.minDimension / 2f * 0.84f
         val c = center
         drawCircle(Brush.radialGradient(listOf(Gold.copy(alpha = 0.30f), Color.Transparent), center = c, radius = r * 1.22f), radius = r * 1.22f, center = c)
-        when (style.coerceIn(0, 49)) {
+        when (style.coerceIn(0, 99)) {
             0 -> blobs(c, r, t, amp, 4, false)
             1 -> blobs(c, r, t * 1.6f, amp * 1.4f, 7, true)
             2 -> ripples(c, r, t, amp)
@@ -109,7 +116,57 @@ fun SiriOrb(diameter: Dp, level: Float, mode: Int, style: Int = Prefs.orbStyle) 
             46 -> obsidian(c, r, t, amp)
             47 -> goldenSpiral(c, r, t, amp)
             48 -> prismSweep(c, r, t, amp)
-            else -> supernova(c, r, t, amp)
+            49 -> supernova(c, r, t, amp)
+            50 -> iosBlur(c, r, t, amp)
+            51 -> siriWave(c, r, t, amp)
+            52 -> liquidGlass(c, r, t, amp)
+            53 -> prismRing(c, r, t, amp)
+            54 -> softGradient(c, r, t, amp)
+            55 -> bokeh(c, r, t, amp)
+            56 -> fluidMesh(c, r, t, amp)
+            57 -> auroraSilk(c, r, t, amp)
+            58 -> spectrumBar(c, r, t, amp)
+            59 -> haloPulse(c, r, t, amp)
+            60 -> neonGrid(c, r, t, amp)
+            61 -> chromatic(c, r, t, amp)
+            62 -> particleMist(c, r, t, amp)
+            63 -> orbitGlow(c, r, t, amp)
+            64 -> glassRing(c, r, t, amp)
+            65 -> waveform(c, r, t, amp)
+            66 -> stardust(c, r, t, amp)
+            67 -> mobius(c, r, t, amp)
+            68 -> solarFlare(c, r, t, amp)
+            69 -> iceCrystal(c, r, t, amp)
+            70 -> plasmaOrb(c, r, t, amp)
+            71 -> radialBlur(c, r, t, amp)
+            72 -> liquidRipple(c, r, t, amp)
+            73 -> lightSweep(c, r, t, amp)
+            74 -> auroraBloom(c, r, t, amp)
+            75 -> pulseWeb(c, r, t, amp)
+            76 -> glowTrail(c, r, t, amp)
+            77 -> nebulaCloud(c, r, t, amp)
+            78 -> prismFlare(c, r, t, amp)
+            79 -> kineticDots(c, r, t, amp)
+            80 -> bubbles(c, r, t, amp)
+            81 -> sonicBloom(c, r, t, amp)
+            82 -> chromeBall(c, r, t, amp)
+            83 -> helix(c, r, t, amp)
+            84 -> pendulumWave(c, r, t, amp)
+            85 -> spiralGlow(c, r, t, amp)
+            86 -> conicWheel(c, r, t, amp)
+            87 -> rippleGrid(c, r, t, amp)
+            88 -> starField(c, r, t, amp)
+            89 -> plasmaWeb(c, r, t, amp)
+            90 -> glowOrbits(c, r, t, amp)
+            91 -> softBlob(c, r, t, amp)
+            92 -> fireflies(c, r, t, amp)
+            93 -> vortexRing(c, r, t, amp)
+            94 -> auroraCurtain(c, r, t, amp)
+            95 -> prismDots(c, r, t, amp)
+            96 -> glassSweep(c, r, t, amp)
+            97 -> quantumField(c, r, t, amp)
+            98 -> galaxyCore(c, r, t, amp)
+            else -> liquidAurora(c, r, t, amp)
         }
     }
 }
@@ -679,4 +736,604 @@ private fun DrawScope.supernova(c: Offset, r: Float, t: Float, amp: Float) = bal
         drawCircle(listOf(GoldLight, Gold, warm())[i % 3].copy(alpha = (1f - burst) * 0.8f), radius = r * (0.05f * (1f - burst) + amp * 0.08f), center = Offset(c.x + cos(a) * d, c.y + sin(a) * d))
     }
     soft(Color.White, c, r * (0.3f * (1f - burst) + amp), 0.95f)
+}
+
+// ----- iOS / premium style orbs (50..99) -----
+
+private fun DrawScope.iosBlur(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val cols = listOf(Gold, GoldLight, warm(), GoldDark, GoldLight)
+    for (i in 0 until 5) {
+        val a = t * (0.4f + i * 0.12f) + i * 1.25f
+        val d = r * (0.32f + amp * 0.5f) * (0.6f + (i % 3) * 0.25f)
+        soft(cols[i], Offset(c.x + cos(a) * d, c.y + sin(a * 1.1f) * d), r * (0.7f + amp * 0.4f), 0.7f)
+    }
+    soft(Color.White, c, r * (0.45f + amp * 0.6f), 0.5f)
+}
+
+private fun DrawScope.siriWave(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    for (i in 0 until 6) {
+        val p = Path(); val rr = r * (0.3f + i * 0.11f)
+        var a = 0f
+        while (a <= 2 * PI.toFloat() + 0.01f) {
+            val w = rr * (1f + (0.04f + amp * 0.25f) * sin(a * 3f + t * 2f + i))
+            val x = c.x + cos(a) * w; val y = c.y + sin(a) * w
+            if (a == 0f) p.moveTo(x, y) else p.lineTo(x, y)
+            a += 0.12f
+        }
+        p.close()
+        drawPath(p, listOf(Gold, GoldLight, warm())[i % 3].copy(alpha = 0.75f - i * 0.08f), style = Stroke(width = 2f * density))
+    }
+    soft(Color.White, c, r * (0.2f + amp), 0.85f)
+}
+
+private fun DrawScope.liquidGlass(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r, Color(0xFF12121A)) {
+    for (i in 0 until 4) {
+        val a = t * (0.5f + i * 0.2f) + i * 1.6f
+        val d = r * (0.3f + amp * 0.3f)
+        soft(listOf(Gold, GoldLight, GoldDark, warm())[i], Offset(c.x + cos(a) * d, c.y + sin(a) * d), r * (0.5f + amp * 0.3f), 0.6f)
+    }
+    val p = Path(); p.moveTo(c.x - r, c.y - r * 0.1f)
+    p.quadraticBezierTo(c.x, c.y - r * (0.7f + amp * 0.2f), c.x + r, c.y - r * 0.1f)
+    drawPath(p, Brush.linearGradient(listOf(Color.White.copy(alpha = 0.5f), Color.Transparent), start = Offset(c.x, c.y - r), end = Offset(c.x, c.y)), style = Stroke(width = r * 0.12f, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+    soft(Color.White, Offset(c.x - r * 0.3f, c.y - r * 0.35f), r * 0.3f, 0.6f)
+}
+
+private fun DrawScope.prismRing(c: Offset, r: Float, t: Float, amp: Float) {
+    soft(Gold, c, r * 1.0f, 0.18f)
+    rotate(t * 40f, c) {
+        val seg = 12
+        val rr = r * (0.82f + amp * 0.15f)
+        for (i in 0 until seg) {
+            drawArc(listOf(Gold, GoldLight, warm(), GoldDark)[i % 4].copy(alpha = 0.85f), startAngle = i * 360f / seg + 2f, sweepAngle = 360f / seg - 6f, useCenter = false, topLeft = Offset(c.x - rr, c.y - rr), size = Size(rr * 2, rr * 2), style = Stroke(width = r * (0.14f + amp * 0.3f)))
+        }
+    }
+    soft(Color.White, c, r * (0.2f + amp), 0.8f)
+}
+
+private fun DrawScope.softGradient(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    rotate(t * 30f, c) {
+        drawCircle(Brush.sweepGradient(listOf(GoldDark, Gold, GoldLight, warm(), Gold, GoldDark), center = c), radius = r, center = c)
+    }
+    drawCircle(Brush.radialGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)), center = c, radius = r), radius = r, center = c)
+    soft(Color.White, Offset(c.x - r * 0.3f, c.y - r * 0.35f), r * (0.3f + amp * 0.2f), 0.5f)
+}
+
+private fun DrawScope.bokeh(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val cols = listOf(Gold, GoldLight, warm(), GoldDark)
+    for (i in 0 until 12) {
+        val a = i * 2.399f + t * (0.5f + (i % 4) * 0.2f)
+        val d = r * (0.1f + (i % 5) / 5f * 0.7f) * (0.9f + amp * 0.3f)
+        soft(cols[i % 4], Offset(c.x + cos(a) * d, c.y + sin(a) * d), r * (0.14f + (i % 3) * 0.06f + amp * 0.1f), 0.55f)
+    }
+    soft(Color.White, c, r * (0.2f + amp), 0.6f)
+}
+
+private fun DrawScope.fluidMesh(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    for (b in 0 until 7) {
+        val p = Path(); var x = c.x - r
+        val y0 = c.y - r + b * (2f * r / 6f)
+        p.moveTo(x, y0 + sin(x / r * 2f + t + b) * r * (0.04f + amp * 0.2f))
+        while (x <= c.x + r) {
+            p.lineTo(x, y0 + sin(x / r * 2.5f + t * 2f + b) * r * (0.04f + amp * 0.25f))
+            x += r / 12f
+        }
+        drawPath(p, listOf(Gold, GoldLight, warm())[b % 3].copy(alpha = 0.4f), style = Stroke(width = 1.2f * density))
+    }
+    soft(GoldLight, c, r * (0.5f + amp), 0.5f); soft(Color.White, c, r * 0.18f, 0.8f)
+}
+
+private fun DrawScope.auroraSilk(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val cols = listOf(GoldLight, Gold, warm(), GoldDark)
+    for (b in 0 until 6) {
+        val x0 = c.x - r + b * (2f * r / 5f)
+        val p = Path(); p.moveTo(x0, c.y - r)
+        var y = c.y - r
+        while (y <= c.y + r) {
+            p.lineTo(x0 + sin(y / r * 2f + t * 1.5f + b) * r * (0.12f + amp * 0.4f), y)
+            y += r / 14f
+        }
+        drawPath(p, Brush.verticalGradient(listOf(cols[b % 4].copy(alpha = 0.5f), Color.Transparent), startY = c.y - r, endY = c.y + r), style = Stroke(width = r * (0.1f + amp * 0.15f), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+    }
+    soft(Color.White, c, r * (0.2f + amp), 0.6f)
+}
+
+private fun DrawScope.spectrumBar(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 44
+    for (i in 0 until n) {
+        val a = i * 2 * PI.toFloat() / n
+        val h = r * (0.12f + (0.1f + amp * 0.9f) * abs(sin(i * 0.5f + t * 3f)))
+        val s = Offset(c.x + cos(a) * r * 0.66f, c.y + sin(a) * r * 0.66f)
+        val e = Offset(c.x + cos(a) * (r * 0.66f + h), c.y + sin(a) * (r * 0.66f + h))
+        drawLine(if (i % 2 == 0) GoldLight else Gold, s, e, strokeWidth = 3f * density, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+    }
+    soft(Gold, c, r * (0.4f + amp), 0.5f); soft(Color.White, c, r * 0.16f)
+}
+
+private fun DrawScope.haloPulse(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val k = t / (2 * PI.toFloat())
+    for (i in 0 until 4) {
+        val f = (k * 2f + i / 4f) % 1f
+        drawCircle(GoldLight.copy(alpha = (1f - f) * 0.6f), radius = r * (0.25f + f * 0.72f), center = c, style = Stroke(width = (3f - f * 2f) * density))
+    }
+    soft(GoldLight, c, r * (0.4f + amp), 0.7f); soft(Color.White, c, r * (0.2f + amp), 0.9f)
+}
+
+private fun DrawScope.neonGrid(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 7
+    for (i in 0 until n) {
+        val p = (i + 1f) / n
+        drawLine(Gold.copy(alpha = 0.5f), Offset(c.x - r, c.y - r + p * 2f * r), Offset(c.x + r, c.y - r + p * 2f * r), strokeWidth = 1f * density)
+    }
+    for (i in 0 until n) {
+        val p = ((i + 1f) / n + t / (2 * PI.toFloat()) * 0.3f) % 1f
+        drawLine(GoldLight.copy(alpha = 0.5f), Offset(c.x - r + p * 2f * r, c.y - r), Offset(c.x - r + p * 2f * r, c.y + r), strokeWidth = 1f * density)
+    }
+    soft(Gold, c, r * (0.4f + amp), 0.4f); soft(Color.White, c, r * 0.14f)
+}
+
+private fun DrawScope.chromatic(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val d = r * (0.28f + amp * 0.3f)
+    soft(Gold, Offset(c.x - d * 0.5f, c.y - d * 0.3f), r * (0.7f + amp * 0.3f), 0.6f)
+    soft(GoldLight, Offset(c.x + d * 0.5f, c.y - d * 0.3f), r * (0.7f + amp * 0.3f), 0.6f)
+    soft(warm(), Offset(c.x, c.y + d * 0.6f), r * (0.7f + amp * 0.3f), 0.6f)
+    soft(Color.White, c, r * (0.2f + amp), 0.7f)
+}
+
+private fun DrawScope.particleMist(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    for (i in 0 until 60) {
+        val a = i * 2.399f + t * (0.8f + (i % 6) * 0.15f)
+        val d = r * (0.9f - (i % 10) / 10f) * (0.85f + amp * 0.3f)
+        drawCircle(GoldLight.copy(alpha = 0.35f - (i % 10) * 0.02f), radius = r * (0.015f + amp * 0.06f), center = Offset(c.x + cos(a) * d, c.y + sin(a) * d))
+    }
+    soft(Gold, c, r * (0.5f + amp), 0.4f); soft(Color.White, c, r * 0.14f, 0.7f)
+}
+
+private fun DrawScope.orbitGlow(c: Offset, r: Float, t: Float, amp: Float) {
+    soft(Gold, c, r * 0.9f, 0.15f)
+    drawCircle(Gold.copy(alpha = 0.25f), radius = r * 0.7f, center = c, style = Stroke(width = 1.2f * density))
+    val pos = Offset(c.x + cos(t * 1.2f) * r * 0.7f, c.y + sin(t * 1.2f) * r * 0.7f)
+    soft(GoldLight, pos, r * (0.3f + amp * 0.4f), 0.9f)
+    drawCircle(Color.White, radius = r * (0.08f + amp * 0.1f), center = pos)
+    soft(Color.White, c, r * (0.18f + amp), 0.6f)
+}
+
+private fun DrawScope.glassRing(c: Offset, r: Float, t: Float, amp: Float) {
+    soft(Gold, c, r, 0.12f)
+    drawCircle(Brush.sweepGradient(listOf(Color.White.copy(alpha = 0.0f), Color.White.copy(alpha = 0.6f), Color.White.copy(alpha = 0.0f), GoldLight.copy(alpha = 0.5f), Color.White.copy(alpha = 0.0f)), center = c), radius = r * 0.78f, center = c, style = Stroke(width = r * (0.16f + amp * 0.3f)))
+    drawCircle(GoldLight.copy(alpha = 0.35f), radius = r * 0.6f, center = c, style = Stroke(width = 1f * density))
+    soft(Color.White, c, r * (0.16f + amp), 0.7f)
+}
+
+private fun DrawScope.waveform(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val p = Path(); val n = 60
+    for (i in 0..n) {
+        val f = i / n.toFloat()
+        val x = c.x - r + f * 2f * r
+        val y = c.y + sin(f * 10f + t * 4f) * r * (0.12f + amp * 0.6f) * (0.3f + abs(sin(f * 3.14f)))
+        if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+    }
+    drawPath(p, Gold.copy(alpha = 0.25f), style = Stroke(width = (5f + amp * 10f) * density, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+    drawPath(p, GoldLight, style = Stroke(width = 2f * density, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+    soft(Color.White, c, r * 0.12f)
+}
+
+private fun DrawScope.stardust(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    for (i in 0 until 70) {
+        val a = i * 2.399f
+        val d = r * ((i % 7) / 7f) * (0.85f + amp * 0.3f)
+        val tw = abs(sin(i * 1.7f + t * 4f))
+        drawCircle(if (i % 4 == 0) GoldLight else Gold, radius = r * (0.012f + 0.03f * tw) + amp * 2f, center = Offset(c.x + cos(a) * d, c.y + sin(a) * d))
+    }
+    soft(Gold, c, r * (0.4f + amp), 0.4f); soft(Color.White, c, r * 0.14f)
+}
+
+private fun DrawScope.mobius(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    rotate(t * 25f, c) {
+        val p = Path(); val n = 160
+        val bigR = r * (0.55f + amp * 0.2f)
+        for (i in 0..n) {
+            val a = i * 2 * PI.toFloat() / n
+            val x = c.x + bigR * cos(a) / (1f + 0.4f * sin(a * 2f + t * 2f))
+            val y = c.y + bigR * sin(a * 2f + t * 2f) / (1f + 0.4f * cos(a + t))
+            if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+        }
+        p.close()
+        drawPath(p, Brush.linearGradient(listOf(GoldLight, Gold, warm(), GoldDark), start = Offset(c.x - r, c.y - r), end = Offset(c.x + r, c.y + r)), style = Stroke(width = 2.5f * density))
+    }
+    soft(Color.White, c, r * (0.2f + amp), 0.8f)
+}
+
+private fun DrawScope.solarFlare(c: Offset, r: Float, t: Float, amp: Float) {
+    for (i in 0 until 3) {
+        val a0 = i * 2.094f + t * 0.8f
+        val p = Path(); p.moveTo(c.x, c.y)
+        var a = a0 - 0.5f
+        while (a <= a0 + 0.5f) {
+            val d = r * (1.05f + 0.15f * sin(a * 8f + t * 4f))
+            p.lineTo(c.x + cos(a) * d, c.y + sin(a) * d)
+            a += 0.05f
+        }
+        p.close()
+        drawPath(p, listOf(Gold, GoldLight, warm())[i].copy(alpha = 0.4f))
+    }
+    soft(GoldLight, c, r * (0.5f + amp), 0.9f); soft(Color.White, c, r * (0.28f + amp * 0.6f))
+}
+
+private fun DrawScope.iceCrystal(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    rotate(t * 15f, c) {
+        for (i in 0 until 6) {
+            val a = i * 2 * PI.toFloat() / 6
+            val e = Offset(c.x + cos(a) * r * (0.8f + amp * 0.3f), c.y + sin(a) * r * (0.8f + amp * 0.3f))
+            drawLine(GoldLight.copy(alpha = 0.8f), c, e, strokeWidth = 2f * density)
+            val m = Offset(c.x + cos(a) * r * 0.5f, c.y + sin(a) * r * 0.5f)
+            drawLine(Gold.copy(alpha = 0.6f), m, Offset(m.x + cos(a + 0.6f) * r * 0.2f, m.y + sin(a + 0.6f) * r * 0.2f), strokeWidth = 1.2f * density)
+            drawLine(Gold.copy(alpha = 0.6f), m, Offset(m.x + cos(a - 0.6f) * r * 0.2f, m.y + sin(a - 0.6f) * r * 0.2f), strokeWidth = 1.2f * density)
+        }
+    }
+    soft(Color.White, c, r * (0.24f + amp), 0.9f)
+}
+
+private fun DrawScope.plasmaOrb(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val cols = listOf(Gold, warm(), GoldLight, GoldDark, Gold, warm())
+    for (i in 0 until 6) {
+        val a = t * (0.9f + i * 0.2f) + i * 1.05f
+        val d = r * (0.15f + amp * 0.7f) * (0.5f + (i % 3) * 0.3f)
+        soft(cols[i], Offset(c.x + cos(a) * d, c.y + sin(a * 1.3f) * d), r * (0.55f + amp), 0.7f)
+    }
+    soft(Color.White, c, r * (0.3f + amp * 0.7f), 0.8f)
+}
+
+private fun DrawScope.radialBlur(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 60
+    for (i in 0 until n) {
+        val a = i * 2 * PI.toFloat() / n
+        val len = r * (0.75f + 0.2f * abs(sin(i * 1.3f + t * 3f)) + amp * 0.2f)
+        drawLine(listOf(Gold, GoldLight, warm())[i % 3].copy(alpha = 0.35f), c, Offset(c.x + cos(a) * len, c.y + sin(a) * len), strokeWidth = 1.5f * density)
+    }
+    soft(GoldLight, c, r * (0.5f + amp), 0.8f); soft(Color.White, c, r * (0.2f + amp), 0.9f)
+}
+
+private fun DrawScope.liquidRipple(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val k = t / (2 * PI.toFloat())
+    for (i in 0 until 5) {
+        val f = (k * 1.5f + i / 5f) % 1f
+        val rad = r * f * (1f + amp * 0.2f)
+        drawCircle(Gold.copy(alpha = (1f - f) * 0.5f), radius = rad, center = c, style = Stroke(width = (2.5f - f) * density))
+        drawCircle(GoldLight.copy(alpha = (1f - f) * 0.3f), radius = rad * 0.85f, center = c, style = Stroke(width = 1f * density))
+    }
+    soft(GoldLight, c, r * (0.32f + amp), 0.7f); soft(Color.White, c, r * 0.16f, 0.9f)
+}
+
+private fun DrawScope.lightSweep(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    soft(Gold, c, r * 1.0f, 0.2f)
+    val f = (t / (2 * PI.toFloat())) % 1f
+    rotate(-30f, c) {
+        val x = c.x - r + f * 2f * r
+        drawLine(Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.7f), Color.Transparent), start = Offset(x - r * 0.3f, c.y), end = Offset(x + r * 0.3f, c.y)), Offset(x - r * 0.35f, c.y - r), Offset(x + r * 0.35f, c.y + r), strokeWidth = r * (0.28f + amp * 0.3f))
+    }
+    soft(GoldLight, c, r * (0.4f + amp), 0.5f); soft(Color.White, c, r * 0.14f)
+}
+
+private fun DrawScope.auroraBloom(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val petals = 10
+    for (i in 0 until petals) {
+        val a = i * 2 * PI.toFloat() / petals + t * 0.25f
+        val len = r * (0.55f + 0.25f * abs(sin(i * 0.8f + t * 2f)) + amp * 0.3f)
+        val tip = Offset(c.x + cos(a) * len, c.y + sin(a) * len)
+        drawLine(Brush.linearGradient(listOf(listOf(Gold, GoldLight, warm())[i % 3].copy(alpha = 0.8f), Color.Transparent), start = c, end = tip), c, tip, strokeWidth = r * 0.09f)
+        soft(listOf(Gold, GoldLight, warm())[i % 3], tip, r * (0.12f + amp * 0.3f), 0.6f)
+    }
+    soft(Color.White, c, r * (0.22f + amp), 0.9f)
+}
+
+private fun DrawScope.pulseWeb(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 8
+    val pts = ArrayList<Offset>()
+    for (i in 0 until n) {
+        val a = i * 2 * PI.toFloat() / n + t * 0.3f
+        val d = r * (0.55f + 0.2f * abs(sin(i * 1.4f + t * 2f)) + amp * 0.2f)
+        pts.add(Offset(c.x + cos(a) * d, c.y + sin(a) * d))
+    }
+    for (i in pts.indices) {
+        val j = (i + 1) % n
+        drawLine(Gold.copy(alpha = 0.5f), c, pts[i], strokeWidth = 1.2f * density)
+        drawLine(GoldLight.copy(alpha = 0.5f), pts[i], pts[j], strokeWidth = 1.2f * density)
+    }
+    pts.forEach { soft(GoldLight, it, r * (0.1f + amp * 0.3f), 0.9f) }
+    soft(Color.White, c, r * (0.16f + amp), 0.9f)
+}
+
+private fun DrawScope.glowTrail(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    soft(Gold, c, r * (0.25f + amp), 0.4f)
+    for (i in 0 until 22) {
+        val f = i / 22f
+        val a = t * 1.1f - f * 1.6f
+        drawCircle(GoldLight.copy(alpha = (1f - f) * 0.85f), radius = r * (0.09f * (1f - f * 0.6f) + amp * 0.1f), center = Offset(c.x + cos(a) * r * 0.72f, c.y + sin(a) * r * 0.72f))
+    }
+    soft(Color.White, Offset(c.x + cos(t * 1.1f) * r * 0.72f, c.y + sin(t * 1.1f) * r * 0.72f), r * (0.12f + amp), 0.95f)
+}
+
+private fun DrawScope.nebulaCloud(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val cols = listOf(Gold, warm(), GoldLight, GoldDark)
+    for (i in 0 until 12) {
+        val a = i * 2.399f + t * 0.3f
+        val d = r * (0.1f + (i % 4) * 0.16f)
+        soft(cols[i % 4], Offset(c.x + cos(a) * d, c.y + sin(a) * d), r * (0.35f + amp * 0.4f), 0.5f)
+    }
+    for (i in 0 until 20) {
+        val a = i * 1.618f
+        drawCircle(Color.White.copy(alpha = 0.5f), radius = r * 0.012f + amp * 2f, center = Offset(c.x + cos(a) * r * ((i % 5) / 5f), c.y + sin(a) * r * ((i % 5) / 5f)))
+    }
+    soft(Color.White, c, r * (0.25f + amp), 0.8f)
+}
+
+private fun DrawScope.prismFlare(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val f = 0.4f + 0.5f * abs(sin(t * 1.5f)) + amp * 0.2f
+    for (i in 0 until 3) {
+        val a = i * 2.094f + t * 0.5f
+        drawLine(listOf(Gold, GoldLight, warm())[i].copy(alpha = 0.7f), Offset(c.x - cos(a) * r * f, c.y - sin(a) * r * f), Offset(c.x + cos(a) * r * f, c.y + sin(a) * r * f), strokeWidth = (2f + i) * density)
+    }
+    for (i in 0 until 4) {
+        val a = i * 2 * PI.toFloat() / 4 + 0.78f
+        soft(GoldLight, Offset(c.x + cos(a) * r * 0.55f, c.y + sin(a) * r * 0.55f), r * (0.12f + amp * 0.2f), 0.7f)
+    }
+    soft(Color.White, c, r * (0.28f + amp), 0.95f)
+}
+
+private fun DrawScope.kineticDots(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 6
+    for (ix in 0 until n) for (iy in 0 until n) {
+        val x = c.x - r * 0.68f + ix * (1.36f * r / (n - 1))
+        val y = c.y - r * 0.68f + iy * (1.36f * r / (n - 1))
+        val yy = y + sin(x / r * 2.5f + t * 2f) * r * (0.03f + amp * 0.15f)
+        drawCircle(GoldLight.copy(alpha = 0.75f), radius = r * (0.035f + amp * 0.1f), center = Offset(x, yy))
+    }
+}
+
+private fun DrawScope.bubbles(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val k = t / (2 * PI.toFloat())
+    for (i in 0 until 10) {
+        val f = (k + i / 10f) % 1f
+        val x = c.x + sin(i * 2.399f) * r * 0.6f
+        val y = c.y + r - f * 2f * r
+        val rad = r * (0.05f + (i % 3) * 0.03f) * (0.7f + amp * 0.5f)
+        drawCircle(GoldLight.copy(alpha = (1f - f) * 0.6f), radius = rad, center = Offset(x, y), style = Stroke(width = 1.5f * density))
+    }
+    soft(Gold, c, r * (0.4f + amp), 0.35f)
+}
+
+private fun DrawScope.sonicBloom(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val petals = 14
+    for (i in 0 until petals) {
+        val a = i * 2 * PI.toFloat() / petals + t * 0.4f
+        val len = r * (0.5f + 0.3f * abs(sin(t * 2f + i * 0.5f)) + amp * 0.3f)
+        val e = Offset(c.x + cos(a) * len, c.y + sin(a) * len)
+        drawLine(Brush.linearGradient(listOf(GoldLight.copy(alpha = 0.9f), Color.Transparent), start = c, end = e), c, e, strokeWidth = r * 0.06f)
+    }
+    soft(Gold, c, r * (0.4f + amp), 0.7f); soft(Color.White, c, r * (0.2f + amp), 0.9f)
+}
+
+private fun DrawScope.chromeBall(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r, Color(0xFF101014)) {
+    rotate(t * 20f, c) {
+        drawCircle(Brush.sweepGradient(listOf(Color.White, GoldLight, Gold, GoldDark, warm(), Color.White), center = c), radius = r * (0.8f + amp * 0.15f), center = c)
+    }
+    drawCircle(Brush.radialGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)), center = Offset(c.x - r * 0.2f, c.y - r * 0.2f), radius = r * 1.1f), radius = r, center = c)
+    soft(Color.White, Offset(c.x - r * 0.32f, c.y - r * 0.36f), r * 0.28f, 0.85f)
+}
+
+private fun DrawScope.helix(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 26
+    for (i in 0 until n) {
+        val f = i / n.toFloat()
+        val a = f * 6 * PI.toFloat() + t * 2f
+        val x = c.x + cos(a) * r * 0.45f
+        val y = c.y - r * 0.8f + f * 1.6f * r
+        val s = 0.4f + 0.6f * ((sin(a) + 1f) / 2f)
+        drawCircle((if (i % 2 == 0) GoldLight else Gold).copy(alpha = 0.5f + s * 0.5f), radius = r * (0.04f + amp * 0.1f) * s, center = Offset(x, y))
+        val x2 = c.x - cos(a) * r * 0.45f
+        drawCircle(Gold.copy(alpha = 0.5f), radius = r * (0.04f + amp * 0.1f) * s, center = Offset(x2, y))
+        drawLine(Gold.copy(alpha = 0.2f), Offset(x, y), Offset(x2, y), strokeWidth = 1f * density)
+    }
+    soft(Color.White, c, r * (0.16f + amp), 0.6f)
+}
+
+private fun DrawScope.pendulumWave(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 7
+    for (i in 0 until n) {
+        val a = sin(t * (1f + i * 0.18f))
+        val x = c.x - r * 0.7f + i * (1.4f * r / (n - 1))
+        val y = c.y - r * 0.5f + (1f - cos(a)) * r * (0.7f + amp * 0.3f)
+        drawLine(Gold.copy(alpha = 0.25f), Offset(x, c.y - r * 0.8f), Offset(x, y), strokeWidth = 1f * density)
+        soft(listOf(Gold, GoldLight, warm())[i % 3], Offset(x, y), r * (0.1f + amp * 0.3f), 0.9f)
+    }
+}
+
+private fun DrawScope.spiralGlow(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 90
+    for (i in 0 until n) {
+        val f = i / n.toFloat()
+        val a = f * 5 * PI.toFloat() + t * 1.5f
+        val d = r * f * (0.85f + amp * 0.2f)
+        drawCircle(GoldLight.copy(alpha = f * (0.7f + amp * 0.3f)), radius = r * (0.02f + f * 0.05f), center = Offset(c.x + cos(a) * d, c.y + sin(a) * d))
+    }
+    soft(Color.White, c, r * (0.2f + amp), 0.9f)
+}
+
+private fun DrawScope.conicWheel(c: Offset, r: Float, t: Float, amp: Float) {
+    rotate(t * 35f, c) {
+        val seg = 12
+        val rr = r * (0.8f + amp * 0.15f)
+        for (i in 0 until seg) {
+            drawArc(listOf(Gold, GoldLight, warm(), GoldDark)[i % 4].copy(alpha = if (i % 2 == 0) 0.85f else 0.45f), startAngle = i * 360f / seg, sweepAngle = 360f / seg, useCenter = true, topLeft = Offset(c.x - rr, c.y - rr), size = Size(rr * 2, rr * 2))
+        }
+    }
+    drawCircle(Brush.radialGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.4f)), center = c, radius = r), radius = r, center = c)
+    soft(Color.White, Offset(c.x - r * 0.3f, c.y - r * 0.32f), r * 0.25f, 0.5f)
+}
+
+private fun DrawScope.rippleGrid(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 6
+    for (ix in 0 until n) for (iy in 0 until n) {
+        val bx = c.x - r * 0.7f + ix * (1.4f * r / (n - 1))
+        val by = c.y - r * 0.7f + iy * (1.4f * r / (n - 1))
+        val dx = bx - c.x; val dy = by - c.y
+        val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+        val w = sin(dist / r * 6f - t * 3f) * r * (0.04f + amp * 0.15f)
+        drawCircle(GoldLight.copy(alpha = 0.6f), radius = r * 0.03f, center = Offset(bx + dx / (dist + 1f) * w, by + dy / (dist + 1f) * w))
+    }
+    soft(Gold, c, r * (0.4f + amp), 0.3f)
+}
+
+private fun DrawScope.starField(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val k = t / (2 * PI.toFloat())
+    for (i in 0 until 60) {
+        val f = (k * (0.5f + (i % 5) * 0.3f) + i / 60f) % 1f
+        val a = i * 2.399f
+        val d = r * f * (0.9f + amp * 0.2f)
+        drawCircle(GoldLight.copy(alpha = f * 0.9f), radius = r * (0.01f + f * 0.035f), center = Offset(c.x + cos(a) * d, c.y + sin(a) * d))
+    }
+    soft(Gold, c, r * (0.35f + amp), 0.3f); soft(Color.White, c, r * 0.12f)
+}
+
+private fun DrawScope.plasmaWeb(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    for (n in 1..4) {
+        val nodes = 4 + n * 2
+        val p = Path()
+        for (i in 0..nodes) {
+            val a = i * 2 * PI.toFloat() / nodes + t * (0.3f + n * 0.1f)
+            val d = r * (0.2f * n + 0.1f * sin(i * 2f + t * 2f)) * (0.9f + amp * 0.2f)
+            val x = c.x + cos(a) * d; val y = c.y + sin(a) * d
+            if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+        }
+        p.close()
+        drawPath(p, listOf(Gold, GoldLight, warm(), GoldDark)[n % 4].copy(alpha = 0.6f), style = Stroke(width = 1.4f * density))
+    }
+    soft(GoldLight, c, r * (0.4f + amp), 0.6f); soft(Color.White, c, r * 0.16f, 0.9f)
+}
+
+private fun DrawScope.glowOrbits(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    soft(Gold, c, r * (0.4f + amp), 0.5f)
+    for (i in 0 until 4) {
+        rotate(t * (10f + i * 8f) * (if (i % 2 == 0) 1f else -1f), c) {
+            val rad = r * (0.4f + i * 0.14f)
+            drawCircle(listOf(Gold, GoldLight, warm(), GoldDark)[i].copy(alpha = 0.55f), radius = rad, center = Offset(c.x + r * 0.1f, c.y), style = Stroke(width = 1.8f * density))
+        }
+    }
+    soft(Color.White, c, r * (0.18f + amp), 0.9f)
+}
+
+private fun DrawScope.softBlob(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val p = Path(); val n = 80
+    for (i in 0..n) {
+        val a = i * 2 * PI.toFloat() / n
+        val d = r * (0.55f + (0.06f + amp * 0.4f) * (sin(a * 2f + t * 1.5f) + 0.5f * sin(a * 3f - t * 2f)))
+        val x = c.x + cos(a) * d; val y = c.y + sin(a) * d
+        if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+    }
+    p.close()
+    drawPath(p, Brush.radialGradient(listOf(GoldLight, Gold, GoldDark), center = c, radius = r * 1.1f))
+    soft(Color.White, Offset(c.x - r * 0.2f, c.y - r * 0.25f), r * (0.3f + amp * 0.3f), 0.6f)
+}
+
+private fun DrawScope.fireflies(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    for (i in 0 until 16) {
+        val a = i * 2.399f + t * (0.6f + (i % 4) * 0.2f)
+        val d = r * (0.25f + (i % 5) / 5f * 0.55f)
+        val x = c.x + cos(a) * d
+        val y = c.y + sin(a * 0.8f) * d + sin(t * 3f + i) * r * 0.08f
+        val glow = 0.5f + 0.5f * abs(sin(t * 4f + i * 1.3f))
+        soft(GoldLight, Offset(x, y), r * (0.08f + amp * 0.25f), glow)
+    }
+    soft(Gold, c, r * (0.35f + amp), 0.3f)
+}
+
+private fun DrawScope.vortexRing(c: Offset, r: Float, t: Float, amp: Float) {
+    soft(Gold, c, r * 1.0f, 0.2f)
+    for (i in 0 until 5) {
+        rotate(t * (20f + i * 10f), c) {
+            val rad = r * (0.35f + i * 0.12f)
+            drawArc(listOf(Gold, GoldLight, warm(), GoldDark, GoldLight)[i].copy(alpha = 0.75f), startAngle = 0f, sweepAngle = 250f, useCenter = false, topLeft = Offset(c.x - rad, c.y - rad), size = Size(rad * 2, rad * 2), style = Stroke(width = r * (0.06f + amp * 0.15f), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+        }
+    }
+    soft(Color.White, c, r * (0.18f + amp), 0.9f)
+}
+
+private fun DrawScope.auroraCurtain(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val cols = listOf(GoldLight, Gold, warm(), GoldDark)
+    for (b in 0 until 6) {
+        val p = Path()
+        val x0 = c.x - r + b * (2f * r / 5f)
+        p.moveTo(x0, c.y - r)
+        var y = c.y - r
+        while (y <= c.y + r) {
+            p.lineTo(x0 + sin(y / r * 1.5f + t + b) * r * (0.1f + amp * 0.5f), y)
+            y += r / 12f
+        }
+        drawPath(p, cols[b % 4].copy(alpha = 0.45f), style = Stroke(width = r * (0.1f + amp * 0.2f), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+    }
+    soft(Color.White, c, r * (0.2f + amp), 0.6f)
+}
+
+private fun DrawScope.prismDots(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 36
+    for (i in 0 until n) {
+        val a = i * 2 * PI.toFloat() / n + t * 0.6f
+        val d = r * (0.45f + 0.3f * abs(sin(i * 0.9f + t * 2f)) + amp * 0.2f)
+        drawCircle(listOf(Gold, GoldLight, warm())[i % 3].copy(alpha = 0.85f), radius = r * (0.03f + amp * 0.12f), center = Offset(c.x + cos(a) * d, c.y + sin(a) * d))
+    }
+    soft(Gold, c, r * (0.35f + amp), 0.6f); soft(Color.White, c, r * 0.16f, 0.9f)
+}
+
+private fun DrawScope.glassSweep(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r, Color(0xFF121218)) {
+    val f = (t / (2 * PI.toFloat())) % 1f
+    rotate(25f, c) {
+        val x = c.x - r + f * 2f * r
+        val p = Path()
+        p.moveTo(x - r * 0.2f, c.y - r)
+        p.lineTo(x + r * 0.2f, c.y - r)
+        p.lineTo(x + r * 0.5f, c.y + r)
+        p.lineTo(x + r * 0.05f, c.y + r)
+        p.close()
+        drawPath(p, Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.6f), GoldLight.copy(alpha = 0.4f), Color.Transparent), start = Offset(x, c.y - r), end = Offset(x, c.y + r)))
+    }
+    drawCircle(GoldLight.copy(alpha = 0.3f), radius = r * 0.86f, center = c, style = Stroke(width = 1.2f * density))
+    soft(Color.White, Offset(c.x - r * 0.3f, c.y - r * 0.35f), r * 0.28f, 0.5f)
+}
+
+private fun DrawScope.quantumField(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val n = 40
+    for (i in 0 until n) {
+        val a = i * 2 * PI.toFloat() / n + sin(t + i * 0.3f) * 0.3f
+        val d = r * (0.3f + 0.5f * abs(sin(i * 0.5f + t * 2f)))
+        val pos = Offset(c.x + cos(a) * d, c.y + sin(a) * d)
+        val e = Offset(c.x + cos(a + 0.5f) * d, c.y + sin(a + 0.5f) * d)
+        drawLine(listOf(Gold, GoldLight, warm())[i % 3].copy(alpha = 0.45f), pos, e, strokeWidth = 1.2f * density)
+    }
+    soft(GoldLight, c, r * (0.35f + amp), 0.6f); soft(Color.White, c, r * 0.14f)
+}
+
+private fun DrawScope.galaxyCore(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    for (arm in 0 until 4) for (i in 0 until 40) {
+        val f = i / 40f
+        val a = t * 0.9f + arm * 1.5708f + f * 4.8f
+        val d = r * (0.05f + f * (0.88f + amp * 0.2f))
+        drawCircle(listOf(Gold, GoldLight, warm(), GoldDark)[arm].copy(alpha = 1f - f * 0.7f), radius = r * (0.04f - f * 0.02f) + 0.5f, center = Offset(c.x + cos(a) * d, c.y + sin(a) * d))
+    }
+    soft(GoldLight, c, r * (0.35f + amp), 0.9f); soft(Color.White, c, r * (0.2f + amp), 0.9f)
+}
+
+private fun DrawScope.liquidAurora(c: Offset, r: Float, t: Float, amp: Float) = ball(c, r) {
+    val cols = listOf(Gold, GoldLight, warm(), GoldDark, Gold, GoldLight)
+    for (b in 0 until 6) {
+        val p = Path()
+        val base = c.y - r + b * (2f * r / 5f)
+        p.moveTo(c.x - r, base)
+        var x = c.x - r
+        while (x <= c.x + r) {
+            p.lineTo(x, base + sin(x / r * 2f + t * (1f + b * 0.25f) + b) * r * (0.08f + amp * 0.5f))
+            x += r / 16f
+        }
+        drawPath(p, cols[b].copy(alpha = 0.5f), style = Stroke(width = r * (0.09f + amp * 0.15f), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+    }
+    soft(Color.White, c, r * (0.2f + amp), 0.8f)
 }
