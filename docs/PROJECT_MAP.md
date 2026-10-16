@@ -1,10 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 16:47 UTC · 94 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 16:51 UTC · 94 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/code/TaskStateStore.kt
-- app/src/main/java/com/jarvis/app/ui/screens/CodeScreen.kt
+- nothing
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
