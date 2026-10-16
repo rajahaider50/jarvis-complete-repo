@@ -1,6 +1,6 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 13:03 UTC · 93 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 13:12 UTC · 93 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
 - nothing
