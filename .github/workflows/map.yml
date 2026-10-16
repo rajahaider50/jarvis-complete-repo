@@ -1,0 +1,20 @@
+name: Update project map
+on:
+  push:
+    branches: [ main ]
+    paths-ignore: [ 'docs/PROJECT_MAP.md', 'docs/.map_state.json' ]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  map:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/make_map.py
+      - name: Commit map
+        run: |
+          git config user.name "map-bot"
+          git config user.email "map-bot@users.noreply.github.com"
+          git add docs/PROJECT_MAP.md docs/.map_state.json
+          git diff --cached --quiet || (git commit -m "Update project map [skip ci]" && git push)

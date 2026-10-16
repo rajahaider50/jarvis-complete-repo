@@ -1,0 +1,20 @@
+name: Pack context for an AI
+on:
+  workflow_dispatch:
+    inputs:
+      goal:
+        description: "Goal in 1-2 sentences"
+        required: true
+      keywords:
+        description: "Area words, e.g. chat bubble"
+        required: true
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/make_pack.py "${{ github.event.inputs.goal }}" "${{ github.event.inputs.keywords }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: context-pack
+          path: context-pack.zip

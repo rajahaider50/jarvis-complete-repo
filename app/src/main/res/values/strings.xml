@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Jarvis</string>
+    <string name="a11y_description">Lets the assistant read the screen and tap, type, scroll and press Back or Home for you.</string>
+</resources>
