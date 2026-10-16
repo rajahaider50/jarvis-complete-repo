@@ -1,8 +1,15 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 21:37 · 151 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 21:53 · 152 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
+- Complete.md
+- Pending.md
+- Planning.md
+- Task.md
+- app/src/main/java/com/jarvis/app/ui/components/SiriOrb.kt
+- app/src/main/java/com/jarvis/app/ui/theme/Color.kt
+- docs/CHANGES_20261017_orb100-themes50.md
 - docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
@@ -71,7 +78,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### ui/components/
 - `Components.kt` · 257 · The bottom bar follows the chosen interface style. · goldBrush, JText, Hairline, JarvisOrb, GoldButton, GoldIconBox, ScreenScaffold
-- `SiriOrb.kt` · 683 · mode: 0 idle, 1 listening (reacts to level), 2 thinking, 3 speaking. style: 0..49 (see ORB · ORB_STYLES, SiriOrb, glow, ball, soft, warm, blobs · uses: Prefs.kt
+- `SiriOrb.kt` · 1340 · mode: 0 idle, 1 listening (reacts to level), 2 thinking, 3 speaking. style: 0..99 (see ORB · ORB_STYLES, SiriOrb, glow, ball, soft, warm, blobs · uses: Prefs.kt
 - `VoiceWave.kt` · 47 · Siri-style layered voice waves that follow the voice level. · VoiceWave
 
 ### ui/overlay/
@@ -105,21 +112,21 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `StyleKit.kt` · 201 · What the Home screen controller hands to every interface style. · HomeUi, Warn, gemStatus, AuroraNav, NovaNav, AuroraHeader, NovaHeader · uses: ModelCatalog.kt, Prefs.kt, Device.kt, Components.kt
 
 ### ui/theme/
-- `Color.kt` · 90 · 15 color styles. The first one is the original Figma "Royal Gold". · Palette, Palettes, Bg
+- `Color.kt` · 125 · 50 color styles. The first one is the original Figma "Royal Gold". · Palette, Palettes, Bg
 - `Theme.kt` · 33 · - · JarvisTheme
 - `Type.kt` · 10 · Figma uses Playfair Display (headings) and Inter (body). · JarvisSerif, JarvisSans
 
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 11 lines
+- `Complete.md` · 12 lines
 - `FEATURES.md` · 22 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 8 lines
-- `Planning.md` · 31 lines
+- `Planning.md` · 20 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
-- `Task.md` · 8 lines
+- `Task.md` · 11 lines
 - `build.gradle.kts` · 5 lines
 - `gradle.properties` · 5 lines
 - `settings.gradle.kts` · 8 lines
@@ -159,8 +166,9 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261016_task-state-resume-phase2.md` · 44 lines
 - `docs/CHANGES_20261017_build-fixes.md` · 19 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
+- `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
-- `docs/HANDOFF_STATE.md` · 17 lines
+- `docs/HANDOFF_STATE.md` · 18 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
