@@ -1,10 +1,8 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 16:45 UTC · 94 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 16:47 UTC · 94 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
 - app/src/main/java/com/jarvis/app/code/TaskStateStore.kt
 - app/src/main/java/com/jarvis/app/ui/screens/CodeScreen.kt
 
@@ -81,7 +79,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ApiScreen.kt` · 132 · - · ApiScreen, AutoRow · uses: ModelCatalog.kt, Prefs.kt, Components.kt, Color.kt
 - `AssistantScreen.kt` · 213 · - · AssistantScreen, StatusRow · uses: AppLog.kt, Device.kt, Langs.kt, Prefs.kt, JarvisAccessibilityService.kt, VoskModels.kt, WakeService.kt, Components.kt
 - `ChatScreen.kt` · 298 · The model's live thinking and the answer as it is being written. · ChatScreen, ThinkingCard, ActionBar, Bubble · uses: Speaker.kt, ChatStore.kt, CustomProviders.kt, ImageUtil.kt, ModelCatalog.kt, Prefs.kt, Components.kt, Color.kt
-- `CodeScreen.kt` · 427 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Red, TEXT_EXT, Mono · uses: CodeAgent.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, Components.kt, Color.kt
+- `CodeScreen.kt` · 428 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Red, TEXT_EXT, Mono · uses: CodeAgent.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, Components.kt, Color.kt
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt, Components.kt, Color.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt, Components.kt, Color.kt
 - `HomeScreen.kt` · 216 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt, Voices.kt, Components.kt, SiriOrb.kt
