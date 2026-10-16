@@ -22,6 +22,7 @@ import com.jarvis.app.audio.Speaker
 import com.jarvis.app.data.ChatStore
 import com.jarvis.app.data.DeviceControl
 import com.jarvis.app.data.ModelCatalog
+import com.jarvis.app.data.ModelRouter
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.live.CallHost
 import com.jarvis.app.live.WakeService

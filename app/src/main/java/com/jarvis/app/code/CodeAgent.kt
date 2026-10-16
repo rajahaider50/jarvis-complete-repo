@@ -10,6 +10,7 @@ import com.jarvis.app.data.CustomProvider
 import com.jarvis.app.data.CustomProviders
 import com.jarvis.app.data.GeminiClient
 import com.jarvis.app.data.ModelCatalog
+import com.jarvis.app.data.ModelRouter
 import com.jarvis.app.data.OpenAiCompat
 import com.jarvis.app.data.Prefs
 import kotlinx.coroutines.CancellationException
