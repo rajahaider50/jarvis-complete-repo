@@ -1,15 +1,8 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 21:53 · 152 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 22:01 · 152 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- Pending.md
-- Planning.md
-- Task.md
-- app/src/main/java/com/jarvis/app/ui/components/SiriOrb.kt
-- app/src/main/java/com/jarvis/app/ui/theme/Color.kt
-- docs/CHANGES_20261017_orb100-themes50.md
 - docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
