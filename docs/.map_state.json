@@ -9,7 +9,7 @@
 "app/src/main/java/com/jarvis/app/audio/Speaker.kt": "b56fdb59da7277d9d88a55972f573e8e",
 "app/src/main/java/com/jarvis/app/audio/WavUtil.kt": "27945c717479b97ab884452391cfa78f",
 "app/src/main/java/com/jarvis/app/code/AgentTools.kt": "7e8e422d2984c7cc5c577f9f1b440dc1",
-"app/src/main/java/com/jarvis/app/code/CodeAgent.kt": "8f8e62318ca5119dccc8c4785675a552",
+"app/src/main/java/com/jarvis/app/code/CodeAgent.kt": "02c4bd1a6d10b75857b644d97f8b39eb",
 "app/src/main/java/com/jarvis/app/code/CodeTaskService.kt": "73f54f8665c8e44f65bb4cd1142bd7d5",
 "app/src/main/java/com/jarvis/app/code/DocGen.kt": "a558798e352ecc87ad54faf85d0cac16",
 "app/src/main/java/com/jarvis/app/code/NetworkMonitor.kt": "a57e618d1d9c0b30739c63de0e75fbe3",

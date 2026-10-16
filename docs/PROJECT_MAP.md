@@ -1,15 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 17:12 UTC · 97 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 17:15 UTC · 97 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/AndroidManifest.xml
-- app/src/main/java/com/jarvis/app/MainActivity.kt
 - app/src/main/java/com/jarvis/app/code/CodeAgent.kt
-- app/src/main/java/com/jarvis/app/code/CodeTaskService.kt
-- app/src/main/java/com/jarvis/app/code/NetworkMonitor.kt
-- app/src/main/java/com/jarvis/app/code/TaskStateStore.kt
-- app/src/main/java/com/jarvis/app/ui/screens/CodeScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -31,7 +25,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### code/
 - `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: CodeAgent.kt, DocGen.kt, Skills.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
-- `CodeAgent.kt` · 329 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, CodeTaskService.kt, NetworkMonitor.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
+- `CodeAgent.kt` · 328 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, CodeTaskService.kt, NetworkMonitor.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
 - `CodeTaskService.kt` · 34 · Keeps the app process at foreground priority while a coding task is running. · CodeTaskService
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen · uses: CustomProviders.kt
 - `NetworkMonitor.kt` · 57 · Process-level network state used by coding mode; callbacks are delivered on the main threa · NetworkMonitor · uses: AppLog.kt
