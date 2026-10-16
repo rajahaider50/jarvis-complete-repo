@@ -1,26 +1,20 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 18:32 · 136 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 18:36 · 148 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- Goal.md
-- Pending.md
-- Planning.md
-- README.md
-- Roadmap.md
-- Task.md
-- docs/AI_GUIDE.md
-- docs/ARCHITECTURE.md
-- docs/HANDOFF_STATE.md
-- docs/HOW_TO_WORK_WITH_AI.md
-- docs/START_PROMPT.md
-- docs/skills/add-feature.md
-- docs/skills/delivery-format.md
-- docs/skills/fix-bug.md
-- docs/skills/light-model-boost.md
-- docs/skills/ui-design.md
-- tools/pack_context.py
+- FEATURES.md
+- app/src/main/java/com/jarvis/app/code/CodeTaskService.kt
+- app/src/main/java/com/jarvis/app/code/MemoryStore.kt
+- app/src/main/java/com/jarvis/app/code/NetworkMonitor.kt
+- app/src/main/java/com/jarvis/app/code/TaskStateStore.kt
+- app/src/main/java/com/jarvis/app/data/ModelRouter.kt
+- docs/CHANGES_20261016_custom-provider-models.md
+- docs/CHANGES_20261016_network-resilience-phase4.md
+- docs/CHANGES_20261016_provider-discovery-phase1.md
+- docs/CHANGES_20261016_skills-memory-phase5.md
+- docs/CHANGES_20261016_smart-router-phase3.md
+- docs/CHANGES_20261016_task-state-resume-phase2.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -43,8 +37,12 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ### code/
 - `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: AppLog.kt
 - `CodeAgent.kt` · 247 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, Prefs.kt
+- `CodeTaskService.kt` · 34 · Keeps the app process at foreground priority while a coding task is running. · CodeTaskService
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen
+- `MemoryStore.kt` · 62 · Topic-based markdown memory. It never runs content and rejects obvious secret material. · MemoryStore
+- `NetworkMonitor.kt` · 57 · Process-level network state used by coding mode; callbacks are delivered on the main threa · NetworkMonitor · uses: AppLog.kt
 - `Skills.kt` · 100 · Skills are short instruction packs. The agent sees only each skill's name and one line; wh · Skills · uses: AppLog.kt
+- `TaskStateStore.kt` · 122 · Crash-safe local state for the one coding task that may need to resume. · TaskStateStore · uses: AppLog.kt
 - `Workspace.kt` · 236 · Projects on the phone: folders of real files that you and the AI can create, edit, delete, · Workspace · uses: AppLog.kt
 
 ### data/
@@ -56,6 +54,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ImageUtil.kt` · 31 · - · ImageUtil
 - `Langs.kt` · 45 · - · Lang, Langs
 - `ModelCatalog.kt` · 109 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog
+- `ModelRouter.kt` · 138 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
 - `Prefs.kt` · 115 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
@@ -125,6 +124,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 - `.gitignore` · 9 lines
 - `Complete.md` · 8 lines
+- `FEATURES.md` · 22 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 7 lines
 - `Planning.md` · 8 lines
@@ -162,6 +162,12 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `design/icons/pref_wake.svg` · 1 lines
 - `docs/AI_GUIDE.md` · 68 lines
 - `docs/ARCHITECTURE.md` · 52 lines
+- `docs/CHANGES_20261016_custom-provider-models.md` · 28 lines
+- `docs/CHANGES_20261016_network-resilience-phase4.md` · 51 lines
+- `docs/CHANGES_20261016_provider-discovery-phase1.md` · 45 lines
+- `docs/CHANGES_20261016_skills-memory-phase5.md` · 43 lines
+- `docs/CHANGES_20261016_smart-router-phase3.md` · 49 lines
+- `docs/CHANGES_20261016_task-state-resume-phase2.md` · 44 lines
 - `docs/HANDOFF_STATE.md` · 14 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
