@@ -1,15 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 17:23 UTC · 98 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 17:28 UTC · 98 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/code/AgentTools.kt
-- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
-- app/src/main/java/com/jarvis/app/code/MemoryStore.kt
-- app/src/main/java/com/jarvis/app/code/Skills.kt
-- app/src/main/java/com/jarvis/app/ui/screens/MemoryScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/SkillsScreen.kt
+- nothing
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
