@@ -1,10 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 17:04 UTC · 95 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 17:08 UTC · 95 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
+- nothing
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
