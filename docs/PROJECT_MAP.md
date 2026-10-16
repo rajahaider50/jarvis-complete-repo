@@ -1,15 +1,12 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 20:05 · 149 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 20:25 · 150 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- Pending.md
 - app/src/main/java/com/jarvis/app/data/CustomProviders.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
-- docs/ARCHITECTURE.md
-- docs/CHANGES_20261017_provider-json-import.md
-- docs/HANDOFF_STATE.md
+- app/src/main/java/com/jarvis/app/live/LiveClient.kt
+- app/src/main/java/com/jarvis/app/ui/screens/HomeScreen.kt
+- docs/CHANGES_20261017_build-fixes.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -43,7 +40,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ### data/
 - `AppLog.kt` · 130 · The app-wide console. Every handled error (every catch block), every crash and the importa · AppLog
 - `ChatStore.kt` · 232 · - · Msg, SessionMeta, ChatStore
-- `CustomProviders.kt` · 352 · An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRout · CustomProvider, ImportSummary, CustomProviders, OpenAiCompat · uses: WavUtil.kt, PhoneTools.kt
+- `CustomProviders.kt` · 367 · One model offered by a provider. Used by the smart router (`ModelRouter`) to score and pic · ProviderModel, CustomProvider, ImportSummary, CustomProviders, OpenAiCompat · uses: WavUtil.kt, PhoneTools.kt
 - `Device.kt` · 142 · Real phone controls. Android does not let apps flip Wi-Fi/Bluetooth/Airplane directly, so  · Stats, DeviceStats, DeviceControl
 - `GeminiClient.kt` · 255 · Minimal Gemini API client (REST, v1beta). No model names are hard-coded: · GeminiClient
 - `ImageUtil.kt` · 31 · - · ImageUtil
@@ -91,7 +88,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CodeScreen.kt` · 418 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Mono, viewable, rememberSaveFile, NameDialog · uses: CodeAgent.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
-- `HomeScreen.kt` · 216 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
+- `HomeScreen.kt` · 217 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
 - `LiveVoiceScreen.kt` · 290 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 99 · - · MemoryScreen · uses: ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
@@ -163,6 +160,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261016_skills-memory-phase5.md` · 43 lines
 - `docs/CHANGES_20261016_smart-router-phase3.md` · 49 lines
 - `docs/CHANGES_20261016_task-state-resume-phase2.md` · 44 lines
+- `docs/CHANGES_20261017_build-fixes.md` · 19 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
 - `docs/HANDOFF_STATE.md` · 15 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
