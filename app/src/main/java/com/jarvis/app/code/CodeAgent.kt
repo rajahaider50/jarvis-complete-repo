@@ -1,6 +1,9 @@
 package com.jarvis.app.code
 
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,9 +20,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
@@ -40,7 +45,7 @@ object CodeAgent {
         var thought by mutableStateOf("")
         var summary by mutableStateOf("")
         var error by mutableStateOf("")
-        var status by mutableStateOf(0)         // 0 working, 1 done, 2 failed, 3 stopped
+        var status by mutableStateOf(0)         // 0 working, 1 done, 2 failed, 3 stopped, 4 waiting for network
         var model by mutableStateOf("")
         var editorPath by mutableStateOf("")
         var editorText by mutableStateOf("")
@@ -173,7 +178,22 @@ object CodeAgent {
     var current by mutableStateOf<Run?>(null)
     val busy: Boolean get() = current?.status == 0
     private var job: Job? = null
+    private var appContext: Context? = null
+    private var networkPauseRequested = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    private class NetworkUnavailableException : IOException("Network unavailable")
+
+    fun init(ctx: Context) { appContext = ctx.applicationContext }
+
+    fun onNetworkChanged(connected: Boolean) {
+        if (!connected && busy) {
+            networkPauseRequested = true
+            job?.cancel()
+        } else if (connected && current?.status == 4 && !busy) {
+            resume()
+        }
+    }
 
     private fun systemPrompt(p: Workspace.Project): String =
         "You are a coding and document agent inside a phone app. You work in the project \"${p.name}\" with tools, and the user watches an editor, not a chat.\n" +
@@ -210,18 +230,42 @@ object CodeAgent {
     }
 
     private fun startInternal(p: Workspace.Project, prompt: String, attached: List<String>, saved: TaskStateStore.State?) {
+        networkPauseRequested = false
         val state = saved ?: TaskStateStore.begin(p, prompt)
         if (saved != null) TaskStateStore.resume(saved)
         val run = Run(p, prompt, state.taskId, saved != null)
         runs.add(run); current = run
+        if (!NetworkMonitor.online) {
+            run.status = 4; run.error = "Waiting for network…"
+            job = scope.launch { TaskStateStore.waitForNetwork(state, p, "Task queued while network is unavailable") }
+            return
+        }
+        keepAlive()
         job = scope.launch {
             try { execute(run, attached, state) }
-            catch (e: CancellationException) { run.status = 3; TaskStateStore.pause(state, p, "Stopped before completion"); throw e }
-            catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2; TaskStateStore.pause(state, p, run.error) }
+            catch (e: CancellationException) {
+                if (networkPauseRequested || !NetworkMonitor.online) {
+                    run.status = 4; run.error = "Waiting for network…"; withContext(NonCancellable) { TaskStateStore.waitForNetwork(state, p, "Network lost; task paused safely") }
+                } else { run.status = 3; withContext(NonCancellable) { TaskStateStore.pause(state, p, "Stopped before completion") } }
+                stopKeepAlive()
+            }
+            catch (e: Exception) {
+                if (!NetworkMonitor.online) { run.status = 4; run.error = "Waiting for network…"; withContext(NonCancellable) { TaskStateStore.waitForNetwork(state, p, "Network lost during request") } }
+                else { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2; withContext(NonCancellable) { TaskStateStore.pause(state, p, run.error) } }
+                stopKeepAlive()
+            }
         }
     }
 
-    fun stop() { job?.cancel(); current?.let { if (it.status == 0) it.status = 3 } }
+    fun stop() { networkPauseRequested = false; job?.cancel(); current?.let { if (it.status == 0) it.status = 3 } }
+
+    private fun keepAlive() {
+        val c = appContext ?: return
+        try { if (Build.VERSION.SDK_INT >= 26) c.startForegroundService(Intent(c, CodeTaskService::class.java)) else c.startService(Intent(c, CodeTaskService::class.java)) }
+        catch (e: Exception) { AppLog.w(e) }
+    }
+
+    private fun stopKeepAlive() { try { val c = appContext ?: return; c.stopService(Intent(c, CodeTaskService::class.java)) } catch (e: Exception) { AppLog.w(e) } }
 
     private suspend fun execute(run: Run, attached: List<String>, state: TaskStateStore.State) {
         val p = run.project
@@ -233,6 +277,7 @@ object CodeAgent {
         TaskStateStore.record(state, p, if (run.resumed) "Resumed task" else "Started task", run.editorPath, run.editorText)
         var fixRounds = 0; var done = false; var empty = 0
         for (round in 1..45) {
+            if (!NetworkMonitor.online) throw NetworkUnavailableException()
             val t = backend.step { run.thought += it }
             run.model = backend.label
             if (t.text.isNotBlank()) run.notes.add(t.text.trim().take(400))
@@ -262,6 +307,7 @@ object CodeAgent {
         if (!done && run.outputs.isEmpty()) deliver(run, JSONObject().put("deliver", "zip"))
         run.status = 1
         TaskStateStore.complete(state)
+        stopKeepAlive()
     }
 
     /** Puts the result where you can view / download it: a single file, or a zip of the project. */

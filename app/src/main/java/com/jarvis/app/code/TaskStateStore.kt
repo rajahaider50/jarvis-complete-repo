@@ -61,8 +61,8 @@ object TaskStateStore {
 
     fun resume(s: State) { s.status = "running"; s.updatedAt = System.currentTimeMillis(); pending = s; save(s) }
 
-    suspend fun checkpoint(s: State, project: Workspace.Project, currentFile: String = "", partial: String = "") = withContext(Dispatchers.IO) {
-        s.status = "running"
+    suspend fun checkpoint(s: State, project: Workspace.Project, currentFile: String = "", partial: String = "", stateStatus: String = "running") = withContext(Dispatchers.IO) {
+        s.status = stateStatus
         s.currentFile = currentFile
         s.partialContent = partial.takeLast(60000)
         s.completedFiles.clear()
@@ -79,7 +79,11 @@ object TaskStateStore {
     }
 
     suspend fun pause(s: State, project: Workspace.Project, reason: String) {
-        s.status = "paused"; s.conversation.add(reason.take(500)); checkpoint(s, project, s.currentFile, s.partialContent); s.status = "paused"; save(s)
+        s.status = "paused"; s.conversation.add(reason.take(500)); checkpoint(s, project, s.currentFile, s.partialContent, "paused"); save(s)
+    }
+
+    suspend fun waitForNetwork(s: State, project: Workspace.Project, reason: String) {
+        s.status = "waiting_network"; s.conversation.add(reason.take(500)); checkpoint(s, project, s.currentFile, s.partialContent, "waiting_network"); save(s)
     }
 
     fun complete(s: State) {
