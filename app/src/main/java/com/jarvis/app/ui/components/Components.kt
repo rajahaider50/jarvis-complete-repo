@@ -111,6 +111,7 @@ fun BottomNav(current: String, onNav: (String) -> Unit) = when (Palettes.engine)
     2 -> com.jarvis.app.ui.styles.NovaNav(current, onNav)
     3 -> com.jarvis.app.ui.styles.PulseNav(current, onNav)
     4 -> Unit
+    5 -> com.jarvis.app.ui.styles.IfaceNav(current, onNav)
     else -> ClassicBottomNav(current, onNav)
 }
 
@@ -153,6 +154,7 @@ fun SubHeader(title: String, onBack: () -> Unit) = when (Palettes.engine) {
     2 -> com.jarvis.app.ui.styles.NovaHeader(title, onBack)
     3 -> com.jarvis.app.ui.styles.PulseHeader(title, onBack)
     4 -> com.jarvis.app.ui.styles.FolioHeader(title, onBack)
+    5 -> com.jarvis.app.ui.styles.IfaceHeader(title, onBack)
     else -> ClassicSubHeader(title, onBack)
 }
 

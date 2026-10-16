@@ -118,24 +118,34 @@ private fun Mini(index: Int, st: StyleInfo) {
 @Composable
 private fun MiniModern(index: Int) {
     val d = IfaceCatalog.forStyle(index) ?: return
+    val cfg = IfaceCatalog.cfgFor(index)
     val p = d.palette
     val bg = Color(p.bg)
     val card = Color(p.s1)
     val accent = Color(p.accent)
     val text = Color(p.text)
+    val radius = intArrayOf(6, 8, 10, 14)[cfg.corner.coerceIn(0, 3)]
     Box(Modifier.size(64.dp, 112.dp).clip(RoundedCornerShape(12.dp)).background(bg).border(1.dp, accent.copy(alpha = 0.4f), RoundedCornerShape(12.dp)).padding(6.dp)) {
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Box(Modifier.fillMaxWidth(0.62f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(text.copy(alpha = 0.7f)))
-            Box(Modifier.fillMaxWidth().height(34.dp).clip(RoundedCornerShape(10.dp)).background(accent.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxWidth().height(34.dp).clip(RoundedCornerShape(radius.dp)).background(accent.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
                 Box(Modifier.size(18.dp).background(accent, CircleShape))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-                repeat(2) { Box(Modifier.weight(1f).height(20.dp).clip(RoundedCornerShape(6.dp)).background(card).border(1.dp, accent.copy(alpha = 0.3f), RoundedCornerShape(6.dp))) }
+                repeat(2) { Box(Modifier.weight(1f).height(20.dp).clip(RoundedCornerShape(radius.dp)).background(card).border(1.dp, accent.copy(alpha = 0.3f), RoundedCornerShape(radius.dp))) }
             }
             Spacer(Modifier.weight(1f))
-            if (d.engine == 1) Box(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)).background(accent))
-            else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                repeat(4) { Box(Modifier.size(11.dp).background(if (it == 0) accent else accent.copy(alpha = 0.3f), CircleShape)) }
+            when (cfg.nav) {
+                1, 2 -> Box(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)).background(accent))
+                3 -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    repeat(4) { Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Box(Modifier.width(8.dp).height(2.dp).background(if (it == 0) accent else accent.copy(alpha = 0.3f)))
+                        Box(Modifier.size(8.dp).background(if (it == 0) accent else accent.copy(alpha = 0.30f), CircleShape))
+                    } }
+                }
+                else -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    repeat(4) { Box(Modifier.size(11.dp).background(if (it == 0) accent else accent.copy(alpha = 0.3f), if (cfg.nav == 0) RoundedCornerShape(3.dp) else CircleShape)) }
+                }
             }
         }
     }

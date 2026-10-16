@@ -3,22 +3,18 @@ package com.jarvis.app.ui.styles
 import com.jarvis.app.ui.theme.Palette
 import com.jarvis.app.ui.theme.Palettes
 
-/**
- * One extra interface style. [engine] picks which layout engine draws it:
- * 1 = Aurora (glass pill, floating), 2 = Nova (native Android, tonal cards), 3 = Pulse (HUD), 4 = Folio (paper).
- */
+/** One extra interface style. All of these use the premium "Iface" engine (engine 5). */
 data class IfaceDef(
     val name: String,
     val about: String,
     val palette: Palette,
-    val engine: Int,
+    val engine: Int = 5,
     val serif: Boolean = false
 )
 
-/**
- * Styles 5..49 (the 5 built-in ones live in [com.jarvis.app.ui.screens.UiStyleScreen]).
- * Index 0 here = interface style 5. 20 native-Android premium + 25 iOS premium = 45, to make 50 in total.
- */
+/** A style's layout recipe: which home/control/settings archetype and which nav bar + corner style. */
+data class IfaceCfg(val layout: Int, val nav: Int, val corner: Int)
+
 object IfaceCatalog {
 
     // ------------------------------------------------------------------ iOS premium palettes
@@ -52,55 +48,66 @@ object IfaceCatalog {
 
     /** 45 extra styles. Index 0 = interface style 5. */
     val list: List<IfaceDef> = listOf(
-        // ---- 20 native Android premium (Material-style, engine 2 = Nova; a few engine 3 = Pulse) ----
-        IfaceDef("Material Midnight", "Native Android: top title, tonal cards, label tabs. Deep blue surfaces.", Palettes.all[15], 2),
-        IfaceDef("Material Sky", "Native Android: clean blue Material cards and label tabs.", Palettes.all[16], 2),
-        IfaceDef("Material Graphite", "Native Android: neutral graphite Material surfaces.", Palettes.all[17], 2),
-        IfaceDef("Material Coral", "Native Android HUD: coral accents on near-black glass.", Palettes.all[18], 3),
-        IfaceDef("Material Lavender", "Native Android: soft lavender tonal cards.", Palettes.all[19], 2),
-        IfaceDef("Material Mint", "Native Android: fresh mint Material palette.", Palettes.all[20], 2),
-        IfaceDef("Material Peach", "Native Android: warm peach Material cards.", Palettes.all[21], 2),
-        IfaceDef("Material Indigo", "Native Android: deep indigo Material look.", Palettes.all[22], 2),
-        IfaceDef("Material Crimson", "Native Android HUD: crimson accents on black.", Palettes.all[23], 3),
-        IfaceDef("Material Amber", "Native Android: amber Material surfaces.", Palettes.all[24], 2),
-        IfaceDef("Material Arctic", "Native Android: icy arctic Material cards.", Palettes.all[25], 2),
-        IfaceDef("Material Forest", "Native Android: forest green Material look.", Palettes.all[26], 2),
-        IfaceDef("Material Wine", "Native Android: rich wine Material surfaces.", Palettes.all[27], 2),
-        IfaceDef("Material Stone", "Native Android HUD: stone accents on black.", Palettes.all[28], 3),
-        IfaceDef("Material Aqua", "Native Android: aqua Material cards.", Palettes.all[29], 2),
-        IfaceDef("Material Sand", "Native Android: soft sand Material palette.", Palettes.all[30], 2),
-        IfaceDef("Material Berry", "Native Android: berry Material surfaces.", Palettes.all[31], 2),
-        IfaceDef("Material Steel", "Native Android: cool steel Material look.", Palettes.all[32], 2),
-        IfaceDef("Material Neon", "Native Android HUD: neon green on black.", Palettes.all[33], 3),
-        IfaceDef("Material Violet", "Native Android: vivid violet Material cards.", Palettes.all[34], 2),
+        // ---- 20 native Android premium (Material-style nav + sharp/medium corners) ----
+        IfaceDef("Material Midnight", "Native Android: top title, tonal cards, label tabs. Deep blue surfaces.", Palettes.all[15]),
+        IfaceDef("Material Sky", "Native Android: clean blue Material cards and label tabs.", Palettes.all[16]),
+        IfaceDef("Material Graphite", "Native Android: neutral graphite Material surfaces.", Palettes.all[17]),
+        IfaceDef("Material Coral", "Native Android: coral Material cards with a compact icon bar.", Palettes.all[18]),
+        IfaceDef("Material Lavender", "Native Android: soft lavender tonal cards.", Palettes.all[19]),
+        IfaceDef("Material Mint", "Native Android: fresh mint Material palette.", Palettes.all[20]),
+        IfaceDef("Material Peach", "Native Android: warm peach Material cards.", Palettes.all[21]),
+        IfaceDef("Material Indigo", "Native Android: deep indigo Material look.", Palettes.all[22]),
+        IfaceDef("Material Crimson", "Native Android: crimson Material cards with text tabs.", Palettes.all[23]),
+        IfaceDef("Material Amber", "Native Android: amber Material surfaces.", Palettes.all[24]),
+        IfaceDef("Material Arctic", "Native Android: icy arctic Material cards.", Palettes.all[25]),
+        IfaceDef("Material Forest", "Native Android: forest green Material look.", Palettes.all[26]),
+        IfaceDef("Material Wine", "Native Android: rich wine Material surfaces.", Palettes.all[27]),
+        IfaceDef("Material Stone", "Native Android: stone Material cards with an icon bar.", Palettes.all[28]),
+        IfaceDef("Material Aqua", "Native Android: aqua Material cards.", Palettes.all[29]),
+        IfaceDef("Material Sand", "Native Android: soft sand Material palette.", Palettes.all[30]),
+        IfaceDef("Material Berry", "Native Android: berry Material surfaces.", Palettes.all[31]),
+        IfaceDef("Material Steel", "Native Android: cool steel Material look.", Palettes.all[32]),
+        IfaceDef("Material Neon", "Native Android: neon green on black, icon bar.", Palettes.all[33]),
+        IfaceDef("Material Violet", "Native Android: vivid violet Material cards.", Palettes.all[34]),
 
-        // ---- 25 iOS premium (engine 1 = Aurora, glass pill + big rounded) ----
-        IfaceDef("iOS Blue", iOSAbout, iOSBlue, 1),
-        IfaceDef("iOS Indigo", iOSAbout, iOSIndigo, 1),
-        IfaceDef("iOS Purple", iOSAbout, iOSPurple, 1),
-        IfaceDef("iOS Pink", iOSAbout, iOSPink, 1),
-        IfaceDef("iOS Red", iOSAbout, iOSRed, 1),
-        IfaceDef("iOS Orange", iOSAbout, iOSOrange, 1),
-        IfaceDef("iOS Yellow", iOSAbout, iOSYellow, 1),
-        IfaceDef("iOS Green", iOSAbout, iOSGreen, 1),
-        IfaceDef("iOS Mint", iOSAbout, iOSMint, 1),
-        IfaceDef("iOS Teal", iOSAbout, iOSTeal, 1),
-        IfaceDef("iOS Cyan", iOSAbout, iOSCyan, 1),
-        IfaceDef("iOS Brown", iOSAbout, iOSBrown, 1),
-        IfaceDef("iOS Graphite", iOSAbout, iOSGraphite, 1),
-        IfaceDef("iOS Midnight", iOSAbout, iOSMidnight, 1),
-        IfaceDef("iOS Space Gray", iOSAbout, iOSSpaceGray, 1),
-        IfaceDef("iOS Night Purple", iOSAbout, iOSNightPurple, 1),
-        IfaceDef("iOS Night Green", iOSAbout, iOSNightGreen, 1),
-        IfaceDef("iOS Rose", iOSAbout, iOSRose, 1),
-        IfaceDef("iOS Sky", iOSAbout, iOSSky, 1),
-        IfaceDef("iOS Plum", iOSAbout, iOSPlum, 1),
-        IfaceDef("iOS Olive", iOSAbout, iOSOlive, 1),
-        IfaceDef("iOS Cobalt", iOSAbout, iOSCobalt, 1),
-        IfaceDef("iOS Coral", iOSAbout, iOSCoral, 1),
-        IfaceDef("iOS Ice", iOSAbout, iOSIce, 1),
-        IfaceDef("iOS Steel", iOSAbout, iOSSteel, 1)
+        // ---- 25 iOS premium (floating / segmented nav + round/pill corners) ----
+        IfaceDef("iOS Blue", iOSAbout, iOSBlue),
+        IfaceDef("iOS Indigo", iOSAbout, iOSIndigo),
+        IfaceDef("iOS Purple", iOSAbout, iOSPurple),
+        IfaceDef("iOS Pink", iOSAbout, iOSPink),
+        IfaceDef("iOS Red", iOSAbout, iOSRed),
+        IfaceDef("iOS Orange", iOSAbout, iOSOrange),
+        IfaceDef("iOS Yellow", iOSAbout, iOSYellow),
+        IfaceDef("iOS Green", iOSAbout, iOSGreen),
+        IfaceDef("iOS Mint", iOSAbout, iOSMint),
+        IfaceDef("iOS Teal", iOSAbout, iOSTeal),
+        IfaceDef("iOS Cyan", iOSAbout, iOSCyan),
+        IfaceDef("iOS Brown", iOSAbout, iOSBrown),
+        IfaceDef("iOS Graphite", iOSAbout, iOSGraphite),
+        IfaceDef("iOS Midnight", iOSAbout, iOSMidnight),
+        IfaceDef("iOS Space Gray", iOSAbout, iOSSpaceGray),
+        IfaceDef("iOS Night Purple", iOSAbout, iOSNightPurple),
+        IfaceDef("iOS Night Green", iOSAbout, iOSNightGreen),
+        IfaceDef("iOS Rose", iOSAbout, iOSRose),
+        IfaceDef("iOS Sky", iOSAbout, iOSSky),
+        IfaceDef("iOS Plum", iOSAbout, iOSPlum),
+        IfaceDef("iOS Olive", iOSAbout, iOSOlive),
+        IfaceDef("iOS Cobalt", iOSAbout, iOSCobalt),
+        IfaceDef("iOS Coral", iOSAbout, iOSCoral),
+        IfaceDef("iOS Ice", iOSAbout, iOSIce),
+        IfaceDef("iOS Steel", iOSAbout, iOSSteel)
     )
 
     fun forStyle(style: Int): IfaceDef? = list.getOrNull(style - 5)
+
+    /** Distinct layout recipe per style so no two premium styles look the same. */
+    fun cfgFor(style: Int): IfaceCfg {
+        val j = (style - 5).coerceIn(0, list.size - 1)
+        return if (j < 20) {
+            IfaceCfg(layout = (j / 4) % 4, nav = intArrayOf(0, 2, 3, 4)[j % 4], corner = intArrayOf(0, 1, 2)[j % 3])
+        } else {
+            val k = j - 20
+            IfaceCfg(layout = (k / 4) % 4, nav = intArrayOf(1, 2, 4, 1)[k % 4], corner = intArrayOf(2, 3, 3)[k % 3])
+        }
+    }
 }

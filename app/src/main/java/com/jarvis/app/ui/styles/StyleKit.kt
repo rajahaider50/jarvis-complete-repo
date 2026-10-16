@@ -191,10 +191,10 @@ fun BarRow(icon: ImageVector, label: String, value: String, frac: Float, warn: B
 // Which interface draws each tab
 // ------------------------------------------------------------------------------------------------
 @Composable
-fun StyledHome(h: HomeUi) = when (Palettes.engine) { 1 -> AuroraHome(h); 2 -> NovaHome(h); 3 -> PulseHome(h); else -> FolioHome(h) }
+fun StyledHome(h: HomeUi) = when (Palettes.engine) { 1 -> AuroraHome(h); 2 -> NovaHome(h); 3 -> PulseHome(h); 5 -> IfaceHome(h); else -> FolioHome(h) }
 
 @Composable
-fun StyledControl(onNav: (String) -> Unit) = when (Palettes.engine) { 1 -> AuroraControl(onNav); 2 -> NovaControl(onNav); 3 -> PulseControl(onNav); else -> FolioControl(onNav) }
+fun StyledControl(onNav: (String) -> Unit) = when (Palettes.engine) { 1 -> AuroraControl(onNav); 2 -> NovaControl(onNav); 3 -> PulseControl(onNav); 5 -> IfaceControl(onNav); else -> FolioControl(onNav) }
 
 @Composable
-fun StyledSettings(onNav: (String) -> Unit) = when (Palettes.engine) { 1 -> AuroraSettings(onNav); 2 -> NovaSettings(onNav); 3 -> PulseSettings(onNav); else -> FolioSettings(onNav) }
+fun StyledSettings(onNav: (String) -> Unit) = when (Palettes.engine) { 1 -> AuroraSettings(onNav); 2 -> NovaSettings(onNav); 3 -> PulseSettings(onNav); 5 -> IfaceSettings(onNav); else -> FolioSettings(onNav) }
