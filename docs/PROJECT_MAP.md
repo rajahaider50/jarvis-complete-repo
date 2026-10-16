@@ -1,10 +1,11 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 20:31 · 150 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 20:46 · 150 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/live/WakeService.kt
-- app/src/main/java/com/jarvis/app/overlay/Overlay.kt
+- Complete.md
+- Pending.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -113,10 +114,10 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 9 lines
+- `Complete.md` · 10 lines
 - `FEATURES.md` · 22 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 8 lines
+- `Pending.md` · 7 lines
 - `Planning.md` · 8 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
@@ -160,7 +161,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261016_task-state-resume-phase2.md` · 44 lines
 - `docs/CHANGES_20261017_build-fixes.md` · 19 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
-- `docs/HANDOFF_STATE.md` · 15 lines
+- `docs/HANDOFF_STATE.md` · 16 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
