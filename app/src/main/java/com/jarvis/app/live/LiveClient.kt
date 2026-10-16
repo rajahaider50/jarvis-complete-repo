@@ -285,7 +285,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     }
 
     /** Change the talking language at any time: the call reconnects with a new instruction and keeps going. */
-    fun switchLanguage(code: String) {
+    override fun switchLanguage(code: String) {
         Prefs.lang = code; Prefs.save()
         if (state == State.IDLE) return
         connId++
