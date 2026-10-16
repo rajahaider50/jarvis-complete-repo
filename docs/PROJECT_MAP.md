@@ -1,19 +1,17 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 22:15 · 154 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 22:34 · 156 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
 - Complete.md
-- Pending.md
 - Planning.md
 - Task.md
-- app/src/main/java/com/jarvis/app/data/Prefs.kt
 - app/src/main/java/com/jarvis/app/ui/components/Components.kt
 - app/src/main/java/com/jarvis/app/ui/screens/UiStyleScreen.kt
 - app/src/main/java/com/jarvis/app/ui/styles/IfaceCatalog.kt
+- app/src/main/java/com/jarvis/app/ui/styles/IfaceScreens.kt
 - app/src/main/java/com/jarvis/app/ui/styles/StyleKit.kt
-- app/src/main/java/com/jarvis/app/ui/theme/Color.kt
-- docs/CHANGES_20261017_interfaces-50.md
+- docs/CHANGES_20261017_interfaces-layouts.md
 - docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
@@ -81,7 +79,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `OverlayLifecycleOwner.kt` · 35 · Compose needs a lifecycle, a saved-state registry and a view-model store to run. An overla · OverlayLifecycleOwner
 
 ### ui/components/
-- `Components.kt` · 257 · The bottom bar follows the chosen interface style. · goldBrush, JText, Hairline, JarvisOrb, GoldButton, GoldIconBox, ScreenScaffold
+- `Components.kt` · 259 · The bottom bar follows the chosen interface style. · goldBrush, JText, Hairline, JarvisOrb, GoldButton, GoldIconBox, ScreenScaffold
 - `SiriOrb.kt` · 1340 · mode: 0 idle, 1 listening (reacts to level), 2 thinking, 3 speaking. style: 0..99 (see ORB · ORB_STYLES, SiriOrb, glow, ball, soft, warm, blobs · uses: Prefs.kt
 - `VoiceWave.kt` · 47 · Siri-style layered voice waves that follow the voice level. · VoiceWave
 
@@ -104,14 +102,15 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ProvidersScreen.kt` · 257 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, Prefs.kt
 - `SkillsScreen.kt` · 86 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, SkillEditor · uses: Skills.kt, AppLog.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt
-- `UiStyleScreen.kt` · 143 · 50 interface styles: 25 native-Android premium and 25 iOS premium. · StyleInfo, STYLES, UiStyleScreen, StyleRow, Mini, MiniModern · uses: Prefs.kt, IfaceCatalog.kt
+- `UiStyleScreen.kt` · 153 · 50 interface styles: 25 native-Android premium and 25 iOS premium. · StyleInfo, STYLES, UiStyleScreen, StyleRow, Mini, MiniModern · uses: Prefs.kt, IfaceCatalog.kt
 - `VoiceScreen.kt` · 241 · - · VOICES, VoiceScreen, VoiceCard, AddVoiceDialog · uses: AppLog.kt, PcmPlayer.kt, Speaker.kt, Prefs.kt, Langs.kt, Voices.kt
 - `WelcomeScreen.kt` · 45 · - · WelcomeScreen
 
 ### ui/styles/
 - `AuroraScreens.kt` · 226 · AURORA · Home: one big hero card with the orb and a "Talk now" pill, quick chips, ring gau · AuroraHome, AuroraControl, AuroraSlider, AuroraSettings · uses: Device.kt, Prefs.kt, JarvisAccessibilityService.kt
 - `FolioScreens.kt` · 197 · FOLIO: a warm, paper-like magazine. Serif headlines, navigation as text tabs at the TOP (n · FolioTabs, FolioHeader, Figure, FolioHome, FolioControl, FolioLevel, FolioSettings · uses: Device.kt, Prefs.kt, JarvisAccessibilityService.kt
-- `IfaceCatalog.kt` · 107 · One extra interface style. [engine] picks which layout engine draws it: · IfaceDef, IfaceCatalog · uses: Color.kt
+- `IfaceCatalog.kt` · 114 · One extra interface style. All of these use the premium "Iface" engine (engine 5). · IfaceDef, IfaceCfg, IfaceCatalog · uses: Color.kt
+- `IfaceScreens.kt` · 604 · ========================================================================================== · curCfg, cornerDp, greeting, homeActions, IfaceOrb, IfaceHome, ActionCircles · uses: Device.kt, Prefs.kt, JarvisAccessibilityService.kt
 - `NovaScreens.kt` · 207 · NOVA · Home: search-style "Ask" bar, a tonal assistant card, circular quick actions and a  · NovaHome, NovaControl, NovaSlider, NovaSettings · uses: Device.kt, Prefs.kt, JarvisAccessibilityService.kt
 - `PulseScreens.kt` · 264 · PULSE: pure-black HUD look. Monospace text, sharp corners, a raised center "talk" button,  · PText, Sharp4, PulseNav, PulseTab, PulseHeader, PulseHome, Card · uses: Device.kt, Prefs.kt
 - `StyleKit.kt` · 201 · What the Home screen controller hands to every interface style. · HomeUi, Warn, gemStatus, AuroraNav, NovaNav, AuroraHeader, NovaHeader · uses: ModelCatalog.kt, Prefs.kt, Device.kt, Components.kt
@@ -124,11 +123,11 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 13 lines
+- `Complete.md` · 14 lines
 - `FEATURES.md` · 22 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 9 lines
-- `Planning.md` · 21 lines
+- `Planning.md` · 15 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
 - `Task.md` · 11 lines
@@ -171,10 +170,11 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261016_task-state-resume-phase2.md` · 44 lines
 - `docs/CHANGES_20261017_build-fixes.md` · 19 lines
 - `docs/CHANGES_20261017_interfaces-50.md` · 24 lines
+- `docs/CHANGES_20261017_interfaces-layouts.md` · 34 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
-- `docs/HANDOFF_STATE.md` · 19 lines
+- `docs/HANDOFF_STATE.md` · 20 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
