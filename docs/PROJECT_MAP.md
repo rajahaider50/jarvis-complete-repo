@@ -1,9 +1,12 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 16:31 UTC · 93 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 16:45 UTC · 94 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- nothing
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
+- app/src/main/java/com/jarvis/app/code/TaskStateStore.kt
+- app/src/main/java/com/jarvis/app/ui/screens/CodeScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -11,7 +14,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: MainActivity.kt, AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt, Components.kt
-- `MainActivity.kt` · 128 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AssistantActivity.kt, Speaker.kt, Skills.kt, Workspace.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, Device.kt
+- `MainActivity.kt` · 129 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AssistantActivity.kt, Speaker.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt, AppLog.kt
@@ -25,9 +28,10 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### code/
 - `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: CodeAgent.kt, DocGen.kt, Skills.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
-- `CodeAgent.kt` · 248 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, Skills.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, Prefs.kt
+- `CodeAgent.kt` · 267 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AgentTools.kt, Skills.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen · uses: CustomProviders.kt
 - `Skills.kt` · 100 · Skills are short instruction packs. The agent sees only each skill's name and one line; wh · Skills · uses: AppLog.kt, CustomProviders.kt
+- `TaskStateStore.kt` · 118 · Crash-safe local state for the one coding task that may need to resume. · TaskStateStore · uses: Workspace.kt, AppLog.kt, CustomProviders.kt
 - `Workspace.kt` · 236 · Projects on the phone: folders of real files that you and the AI can create, edit, delete, · Workspace · uses: AppLog.kt, CustomProviders.kt
 
 ### data/
@@ -77,7 +81,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ApiScreen.kt` · 132 · - · ApiScreen, AutoRow · uses: ModelCatalog.kt, Prefs.kt, Components.kt, Color.kt
 - `AssistantScreen.kt` · 213 · - · AssistantScreen, StatusRow · uses: AppLog.kt, Device.kt, Langs.kt, Prefs.kt, JarvisAccessibilityService.kt, VoskModels.kt, WakeService.kt, Components.kt
 - `ChatScreen.kt` · 298 · The model's live thinking and the answer as it is being written. · ChatScreen, ThinkingCard, ActionBar, Bubble · uses: Speaker.kt, ChatStore.kt, CustomProviders.kt, ImageUtil.kt, ModelCatalog.kt, Prefs.kt, Components.kt, Color.kt
-- `CodeScreen.kt` · 418 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Red, TEXT_EXT, Mono · uses: CodeAgent.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, Components.kt, Color.kt
+- `CodeScreen.kt` · 427 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Red, TEXT_EXT, Mono · uses: CodeAgent.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, Components.kt, Color.kt
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt, Components.kt, Color.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt, Components.kt, Color.kt
 - `HomeScreen.kt` · 216 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt, Voices.kt, Components.kt, SiriOrb.kt
