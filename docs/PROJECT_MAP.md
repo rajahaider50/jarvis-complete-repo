@@ -1,20 +1,15 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 18:36 · 148 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-16 20:05 · 149 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- FEATURES.md
-- app/src/main/java/com/jarvis/app/code/CodeTaskService.kt
-- app/src/main/java/com/jarvis/app/code/MemoryStore.kt
-- app/src/main/java/com/jarvis/app/code/NetworkMonitor.kt
-- app/src/main/java/com/jarvis/app/code/TaskStateStore.kt
-- app/src/main/java/com/jarvis/app/data/ModelRouter.kt
-- docs/CHANGES_20261016_custom-provider-models.md
-- docs/CHANGES_20261016_network-resilience-phase4.md
-- docs/CHANGES_20261016_provider-discovery-phase1.md
-- docs/CHANGES_20261016_skills-memory-phase5.md
-- docs/CHANGES_20261016_smart-router-phase3.md
-- docs/CHANGES_20261016_task-state-resume-phase2.md
+- Complete.md
+- Pending.md
+- app/src/main/java/com/jarvis/app/data/CustomProviders.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
+- docs/ARCHITECTURE.md
+- docs/CHANGES_20261017_provider-json-import.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -48,7 +43,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ### data/
 - `AppLog.kt` · 130 · The app-wide console. Every handled error (every catch block), every crash and the importa · AppLog
 - `ChatStore.kt` · 232 · - · Msg, SessionMeta, ChatStore
-- `CustomProviders.kt` · 289 · An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRout · CustomProvider, CustomProviders, OpenAiCompat · uses: WavUtil.kt, PhoneTools.kt
+- `CustomProviders.kt` · 352 · An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRout · CustomProvider, ImportSummary, CustomProviders, OpenAiCompat · uses: WavUtil.kt, PhoneTools.kt
 - `Device.kt` · 142 · Real phone controls. Android does not let apps flip Wi-Fi/Bluetooth/Airplane directly, so  · Stats, DeviceStats, DeviceControl
 - `GeminiClient.kt` · 255 · Minimal Gemini API client (REST, v1beta). No model names are hard-coded: · GeminiClient
 - `ImageUtil.kt` · 31 · - · ImageUtil
@@ -101,7 +96,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `MemoryScreen.kt` · 99 · - · MemoryScreen · uses: ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
 - `ProfileScreen.kt` · 127 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
-- `ProvidersScreen.kt` · 234 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, Prefs.kt
+- `ProvidersScreen.kt` · 257 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, Prefs.kt
 - `SkillsScreen.kt` · 86 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, SkillEditor · uses: Skills.kt, AppLog.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt
 - `UiStyleScreen.kt` · 105 · Pick the whole design of the app. Everything changes at once: layout, navigation, icons, c · StyleInfo, STYLES, UiStyleScreen, Mini · uses: Prefs.kt
@@ -123,10 +118,10 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 8 lines
+- `Complete.md` · 9 lines
 - `FEATURES.md` · 22 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 7 lines
+- `Pending.md` · 8 lines
 - `Planning.md` · 8 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
@@ -168,7 +163,8 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261016_skills-memory-phase5.md` · 43 lines
 - `docs/CHANGES_20261016_smart-router-phase3.md` · 49 lines
 - `docs/CHANGES_20261016_task-state-resume-phase2.md` · 44 lines
-- `docs/HANDOFF_STATE.md` · 14 lines
+- `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
+- `docs/HANDOFF_STATE.md` · 15 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
