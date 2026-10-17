@@ -43,6 +43,9 @@ object Prefs {
     var pvKeyword by mutableStateOf("JARVIS")   // built-in keyword name, or "custom" (your own .ppn file)
     var greetOnHome by mutableStateOf(true)
     var catalogUrl by mutableStateOf("")        // remote model_catalog.json URL ("" = bundled only)
+    var assistantTheme by mutableStateOf("classic")  // selected AssistantTheme id
+    var fxEnabled by mutableStateOf(true)       // sound effects on/off
+    var fxVolume by mutableStateOf(0.7f)        // sound effects volume 0..1
     val memories = mutableStateListOf<String>()
     val customVoices = mutableStateListOf<CustomVoice>()
 
@@ -79,6 +82,9 @@ object Prefs {
         pvKeyword = sp.getString("pvkw", "JARVIS") ?: "JARVIS"
         greetOnHome = sp.getBoolean("greet", true)
         catalogUrl = sp.getString("catUrl", "") ?: ""
+        assistantTheme = sp.getString("atheme", "classic") ?: "classic"
+        fxEnabled = sp.getBoolean("fxon", true)
+        fxVolume = sp.getFloat("fxvol", 0.7f)
         memories.clear()
         try {
             val a = JSONArray(sp.getString("mem", "[]"))
@@ -125,6 +131,7 @@ object Prefs {
             .putString("callprov", callProvider).putString("goodchat", goodChat).putBoolean("wsearch", webSearch).putString("vlang", voskLang).putInt("ui", uiStyle).putString("weng", wakeEngine).putString("pvkey", pvKey).putString("pvkw", pvKeyword)
             .putString("wsmodel", workspaceModel)
             .putString("catUrl", catalogUrl)
+            .putString("atheme", assistantTheme).putBoolean("fxon", fxEnabled).putFloat("fxvol", fxVolume)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .apply()
     }

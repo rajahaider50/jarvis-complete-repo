@@ -105,7 +105,14 @@ fun HomeScreen(onNav: (String) -> Unit) {
                 col.AnimatedVisibility(stage >= 1, enter = scaleIn(tween(900), initialScale = 0.3f) + fadeIn(tween(900))) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.clickable { greet() }) {
                         BootRings(stage < 5 || talking)
-                        SiriOrb(190.dp, if (talking) 0.5f else 0.1f, if (talking) 3 else if (stage < 5) 2 else 0)
+                        val theme = ThemeRegistry.byId(Prefs.assistantTheme)
+                        val mode = if (talking) 3 else if (stage < 5) 2 else 0
+                        val level = if (talking) 0.5f else 0.1f
+                        if (theme.id == "classic") SiriOrb(190.dp, level, mode)
+                        else {
+                            val st = when (mode) { 3 -> AssistantState.SPEAKING; 2 -> AssistantState.THINKING; else -> AssistantState.IDLE }
+                            Box(Modifier.size(230.dp)) { theme.Render(st, level, Modifier.fillMaxSize()) }
+                        }
                     }
                 }
             }

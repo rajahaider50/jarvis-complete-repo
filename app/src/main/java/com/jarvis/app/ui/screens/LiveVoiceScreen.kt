@@ -164,7 +164,12 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
                 Modifier.fillMaxSize().padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
             ) {
-                SiriOrb(240.dp, level, mode)
+                val theme = ThemeRegistry.byId(Prefs.assistantTheme)
+                if (theme.id == "classic") SiriOrb(240.dp, level, mode)
+                else {
+                    val st = when (mode) { 3 -> AssistantState.SPEAKING; 1 -> AssistantState.LISTENING; else -> AssistantState.THINKING }
+                    Box(Modifier.size(240.dp)) { theme.Render(st, level, Modifier.fillMaxSize()) }
+                }
                 VoiceWave(level, live.state == CallEngine.State.LIVE && (live.speaking || !live.muted))
                 JText(title, 22, Ivory, FontWeight.Medium, serif = true)
                 Column(Modifier.fillMaxWidth().heightIn(max = 130.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {

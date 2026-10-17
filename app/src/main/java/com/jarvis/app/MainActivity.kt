@@ -51,6 +51,8 @@ class MainActivity : ComponentActivity() {
         Speaker.init(this)
         ChatStore.init(this)
         DeviceControl.init(this)
+        com.jarvis.app.ui.theme.Fx.init(this)
+        com.jarvis.app.ui.theme.Fx.play(com.jarvis.app.ui.theme.fx.FxEvent.BOOT)
         if (Prefs.wakeEnabled && Prefs.wakePhrase.isNotBlank() && !WakeService.running) {
             try { WakeService.start(this) } catch (e: Exception) { AppLog.w(e); }
         }
@@ -122,6 +124,7 @@ fun JarvisApp() {
         composable("providers") { ProvidersScreen(back) }
         composable("voices") { VoiceScreen(back) }
         composable("themes") { ThemeScreen(back) }
+        composable("themelab") { ThemeLabScreen(back) }
         composable("memory") { MemoryScreen(back) }
         composable("assistant") { AssistantScreen(back) }
         composable("code") { CodeScreen(back) }

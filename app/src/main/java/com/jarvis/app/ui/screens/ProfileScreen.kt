@@ -84,6 +84,7 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                         Triple(R.drawable.ic_pref_api, "Gemini API", "api"),
                         Triple(R.drawable.ic_pref_voice, "Voice", "voices"),
                         Triple(R.drawable.ic_pref_palette, "Appearance", "themes"),
+                        Triple(R.drawable.ic_pref_palette, "Theme Lab", "themelab"),
                         Triple(R.drawable.ic_pref_memory, "Memory & Instructions", "memory"),
                         Triple(R.drawable.ic_pref_wake, "Assistant name & wake phrase", "assistant")
                     ).forEachIndexed { i, (icon, label, route) ->
