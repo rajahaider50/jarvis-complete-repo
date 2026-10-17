@@ -46,6 +46,8 @@ class MainActivity : ComponentActivity() {
         com.jarvis.app.code.TaskStateStore.init(this)
         com.jarvis.app.code.CodeAgent.init(this)
         com.jarvis.app.code.Skills.init(this)
+        com.jarvis.app.code.Skills.installPack(this)
+        com.jarvis.app.code.MemoryStore.init(this)
         Speaker.init(this)
         ChatStore.init(this)
         DeviceControl.init(this)

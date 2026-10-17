@@ -6,16 +6,26 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.jarvis.app.data.AppLog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.zip.ZipInputStream
 
 /**
  * Skills are short instruction packs. The agent sees only each skill's name and one line; when a task needs one it opens the full
- * instructions with use_skill. You can teach it new skills in Settings > Skills.
+ * instructions with use_skill. You can teach it new skills in Settings > Skills, install the bundled pack, or import SKILL.md files
+ * from a .zip or a raw GitHub link.
  */
 object Skills {
-    class Skill(val id: String, name: String, description: String, instructions: String, enabled: Boolean = true) {
+    class Skill(
+        val id: String, name: String, description: String, instructions: String, enabled: Boolean = true,
+        val category: String = "", val phase: String = "", val source: String = "user"
+    ) {
         var name by mutableStateOf(name)
         var description by mutableStateOf(description)
         var instructions by mutableStateOf(instructions)
@@ -70,14 +80,19 @@ For csv, md, txt, html, svg, json, xml and code files use write_file instead.
         try {
             if (f.exists()) {
                 val a = JSONArray(f.readText())
-                for (i in 0 until a.length()) { val o = a.getJSONObject(i); list.add(Skill(o.getString("id"), o.getString("n"), o.optString("d"), o.optString("i"), o.optBoolean("e", true))) }
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    list.add(Skill(o.getString("id"), o.getString("n"), o.optString("d"), o.optString("i"),
+                        o.optBoolean("e", true), o.optString("c"), o.optString("p"), o.optString("src", "user")))
+                }
             }
         } catch (e: Exception) { AppLog.w(e) }
         if (list.isEmpty()) { list.addAll(builtins()); save() }
     }
 
     fun save() {
-        val a = JSONArray(); list.forEach { a.put(JSONObject().put("id", it.id).put("n", it.name).put("d", it.description).put("i", it.instructions).put("e", it.enabled)) }
+        val a = JSONArray(); list.forEach { a.put(JSONObject().put("id", it.id).put("n", it.name).put("d", it.description).put("i", it.instructions)
+            .put("e", it.enabled).put("c", it.category).put("p", it.phase).put("src", it.source)) }
         try { file?.writeText(a.toString()) } catch (e: Exception) { AppLog.w(e) }
     }
 
@@ -92,8 +107,88 @@ For csv, md, txt, html, svg, json, xml and code files use write_file instead.
 
     fun find(name: String): Skill? = list.firstOrNull { it.enabled && (it.id.equals(name, true) || it.name.equals(name, true)) }
 
+    // ---------------------------------------------------------------- pack + import
+    val phases: List<String> get() = list.filter { it.source == "pack" && it.phase.isNotBlank() }.map { it.phase }.distinct().sorted()
+
+    fun setPhaseEnabled(phase: String, on: Boolean) { list.filter { it.phase == phase }.forEach { it.enabled = on }; save() }
+
+    fun packCount(): Int = list.count { it.source == "pack" }
+
+    /** Installs (or refreshes) the bundled 95-skill pack. Pack skills start disabled so you enable only what you need. */
+    fun installPack(ctx: Context, force: Boolean = false): Int {
+        val text = try { ctx.assets.open("skills_pack.json").bufferedReader().use { it.readText() } } catch (e: Exception) { AppLog.w(e); return 0 }
+        val root = try { JSONObject(text) } catch (e: Exception) { AppLog.w(e); return 0 }
+        val ver = root.optString("version")
+        val mark = File(ctx.filesDir, "skills_pack_version.txt")
+        if (!force && mark.exists() && mark.readText().trim() == ver && list.any { it.source == "pack" }) return 0
+        list.removeAll { it.source == "pack" }
+        val arr = root.optJSONArray("skills") ?: JSONArray()
+        var n = 0
+        for (i in 0 until arr.length()) {
+            val o = arr.getJSONObject(i)
+            val id = o.optString("id").ifBlank { "p$i" }
+            if (list.any { it.id == "pack:$id" }) continue
+            list.add(Skill("pack:$id", o.optString("name").ifBlank { id }, o.optString("description"),
+                o.optString("instructions"), enabled = false, category = o.optString("category"), phase = o.optString("phase"), source = "pack"))
+            n++
+        }
+        try { mark.writeText(ver) } catch (e: Exception) { AppLog.w(e) }
+        save()
+        return n
+    }
+
+    /** Reads one SKILL.md (YAML frontmatter + body) and adds/updates it. */
+    fun importMarkdown(text: String, source: String = "import"): Skill? {
+        val m = Regex("^---\\s*\\n(.*?)\\n---", RegexOption.DOT_MATCHES_ALL).find(text) ?: return null
+        var id = ""; var desc = ""; var phase = ""; var cat = ""; var title = ""
+        m.groupValues[1].split("\n").forEach { line ->
+            val i = line.indexOf(':'); if (i > 0) {
+                val k = line.substring(0, i).trim().lowercase(); val v = line.substring(i + 1).trim()
+                when (k) { "name" -> id = v; "description" -> desc = v; "phase" -> phase = v; "category" -> cat = v; "title" -> title = v }
+            }
+        }
+        if (id.isBlank()) return null
+        val s = Skill(id, title.ifBlank { id.replace('-', ' ').replaceFirstChar { it.uppercase() } }, desc, text, true, cat, phase, source)
+        val at = list.indexOfFirst { it.id == s.id }
+        if (at >= 0) list[at] = s else list.add(s)
+        save()
+        return s
+    }
+
+    /** Imports every SKILL.md inside a .zip. */
+    fun importZip(input: InputStream, source: String = "zip"): Int {
+        var n = 0
+        try {
+            ZipInputStream(input).use { z ->
+                var e = z.nextEntry
+                while (e != null) {
+                    if (e.name.endsWith("SKILL.md", true)) {
+                        if (importMarkdown(z.readBytes().toString(Charsets.UTF_8), source) != null) n++
+                    }
+                    z.closeEntry(); e = z.nextEntry
+                }
+            }
+        } catch (e: Exception) { AppLog.w(e) }
+        return n
+    }
+
+    /** Imports one SKILL.md from a raw URL (e.g. a GitHub raw link). */
+    suspend fun importFromUrl(url: String): Skill? = withContext(Dispatchers.IO) {
+        val u = url.trim(); if (!u.startsWith("http")) throw IllegalArgumentException("The link must start with http")
+        val c = URL(u).openConnection() as HttpURLConnection
+        c.connectTimeout = 15000; c.readTimeout = 20000
+        val text = try {
+            if (c.responseCode !in 200..299) throw IllegalStateException("HTTP ${c.responseCode}")
+            c.inputStream.bufferedReader().use { it.readText() }
+        } finally { c.disconnect() }
+        importMarkdown(text, "github")
+    }
+
     fun promptBlock(): String {
         val on = list.filter { it.enabled }
-        return if (on.isEmpty()) "" else "Skills you can open with use_skill(name):\n" + on.joinToString("\n") { "- ${it.id}: ${it.description}" }
+        if (on.isEmpty()) return ""
+        val shown = on.take(80)
+        val more = if (on.size > shown.size) "\n(+${on.size - shown.size} more enabled skills)" else ""
+        return "Skills you can open with use_skill(name):\n" + shown.joinToString("\n") { "- ${it.id}: ${it.description}" } + more
     }
 }
