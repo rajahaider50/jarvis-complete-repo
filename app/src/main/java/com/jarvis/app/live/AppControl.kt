@@ -50,8 +50,8 @@ object AppControl {
             }
             "set_screen_share" -> {
                 if (args.optBoolean("enabled")) {
-                    ScreenShareRequestActivity.open(ctx)
-                    "Android is asking the user to allow screen sharing."
+                    if (!JarvisAccessibilityService.canScreenshot) "Screen sharing needs Android 11+ and the accessibility service on."
+                    else { ScreenShareService.start(ctx); "Sharing the screen with the call now." }
                 } else { ScreenShareService.stop(ctx); "Screen sharing stopped." }
             }
             "set_camera" -> setCamera(ctx, args.optString("mode", "off"))

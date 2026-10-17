@@ -98,14 +98,6 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
     val camPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) { com.jarvis.app.live.CallCamera.mode = 1; CallService.setCamera(ctx, true) } }
     val notifPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     val btPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    val capture = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        val d = r.data
-        if (r.resultCode == Activity.RESULT_OK && d != null) {
-            ScreenShareService.frameSink = { live.sendJpeg(it) }
-            ScreenShareService.start(ctx, r.resultCode, d)
-            share = true
-        }
-    }
     val recordCap = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val d = r.data
         if (r.resultCode == Activity.RESULT_OK && d != null) ScreenRecordService.start(ctx, r.resultCode, d)
@@ -233,9 +225,8 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
             RoundBtn(Icons.Outlined.ScreenShare, 52, if (share) Gold.copy(alpha = 0.3f) else Surface1, Ivory) {
                 if (share) { ScreenShareService.stop(ctx); share = false }
                 else {
-                    if (Build.VERSION.SDK_INT >= 33 && !has(ctx, Manifest.permission.POST_NOTIFICATIONS)) notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    val mpm = ctx.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-                    capture.launch(mpm.createScreenCaptureIntent())
+                    ScreenShareService.frameSink = { live.sendJpeg(it) }
+                    ScreenShareService.start(ctx); share = true
                 }
             }
             RoundBtn(Icons.Outlined.FiberManualRecord, 52, if (ScreenRecordService.active) Color(0xFFC4483F) else Surface1, Ivory) {

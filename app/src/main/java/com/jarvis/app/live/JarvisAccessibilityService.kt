@@ -1,12 +1,18 @@
 package com.jarvis.app.live
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityService.ScreenshotResult
+import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback
 import android.accessibilityservice.GestureDescription
+import android.graphics.Bitmap
 import android.graphics.Path
 import android.os.Build
 import android.os.Bundle
+import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
 /**
  * Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home on any app,
@@ -37,6 +43,7 @@ class JarvisAccessibilityService : AccessibilityService() {
         }
 
         fun clickByText(text: String): Boolean {
+            ScreenShareService.burst()
             val root = inst?.rootInActiveWindow ?: return false
             val hits = root.findAccessibilityNodeInfosByText(text)
             for (h in hits) {
@@ -101,7 +108,51 @@ class JarvisAccessibilityService : AccessibilityService() {
             return field.performAction(AccessibilityNodeInfo.ACTION_PASTE)
         }
 
+        // ---------- screen capture for the live call (no MediaProjection needed, Android 11+) ----------
+        private val shotExecutor: Executor by lazy { Executors.newSingleThreadExecutor() }
+
+        /** True on Android 11+ where the accessibility service may take screenshots for the call. */
+        val canScreenshot: Boolean get() = Build.VERSION.SDK_INT >= 30
+
+        /**
+         * Grabs the current screen as a software Bitmap via AccessibilityService.takeScreenshot.
+         * [cb] gets null if the service is off, Android < 11, or the system rate-limits the call.
+         */
+        fun screenshot(cb: (Bitmap?) -> Unit) {
+            val s = inst
+            if (s == null || Build.VERSION.SDK_INT < 30) { cb(null); return }
+            try {
+                s.takeScreenshot(Display.DEFAULT_DISPLAY, shotExecutor, object : TakeScreenshotCallback {
+                    override fun onSuccess(result: ScreenshotResult) {
+                        val bmp = try {
+                            Bitmap.wrapHardwareBuffer(result.hardwareBuffer, result.colorSpace)?.copy(Bitmap.Config.ARGB_8888, false)
+                        } catch (e: Exception) { null } finally {
+                            try { result.hardwareBuffer.close() } catch (e: Exception) { }
+                        }
+                        cb(bmp)
+                    }
+                    override fun onFailure(errorCode: Int) { cb(null) }
+                })
+            } catch (e: Exception) { cb(null) }
+        }
+
+        /** The package of the app currently in front (privacy check for screen sharing). */
+        fun foregroundPackage(): String? = try { inst?.rootInActiveWindow?.packageName?.toString() } catch (e: Exception) { null }
+
+        /** A password field is focused on screen — never share/learn this screen. */
+        fun isSensitiveScreen(): Boolean {
+            val root = inst?.rootInActiveWindow ?: return false
+            fun walk(n: AccessibilityNodeInfo?): Boolean {
+                if (n == null) return false
+                if (n.isPassword) return true
+                for (i in 0 until n.childCount) if (walk(n.getChild(i))) return true
+                return false
+            }
+            return walk(root)
+        }
+
         private fun gesture(build: (GestureDescription.Builder, Float, Float) -> Unit): Boolean {
+            ScreenShareService.burst()
             val s = inst ?: return false
             val dm = s.resources.displayMetrics
             val b = GestureDescription.Builder()

@@ -120,7 +120,7 @@
         <service
             android:name=".live.ScreenShareService"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
+            android:foregroundServiceType="dataSync" />
         <service
             android:name=".live.ScreenRecordService"
             android:exported="false"

@@ -121,7 +121,7 @@ object PhoneTools {
             "lock_screen" -> PhoneActions.lockScreen(ctx)
             "power_menu" -> a11y ?: if (JarvisAccessibilityService.press("power_dialog")) "The power menu is showing. The user has to tap an option." else "could not show the power menu"
             "take_screenshot" -> a11y ?: if (JarvisAccessibilityService.press("screenshot")) "Screenshot taken." else "Screenshots need Android 9 or newer."
-            "share_screen" -> { ScreenShareRequestActivity.open(ctx); "Android is asking the user to allow screen sharing. Once they press Start you can see the screen." }
+            "share_screen" -> { ScreenShareService.start(ctx); "Sharing the screen with the call now. You can see what is on the screen." }
             "stop_screen_share" -> { ScreenShareService.stop(ctx); "Screen sharing stopped." }
             "open_settings" -> PhoneActions.openSettings(ctx, args.optString("page"))
             "set_timer" -> PhoneActions.setTimer(ctx, args.optInt("seconds", 60), "Jarvis")

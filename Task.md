@@ -1,9 +1,9 @@
 # TASK (current task; ONE at a time)
-Status: done.
+Status: in progress.
 
-- **Task:** JARVIS LIVE CALL UPDATE (6 phases): smooth no-lag live call, fast (~1s) connect with saved Live Call Models, call keeps running in-app (down-arrow + mini bar), in-app screen recorder (screen + both voices) with mic-silent fix, and AI control by voice (5-5 option popups for orb/theme/interface/color + camera/recording/share/navigate).
-- **Files:** ui/screens/LiveVoiceScreen.kt, live/{CallHost,LiveClient,CallService,CallEngine,CallAudioTap,AudioMixer,ScreenRecordService,ScreenRecordRequestActivity,PhoneTools,AiPanel,AppControl,CallCamera}.kt, ui/components/{MiniCallBar,AiOptionsOverlay}.kt, data/{Prefs,NavState,ModelCatalog}.kt, ui/screens/{ApiScreen,ProfileScreen}.kt, MainActivity.kt, AndroidManifest.xml.
-- **Test:** Build APK green (runs 39049063340, 39049749611, 39050810331, 39051398001, 39052284373). Phone test pending (see Pending.md).
-- **Status:** done.
+- **Task:** JARVIS AI CURSOR SYSTEM + LIVE SCREEN STREAM/SHARE/RECORD (interleaved). Order: (B1-4) one MediaProjection session for recording + share via accessibility takeScreenshot + frame policy; (A1-2) coordinate engine + Cursor Lab + cursor overlay; (A3-6) gestures, manual panel/joystick, AI cursor tools, click-lesson memory (file-based JSON + ui_clicks.md); (B5-6) Live session resumption/compression + UI toggles/AI tools.
+- **Files:** live/{JarvisAccessibilityService,ScreenRecordService,ScreenShareService,PhoneTools,AppControl,LiveClient}.kt, res/xml/accessibility_service_config.xml, AndroidManifest.xml, ui/screens/CursorLabScreen.kt, ui/screens/LiveVoiceScreen.kt.
+- **Test:** Build APK green after each push. Phone test pending (see Pending.md).
+- **Status:** in progress.
 
 At the end: mark Status done, add the item to Complete.md, then reset this file to "none active".
