@@ -1,6 +1,7 @@
 package com.jarvis.app.code
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -176,6 +177,22 @@ object CodeAgent {
     val busy: Boolean get() = current?.status == 0
     private var job: Job? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var appCtx: Context? = null
+
+    /** Sets up network awareness and keeps the process alive during a run. Called once from MainActivity. */
+    fun init(ctx: Context) {
+        appCtx = ctx.applicationContext
+        NetworkMonitor.init(ctx)
+        NetworkMonitor.addListener { online ->
+            if (online) {
+                val st = TaskStateStore.pending
+                if (st != null && st.status == "waiting_network" && !busy) resumeTask()
+            }
+        }
+    }
+
+    private fun startService() { val c = appCtx ?: return; try { c.startForegroundService(Intent(c, CodeTaskService::class.java)) } catch (e: Exception) { AppLog.w(e) } }
+    private fun stopService() { val c = appCtx ?: return; try { c.stopService(Intent(c, CodeTaskService::class.java)) } catch (e: Exception) { AppLog.w(e) } }
 
     private fun systemPrompt(p: Workspace.Project): String =
         "You are a coding and document agent inside a phone app. You work in the project \"${p.name}\" with tools, and the user watches an editor, not a chat.\n" +
@@ -209,10 +226,12 @@ object CodeAgent {
         if (busy || prompt.isBlank()) return
         val run = Run(p, prompt.trim())
         runs.add(run); current = run
+        startService()
         job = scope.launch {
             try { execute(run, attached) }
             catch (e: CancellationException) { run.status = 3; run.state?.let { TaskStateStore.pause(it, p, "Stopped by the user.") }; throw e }
             catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2; run.state?.let { TaskStateStore.pause(it, p, "Interrupted: ${e.message}") } }
+            finally { stopService() }
         }
     }
 
@@ -225,10 +244,12 @@ object CodeAgent {
         val run = Run(p, st.originalGoal)
         run.state = st
         runs.add(run); current = run
+        startService()
         job = scope.launch {
             try { execute(run, emptyList(), st) }
             catch (e: CancellationException) { run.status = 3; TaskStateStore.pause(st, p, "Stopped by the user."); throw e }
             catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2; TaskStateStore.pause(st, p, "Interrupted: ${e.message}") }
+            finally { stopService() }
         }
     }
 
@@ -248,6 +269,12 @@ object CodeAgent {
         if (resume != null) backend.say(TaskStateStore.resumePrompt(state))
         var fixRounds = 0; var done = false; var empty = 0
         for (round in 1..45) {
+            if (!NetworkMonitor.online) {
+                TaskStateStore.waitForNetwork(state, p, "Network lost during the task. It will resume when the network returns.")
+                run.summary = "Paused: the network went away. The task will resume automatically when you are back online."
+                run.status = 3
+                return
+            }
             val t = backend.step { run.thought += it }
             run.model = backend.label
             if (t.text.isNotBlank()) run.notes.add(t.text.trim().take(400))

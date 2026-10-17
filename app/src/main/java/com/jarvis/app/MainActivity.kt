@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
         com.jarvis.app.data.ModelRouter.init(this)
         com.jarvis.app.code.Workspace.init(this)
         com.jarvis.app.code.TaskStateStore.init(this)
+        com.jarvis.app.code.CodeAgent.init(this)
         com.jarvis.app.code.Skills.init(this)
         Speaker.init(this)
         ChatStore.init(this)
