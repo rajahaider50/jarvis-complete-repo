@@ -12,11 +12,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jarvis.app.audio.Speaker
 import com.jarvis.app.data.ChatStore
@@ -103,6 +112,9 @@ fun JarvisApp() {
     LaunchedEffect(pending) {
         if (pending != null && Prefs.onboarded) { go(pending); Launch.route.value = null }
     }
+    val ctx = LocalContext.current
+    val entry = currentBackStackEntryAsState().value
+    Box(Modifier.fillMaxSize()) {
     NavHost(
         navController = nav,
         startDestination = if (Prefs.onboarded) "home" else "welcome",
@@ -133,5 +145,13 @@ fun JarvisApp() {
         composable("uistyle") { UiStyleScreen(back) }
         composable("access") { AccessScreen(back) }
         composable("console") { ConsoleScreen(back) }
+    }
+        if (CallHost.active && entry?.destination?.route != "live") {
+            com.jarvis.app.ui.components.MiniCallBar(
+                onOpen = { go("live") },
+                onEnd = { CallHost.end(ctx, showPopup = false) },
+                modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 2.dp)
+            )
+        }
     }
 }

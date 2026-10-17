@@ -23,6 +23,7 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -70,7 +71,7 @@
         <service
             android:name=".live.CallService"
             android:exported="false"
-            android:foregroundServiceType="microphone" />
+            android:foregroundServiceType="microphone|camera" />
         <receiver
             android:name=".assistant.JarvisAdminReceiver"
             android:exported="true"

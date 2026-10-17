@@ -17,18 +17,30 @@ import com.jarvis.app.data.Prefs
 
 /**
  * Keeps the live call (and its microphone) alive while the app is in the background, as Android requires:
- * a foreground service of type "microphone" with a permanent notification.
+ * a foreground service of type "microphone" with a permanent notification. Camera use of the call adds the
+ * "camera" type. This lets the whole call keep running while you use other screens of the app or leave it.
  */
 class CallService : Service() {
     companion object {
         const val ACTION_END = "com.jarvis.app.END_CALL"
         private const val ID = 87
 
+        @Volatile private var camera = false
+        @Volatile var running = false
+            private set
+
         fun start(ctx: Context) {
             val i = Intent(ctx, CallService::class.java)
             if (Build.VERSION.SDK_INT >= 26) ctx.startForegroundService(i) else ctx.startService(i)
         }
-        fun stop(ctx: Context) { ctx.stopService(Intent(ctx, CallService::class.java)) }
+        fun stop(ctx: Context) { running = false; ctx.stopService(Intent(ctx, CallService::class.java)) }
+
+        /** Tell the service the call now also uses the camera (or stopped): updates the foreground service type. */
+        fun setCamera(ctx: Context, on: Boolean) {
+            if (camera == on) return
+            camera = on
+            if (running) start(ctx)
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -59,8 +71,15 @@ class CallService : Service() {
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentIntent(open).addAction(endAction).setOngoing(true).build()
         try {
-            if (Build.VERSION.SDK_INT >= 29) startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE) else startForeground(ID, n)
+            if (Build.VERSION.SDK_INT >= 29) {
+                var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                if (camera) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                startForeground(ID, n, type)
+            } else startForeground(ID, n)
+            running = true
         } catch (e: Exception) { AppLog.w(e); stopSelf(); return START_NOT_STICKY }
         return START_NOT_STICKY
     }
+
+    override fun onDestroy() { running = false; super.onDestroy() }
 }

@@ -51,6 +51,7 @@ import com.jarvis.app.data.ModelCatalog
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.live.CallEngine
 import com.jarvis.app.live.CallHost
+import com.jarvis.app.live.CallService
 import com.jarvis.app.live.LiveClient
 import com.jarvis.app.live.ScreenShareService
 import com.jarvis.app.live.WakeService
@@ -78,7 +79,7 @@ fun LiveVoiceScreen(onClose: () -> Unit, onChat: () -> Unit, onApi: () -> Unit) 
         AppLog.i("Timing", "call_screen_first_frame ${System.currentTimeMillis() - openedAt}ms")
         if (has(ctx, Manifest.permission.RECORD_AUDIO)) CallHost.begin(ctx) else micPerm.launch(Manifest.permission.RECORD_AUDIO)
     }
-    BackHandler { CallHost.end(ctx, showPopup = false); close() }
+    BackHandler { close() }                                          // back = minimise: the call keeps running (see the mini bar)
     if (live == null) {
         Box(Modifier.fillMaxSize().background(Bg), contentAlignment = Alignment.Center) { SiriOrb(160.dp, 0.1f, 2) }
         return
@@ -93,7 +94,7 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
     var share by remember { mutableStateOf(false) }
     var overlayOk by remember { mutableStateOf(Settings.canDrawOverlays(ctx)) }
 
-    val camPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) cam = 1 }
+    val camPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) { cam = 1; CallService.setCamera(ctx, true) } }
     val notifPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     val btPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     val capture = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -107,7 +108,7 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
     LaunchedEffect(Unit) { while (true) { overlayOk = Settings.canDrawOverlays(ctx); kotlinx.coroutines.delay(1000) } }
     DisposableEffect(Unit) {
         // Leaving the screen does NOT hang up (Home keeps the call alive as a bubble); only the screen-share hook is released.
-        onDispose { ScreenShareService.frameSink = null }
+        onDispose { ScreenShareService.frameSink = null; CallService.setCamera(ctx, false) }
     }
 
     val mode = when {
@@ -128,7 +129,7 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
         ) {
-            RoundBtn(Icons.Outlined.Close, 42, Surface1, Ivory) { CallHost.end(ctx, showPopup = false); onClose() }
+            RoundBtn(Icons.Outlined.KeyboardArrowDown, 42, Surface1, Ivory) { onClose() }
             Row(
                 Modifier.clip(RoundedCornerShape(16.dp)).background(Gold.copy(alpha = 0.12f))
                     .border(1.dp, Gold.copy(alpha = 0.35f), RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 7.dp),
@@ -211,7 +212,8 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
         ) {
             RoundBtn(if (live.muted) Icons.Outlined.MicOff else Icons.Outlined.Mic, 52, if (live.muted) Gold.copy(alpha = 0.3f) else Surface1, Ivory) { live.toggleMute() }
             RoundBtn(if (cam == 0) Icons.Outlined.VideocamOff else Icons.Outlined.Videocam, 52, if (cam != 0) Gold.copy(alpha = 0.3f) else Surface1, Ivory) {
-                if (cam != 0) cam = 0 else if (has(ctx, Manifest.permission.CAMERA)) cam = 1 else camPerm.launch(Manifest.permission.CAMERA)
+                if (cam != 0) { cam = 0; CallService.setCamera(ctx, false) }
+                else if (has(ctx, Manifest.permission.CAMERA)) { cam = 1; CallService.setCamera(ctx, true) } else camPerm.launch(Manifest.permission.CAMERA)
             }
             if (cam != 0) RoundBtn(Icons.Outlined.FlipCameraAndroid, 52, Surface1, Ivory) { cam = if (cam == 1) 2 else 1 }
             RoundBtn(Icons.Outlined.ScreenShare, 52, if (share) Gold.copy(alpha = 0.3f) else Surface1, Ivory) {
