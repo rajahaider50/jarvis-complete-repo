@@ -53,6 +53,7 @@ import com.jarvis.app.live.CallEngine
 import com.jarvis.app.live.CallHost
 import com.jarvis.app.live.CallService
 import com.jarvis.app.live.LiveClient
+import com.jarvis.app.live.ScreenRecordService
 import com.jarvis.app.live.ScreenShareService
 import com.jarvis.app.live.WakeService
 import com.jarvis.app.ui.components.*
@@ -104,6 +105,10 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
             ScreenShareService.start(ctx, r.resultCode, d)
             share = true
         }
+    }
+    val recordCap = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        val d = r.data
+        if (r.resultCode == Activity.RESULT_OK && d != null) ScreenRecordService.start(ctx, r.resultCode, d)
     }
     LaunchedEffect(Unit) { while (true) { overlayOk = Settings.canDrawOverlays(ctx); kotlinx.coroutines.delay(1000) } }
     DisposableEffect(Unit) {
@@ -192,6 +197,9 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
                     }
                 }
                 JText("${live.modelName.ifBlank { "Gemini Live" }} · ${Prefs.voiceLabel}", 11, Muted)
+                if (live.micSilent && live.state == CallEngine.State.LIVE && !live.muted) {
+                    JText("The microphone is silent. If a screen recorder or another app is using it, stop that and let Jarvis use the mic.", 11, Color(0xFFE0665C), align = TextAlign.Center, lh = 16)
+                }
             }
             if (cam != 0) {
                 CameraPip(front = cam == 1, onFrame = { live.sendJpeg(it) },
@@ -204,10 +212,16 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) { Icon(Icons.Outlined.ScreenShare, null, tint = Ivory, modifier = Modifier.size(14.dp)); JText("Sharing screen", 11, Ivory, FontWeight.Medium) }
             }
+            if (ScreenRecordService.active) {
+                Row(
+                    Modifier.align(Alignment.BottomStart).padding(12.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFC4483F).copy(alpha = 0.9f)).padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) { Icon(Icons.Outlined.FiberManualRecord, null, tint = Ivory, modifier = Modifier.size(14.dp)); JText("Recording call", 11, Ivory, FontWeight.Medium) }
+            }
         }
         RouteChips { if (Build.VERSION.SDK_INT >= 31 && !has(ctx, Manifest.permission.BLUETOOTH_CONNECT)) btPerm.launch(Manifest.permission.BLUETOOTH_CONNECT) }
         Row(
-            Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 20.dp),
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 10.dp, bottom = 20.dp).padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically
         ) {
             RoundBtn(if (live.muted) Icons.Outlined.MicOff else Icons.Outlined.Mic, 52, if (live.muted) Gold.copy(alpha = 0.3f) else Surface1, Ivory) { live.toggleMute() }
@@ -222,6 +236,14 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
                     if (Build.VERSION.SDK_INT >= 33 && !has(ctx, Manifest.permission.POST_NOTIFICATIONS)) notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
                     val mpm = ctx.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
                     capture.launch(mpm.createScreenCaptureIntent())
+                }
+            }
+            RoundBtn(Icons.Outlined.FiberManualRecord, 52, if (ScreenRecordService.active) Color(0xFFC4483F) else Surface1, Ivory) {
+                if (ScreenRecordService.active) ScreenRecordService.stop(ctx)
+                else {
+                    if (Build.VERSION.SDK_INT >= 33 && !has(ctx, Manifest.permission.POST_NOTIFICATIONS)) notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    val mpm = ctx.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                    recordCap.launch(mpm.createScreenCaptureIntent())
                 }
             }
             RoundBtn(Icons.Outlined.Close, 64, Color(0xFFC4483F), Ivory) { CallHost.end(ctx, showPopup = false); onClose() }

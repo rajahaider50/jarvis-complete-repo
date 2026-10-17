@@ -83,6 +83,7 @@ object CallHost {
         c.stop()
         ScreenShareService.frameSink = null
         ScreenShareService.stop(app)
+        ScreenRecordService.stop(app)
         AudioRouter.stop(app)
         CallService.stop(app)
         WakeService.setPaused(false)

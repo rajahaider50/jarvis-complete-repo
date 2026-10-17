@@ -23,6 +23,8 @@ abstract class CallEngine {
     var speaking by mutableStateOf(false)
     var modelName by mutableStateOf("")
     var info by mutableStateOf("")
+    /** True when the microphone keeps returning silence (for example another app/screen-recorder is holding it). */
+    var micSilent by mutableStateOf(false)
 
     /** Called with (what you said, what the assistant said) when a turn is finished, so the call can be continued in chat. */
     var onTurn: ((user: String, ai: String) -> Unit)? = null

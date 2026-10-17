@@ -76,6 +76,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private var lastMicUi = 0L
     private var lastOutUi = 0L
     private var connStarted = 0L
+    private var silentRun = 0
 
     private fun ui(block: () -> Unit) { scope.launch(Dispatchers.Main) { block() } }
 
@@ -337,6 +338,10 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                 val lvl = (rms * 7).toFloat().coerceIn(0f, 1f)
                 val now = System.currentTimeMillis()
                 if (now - lastMicUi >= 50) { lastMicUi = now; ui { micLevel = if (muted) 0f else lvl } }
+                CallAudioTap.mic?.invoke(buf, n)                       // hand the mic PCM to the in-app recorder
+                if (sum == 0.0) silentRun++ else silentRun = 0         // ~100 ms per buffer
+                val silent = silentRun >= 10
+                if (silent != micSilent) ui { micSilent = silent }
                 if (!muted) {
                     ws?.send(JSONObject().put("realtimeInput", JSONObject().put("audio",
                         JSONObject().put("data", Base64.encodeToString(buf, 0, n, Base64.NO_WRAP)).put("mimeType", "audio/pcm;rate=16000"))).toString())
@@ -366,6 +371,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                 val lvl = (sqrt(sum / (b.size / 2).coerceAtLeast(1)) / 32768.0 * 6).toFloat().coerceIn(0f, 1f)
                 val now = System.currentTimeMillis()
                 if (now - lastOutUi >= 50) { lastOutUi = now; ui { speaking = true; outLevel = lvl } }
+                CallAudioTap.out?.invoke(b, b.size)                 // hand the assistant's PCM to the in-app recorder
                 try { t.write(b, 0, b.size) } catch (e: Exception) { AppLog.w(e); }
             }
         }
