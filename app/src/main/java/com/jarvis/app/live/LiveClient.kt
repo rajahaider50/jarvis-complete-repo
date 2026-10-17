@@ -63,12 +63,23 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private var playThread: Thread? = null
     @Volatile private var lastAudioAt = 0L
 
+    private var lastMicUi = 0L
+    private var lastOutUi = 0L
+    private var connStarted = 0L
+
     private fun ui(block: () -> Unit) { scope.launch(Dispatchers.Main) { block() } }
+
+    companion object {
+        /** Touch the shared HTTP client so the first real call does not pay for DNS/TLS/OkHttp warm-up. */
+        fun prewarm() { Http.client }
+    }
 
     // ---------- connection ----------
     override fun start() {
         error = null; attempt = 0; modelIdx = 0; userText = ""; aiText = ""
+        connStarted = 0L
         liveModels = ModelCatalog.liveCandidates()
+        AppLog.i("Timing", "live_connect_start models=${liveModels.size}")
         connect()
     }
 
@@ -78,6 +89,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         val model = liveModels.getOrNull(modelIdx)
         if (model == null) { fail("No Live-capable model was found for your key. Open Profile > Gemini API and tap Test & Load Models."); return }
         modelName = model; state = State.CONNECTING; gotSetup = false; info = "Connecting…"
+        if (connStarted == 0L) connStarted = System.currentTimeMillis()
         val req = Request.Builder()
             .url("wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=$key").build()
         val id = ++connId
@@ -169,6 +181,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         val j = try { JSONObject(raw) } catch (e: Exception) { AppLog.w(e); return }
         if (j.has("setupComplete")) {
             gotSetup = true
+            AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · $modelName")
             ui { state = State.LIVE; info = "Live"; startPlayback(); startAudio() }
             return
         }
@@ -239,7 +252,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                 while (k + 1 < n) { val s = ((buf[k + 1].toInt() shl 8) or (buf[k].toInt() and 0xFF)).toShort().toInt(); sum += s.toDouble() * s; k += 2 }
                 val rms = sqrt(sum / (n / 2)) / 32768.0
                 val lvl = (rms * 7).toFloat().coerceIn(0f, 1f)
-                ui { micLevel = if (muted) 0f else lvl }
+                val now = System.currentTimeMillis()
+                if (now - lastMicUi >= 50) { lastMicUi = now; ui { micLevel = if (muted) 0f else lvl } }
                 if (!muted) {
                     ws?.send(JSONObject().put("realtimeInput", JSONObject().put("audio",
                         JSONObject().put("data", Base64.encodeToString(buf, 0, n, Base64.NO_WRAP)).put("mimeType", "audio/pcm;rate=16000"))).toString())
@@ -267,7 +281,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                 var sum = 0.0; var k = 0
                 while (k + 1 < b.size) { val s = ((b[k + 1].toInt() shl 8) or (b[k].toInt() and 0xFF)).toShort().toInt(); sum += s.toDouble() * s; k += 2 }
                 val lvl = (sqrt(sum / (b.size / 2).coerceAtLeast(1)) / 32768.0 * 6).toFloat().coerceIn(0f, 1f)
-                ui { speaking = true; outLevel = lvl }
+                val now = System.currentTimeMillis()
+                if (now - lastOutUi >= 50) { lastOutUi = now; ui { speaking = true; outLevel = lvl } }
                 try { t.write(b, 0, b.size) } catch (e: Exception) { AppLog.w(e); }
             }
         }

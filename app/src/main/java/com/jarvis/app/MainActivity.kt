@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
         DeviceControl.init(this)
         com.jarvis.app.ui.theme.Fx.init(this)
         com.jarvis.app.ui.theme.Fx.play(com.jarvis.app.ui.theme.fx.FxEvent.BOOT)
+        try { com.jarvis.app.live.LiveClient.prewarm() } catch (e: Exception) { AppLog.w(e) }   // warm the HTTP client before the first call
         if (Prefs.wakeEnabled && Prefs.wakePhrase.isNotBlank() && !WakeService.running) {
             try { WakeService.start(this) } catch (e: Exception) { AppLog.w(e); }
         }

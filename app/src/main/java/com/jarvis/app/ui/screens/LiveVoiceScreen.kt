@@ -64,6 +64,7 @@ private fun has(ctx: Context, p: String) = ContextCompat.checkSelfPermission(ctx
 fun LiveVoiceScreen(onClose: () -> Unit, onChat: () -> Unit, onApi: () -> Unit) {
     val ctx = LocalContext.current
     val live = CallHost.client
+    val openedAt = remember { System.currentTimeMillis() }
     var closed by remember { mutableStateOf(false) }
     var hadCall by remember { mutableStateOf(false) }
     val close: () -> Unit = { if (!closed) { closed = true; onClose() } }
@@ -72,8 +73,9 @@ fun LiveVoiceScreen(onClose: () -> Unit, onChat: () -> Unit, onApi: () -> Unit) 
         if (ok) CallHost.begin(ctx) else close()
     }
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(150)                           // draw the screen first: no freeze when the mic button is tapped
         if (CallHost.client != null) return@LaunchedEffect      // coming back from the floating bubble: the call is already running
+        withFrameNanos { }                                       // draw this screen first, then start the call: no freeze, no fixed delay
+        AppLog.i("Timing", "call_screen_first_frame ${System.currentTimeMillis() - openedAt}ms")
         if (has(ctx, Manifest.permission.RECORD_AUDIO)) CallHost.begin(ctx) else micPerm.launch(Manifest.permission.RECORD_AUDIO)
     }
     BackHandler { CallHost.end(ctx, showPopup = false); close() }
@@ -164,7 +166,7 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
                 Modifier.fillMaxSize().padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
             ) {
-                val theme = ThemeRegistry.byId(Prefs.assistantTheme)
+                val theme = remember(Prefs.assistantTheme) { ThemeRegistry.byId(Prefs.assistantTheme) }
                 if (theme.id == "classic") SiriOrb(240.dp, level, mode)
                 else {
                     val st = when (mode) { 3 -> AssistantState.SPEAKING; 1 -> AssistantState.LISTENING; else -> AssistantState.THINKING }

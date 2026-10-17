@@ -41,10 +41,16 @@ object CallHost {
         c.onTurn = { user, ai -> ChatStore.addVoiceTurn(user, ai) }     // every spoken turn is saved, so you can continue in chat
         client = c
         AppLog.i("Call", "Call started with " + (provider?.name ?: "Gemini Live"))
-        Overlay.hideAll()
-        WakeService.setPaused(true)                                      // free the microphone for the call
-        AudioRouter.start(app)
-        CallService.start(app)
+        // Heavy setup runs AFTER this call returns, so the call screen draws its first frame instantly (no 1-3s freeze).
+        val t0 = System.currentTimeMillis()
+        scope.launch {
+            AppLog.i("Timing", "call_setup_begin")
+            Overlay.hideAll()
+            WakeService.setPaused(true)                                  // free the microphone for the call
+            AudioRouter.start(app)
+            CallService.start(app)
+            AppLog.i("Timing", "call_setup_services ${System.currentTimeMillis() - t0}ms")
+        }
         scope.launch {
             if (!ModelCatalog.ready && Prefs.apiKey.isNotBlank()) ModelCatalog.refresh()
             if (client === c) c.start()
