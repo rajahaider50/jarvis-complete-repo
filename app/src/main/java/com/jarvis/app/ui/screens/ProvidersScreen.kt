@@ -41,15 +41,19 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ProvidersScreen(onBack: () -> Unit) {
     var editing by remember { mutableStateOf<CustomProvider?>(null) }
+    var router by remember { mutableStateOf(false) }
     ScreenScaffold(null, {}) {
-        SubHeader(if (editing == null) "Custom providers" else "Provider", if (editing == null) onBack else ({ editing = null }))
         val e = editing
-        if (e == null) ProviderList(onEdit = { editing = it }) else ProviderEditor(e, onDone = { editing = null })
+        when {
+            router -> { SubHeader("Router log", { router = false }); RouterLogScreen() }
+            e == null -> { SubHeader("Custom providers", onBack); ProviderList(onEdit = { editing = it }, onRouter = { router = true }) }
+            else -> { SubHeader("Provider", { editing = null }); ProviderEditor(e, onDone = { editing = null }) }
+        }
     }
 }
 
 @Composable
-private fun ColumnScope.ProviderList(onEdit: (CustomProvider) -> Unit) {
+private fun ColumnScope.ProviderList(onEdit: (CustomProvider) -> Unit, onRouter: () -> Unit) {
     val card = RoundedCornerShape(18.dp)
     val scope = rememberCoroutineScope()
     var note by remember { mutableStateOf("") }
@@ -132,6 +136,7 @@ private fun ColumnScope.ProviderList(onEdit: (CustomProvider) -> Unit) {
             }
         }, Modifier.fillMaxWidth())
         if (catMsg.isNotEmpty()) JText(catMsg, 12, if (catOk == true) Gold else Color(0xFFE0665C), lh = 17)
+        OutlineButton("Router log", Icons.Outlined.List, { onRouter() }, Modifier.fillMaxWidth())
         GoldButton("Add provider", Icons.Outlined.Add, { onEdit(CustomProvider(System.currentTimeMillis().toString(), "", "https://", "", "")) }, Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
     }

@@ -116,6 +116,20 @@ object ModelRouter {
         return out
     }
 
+    /** Read-only view of the routing health for the Router Log screen. */
+    data class Row(
+        val key: String, val providerId: String, val modelId: String,
+        val usedTokens: Long, val cooldownUntil: Long, val successes: Int,
+        val failures: Int, val errorStreak: Int, val latencyMs: Long
+    )
+
+    fun snapshot(): List<Row> = health.entries.map { (k, h) ->
+        val parts = k.split("\u0000")
+        Row(k, parts.getOrElse(0) { "?" }, parts.getOrElse(1) { "?" }, h.usedTokens, h.cooldownUntil, h.successes, h.failures, h.errorStreak, h.latencyMs)
+    }.sortedByDescending { it.usedTokens + it.failures * 100 }
+
+    fun clearAll() { health.clear(); saveAsync() }
+
     private fun get(provider: String, model: String) = health.getOrPut("$provider\u0000$model") { Health() }
     private fun resetDay(h: Health) { if (h.day != today()) { h.day = today(); h.usedTokens = 0; h.failures = 0; h.errorStreak = 0; h.cooldownUntil = 0 } }
     private fun today(): Long = System.currentTimeMillis() / 86_400_000L

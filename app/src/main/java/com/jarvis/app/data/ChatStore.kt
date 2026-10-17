@@ -171,14 +171,35 @@ object ChatStore {
                 .map { GeminiClient.Turn(if (it.user) "user" else "model", it.text, it.image) }
                 .dropWhile { it.role == "model" }
             val system = systemPrompt(voice)
+            val est = ModelRouter.estimateTokens(turns, system)
             var reply: String? = null
             var used = ""
             var lastErr = ""
+
+            // Tries provider models in the smart router's order (best first), with failover and daily usage tracking.
+            suspend fun tryProviders(preferred: CustomProvider?): String? {
+                val candidates = ModelRouter.rank(preferred, ModelRouter.Task.CHAT, est, needsTools = false)
+                for (cand in candidates) {
+                    lastModel = cand.provider.name + " · " + cand.model.id
+                    thinking = ""; streaming = ""
+                    val started = System.currentTimeMillis()
+                    try {
+                        val r = OpenAiCompat.chatStream(cand.provider.copy(modelId = cand.model.id), system, turns, { thinking += it }, { streaming += it })
+                        ModelRouter.markSuccess(cand, System.currentTimeMillis() - started, est)
+                        used = cand.provider.name + " · " + cand.model.id
+                        return r
+                    } catch (e: CancellationException) { throw e }
+                    catch (e: Exception) {
+                        AppLog.w(e); lastErr = e.message ?: "Request failed"
+                        AppLog.i("Router", "${cand.provider.name} · ${cand.model.id}: ${e.message}")
+                        if (!ModelRouter.markFailure(cand, e)) break
+                    }
+                }
+                return null
+            }
+
             if (custom != null) {
-                lastModel = custom.name
-                try { reply = OpenAiCompat.chatStream(custom, system, turns, { thinking += it }, { streaming += it }); used = custom.name + " · " + custom.modelId }
-                catch (e: CancellationException) { throw e }
-                catch (e: Exception) { AppLog.w(e); lastErr = e.message ?: "Request failed" }
+                reply = tryProviders(custom)
             } else if (gemKey.isNotBlank()) {
                 if (!ModelCatalog.ready) ModelCatalog.refresh()
                 val candidates = ModelCatalog.chatCandidates(ModelCatalog.taskFor(text, image != null)).take(10)
@@ -214,15 +235,7 @@ object ChatStore {
                     AppLog.e("Chat", "All Gemini models failed. " + notes.joinToString("; "))
                 }
             }
-            if (reply == null) {
-                for (p in CustomProviders.fallbacks()) {
-                    if (p.id == custom?.id) continue
-                    lastModel = p.name
-                    try { reply = OpenAiCompat.chat(p, system, turns); used = p.name + " · " + p.modelId; break }
-                    catch (e: CancellationException) { throw e }
-                    catch (e: Exception) { AppLog.w(e); lastErr = e.message ?: "Request failed" }
-                }
-            }
+            if (reply == null && custom == null) reply = tryProviders(null)
             val r = reply
             if (r == null) { fail(lastErr.ifBlank { "Request failed" }); saveCurrent(); null }
             else { messages.add(Msg(r, false, model = used, thought = thinking.trim().ifBlank { null })); lastModel = used; saveCurrent(); r }

@@ -10,8 +10,10 @@ import com.jarvis.app.data.CustomProvider
 import com.jarvis.app.data.CustomProviders
 import com.jarvis.app.data.GeminiClient
 import com.jarvis.app.data.ModelCatalog
+import com.jarvis.app.data.ModelRouter
 import com.jarvis.app.data.OpenAiCompat
 import com.jarvis.app.data.Prefs
+import com.jarvis.app.data.ProviderModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -114,10 +116,15 @@ object CodeAgent {
         }
     }
 
-    // ------------------------------------------------------------------ custom provider (OpenAI-compatible)
-    private class ProviderBackend(val p: CustomProvider) : Backend {
+    // ------------------------------------------------------------------ custom provider (OpenAI-compatible), with router failover
+    private class ProviderBackend(private val candidates: List<ModelRouter.Candidate>) : Backend {
         private val msgs = JSONArray()
-        override val label: String get() = p.name + " · " + p.modelId
+        private var idx = 0
+        private val cand get() = candidates[idx]
+        private val p get() = cand.provider
+        private val model get() = cand.model.id
+        private val est get() = 4000
+        override val label: String get() = p.name + " · " + model
 
         override suspend fun begin(system: String, user: String) {
             msgs.put(JSONObject().put("role", "system").put("content", system)); say(user)
@@ -128,27 +135,38 @@ object CodeAgent {
         }
 
         override suspend fun step(onThought: (String) -> Unit): Turn {
-            val body = JSONObject().put("model", p.modelId.trim()).put("messages", msgs).put("tools", AgentTools.openAi()).put("tool_choice", "auto").put("stream", false)
-            p.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
-            val j = try { OpenAiCompat.completions(p, body) }
-            catch (e: IOException) {
-                if (e.message?.contains("HTTP 4") == true && e.message?.contains("tool", true) == true)
-                    throw IOException("${p.name}: this model does not support tool calling, which the code agent needs. Choose another model in Chat.")
-                throw e
+            var last: Exception? = null
+            while (idx < candidates.size) {
+                val body = JSONObject().put("model", model.trim()).put("messages", msgs).put("tools", AgentTools.openAi()).put("tool_choice", "auto").put("stream", false)
+                p.temperature.toDoubleOrNull()?.let { body.put("temperature", it) }
+                val started = System.currentTimeMillis()
+                try {
+                    val j = OpenAiCompat.completions(p, body)
+                    ModelRouter.markSuccess(cand, System.currentTimeMillis() - started, est)
+                    val m = j.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
+                    if (!m.isNull("reasoning_content")) onThought(m.optString("reasoning_content"))
+                    else if (!m.isNull("reasoning")) onThought(m.optString("reasoning"))
+                    val calls = ArrayList<Call>()
+                    val tc = m.optJSONArray("tool_calls")
+                    if (tc != null) for (k in 0 until tc.length()) {
+                        val o = tc.getJSONObject(k); val f = o.getJSONObject("function")
+                        val args = try { JSONObject(f.optString("arguments").ifBlank { "{}" }) } catch (e: Exception) { JSONObject() }
+                        calls.add(Call(o.optString("id", "c$k"), f.getString("name"), args))
+                    }
+                    msgs.put(m)
+                    val text = if (m.isNull("content")) "" else m.optString("content")
+                    return Turn(text, calls)
+                } catch (e: CancellationException) { throw e }
+                catch (e: Exception) {
+                    last = e
+                    val retry = ModelRouter.markFailure(cand, e)
+                    if (e.message?.contains("HTTP 4") == true && e.message?.contains("tool", true) == true && !retry)
+                        throw IOException("${p.name}: this model does not support tool calling, which the code agent needs. Choose another model in Chat.")
+                    if (retry && idx + 1 < candidates.size) { AppLog.i("Router", "${p.name} · $model: ${e.message} → next model"); idx++; continue }
+                    throw e
+                }
             }
-            val m = j.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
-            if (!m.isNull("reasoning_content")) onThought(m.optString("reasoning_content"))
-            else if (!m.isNull("reasoning")) onThought(m.optString("reasoning"))
-            val calls = ArrayList<Call>()
-            val tc = m.optJSONArray("tool_calls")
-            if (tc != null) for (k in 0 until tc.length()) {
-                val o = tc.getJSONObject(k); val f = o.getJSONObject("function")
-                val args = try { JSONObject(f.optString("arguments").ifBlank { "{}" }) } catch (e: Exception) { JSONObject() }
-                calls.add(Call(o.optString("id", "c$k"), f.getString("name"), args))
-            }
-            msgs.put(m)
-            val text = if (m.isNull("content")) "" else m.optString("content")
-            return Turn(text, calls)
+            throw last ?: IOException("No provider model is available")
         }
     }
 
@@ -169,8 +187,15 @@ object CodeAgent {
             "6. End with finish(summary, deliver): deliver=zip for projects with many files, file (+file_path) for one deliverable, none if nothing is to be downloaded. Write the summary in the user's language, 2-4 lines, naming the files and how to use them.\n" +
             "7. Do not invent facts. If the task is vague, choose sensible defaults and mention them in the summary.\n" + Skills.promptBlock()
 
-    private suspend fun makeBackend(): Backend {
-        CustomProviders.selected()?.let { return ProviderBackend(it) }
+    private suspend fun makeBackend(prompt: String): Backend {
+        val custom = CustomProviders.selected()
+        if (custom != null) {
+            val est = ModelRouter.estimateTokens(listOf(GeminiClient.Turn("user", prompt)), "")
+            val cands = ModelRouter.rank(custom, ModelRouter.Task.CODING, est, needsTools = true)
+            if (cands.isNotEmpty()) return ProviderBackend(cands)
+            val m = custom.models.firstOrNull { it.id == custom.modelId } ?: ProviderModel(custom.modelId, source = "manual")
+            return ProviderBackend(listOf(ModelRouter.Candidate(custom, m, 0.0)))
+        }
         val key = Prefs.apiKey.trim()
         if (key.isEmpty()) throw IOException("Add your Gemini API key, or choose a custom provider in the Chat model menu.")
         if (!ModelCatalog.ready) ModelCatalog.refresh()
@@ -216,7 +241,7 @@ object CodeAgent {
         val state = resume ?: TaskStateStore.begin(p, run.prompt)
         run.state = state
         if (resume != null) TaskStateStore.resume(state)
-        val backend = makeBackend()
+        val backend = makeBackend(run.prompt)
         run.model = backend.label
         val files = Workspace.tree(p).take(60).joinToString(", ") { it.path }.ifBlank { "(empty)" }
         backend.begin(systemPrompt(p), run.prompt + (if (attached.isNotEmpty()) "\n\nThe user added these files to the project: ${attached.joinToString()}" else "") + "\n\nProject files now: $files")
