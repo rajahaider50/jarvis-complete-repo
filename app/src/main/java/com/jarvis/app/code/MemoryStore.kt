@@ -1,6 +1,9 @@
 package com.jarvis.app.code
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.io.File
 import java.io.IOException
 
@@ -9,7 +12,18 @@ object MemoryStore {
     private const val MAX = 120_000L
     private var root: File? = null
 
+    /** Bumped on every write so the Memory screen can show new memory the moment the agent adds it. */
+    var revision by mutableStateOf(0)
+        private set
+
     fun init(ctx: Context) { if (root == null) root = File(ctx.applicationContext.filesDir, "memory").apply { mkdirs() } }
+
+    /** Every memory topic file with its size in bytes (path, bytes) — newest activity can be reviewed by the user. */
+    fun entries(): List<Pair<String, Long>> {
+        val r = root ?: return emptyList()
+        return r.walkTopDown().filter { it.isFile && it.extension.equals("md", true) }
+            .map { it.relativeTo(r).path to it.length() }.sortedBy { it.first }.toList()
+    }
 
     fun list(): String {
         val r = root ?: throw IOException("Memory is not initialized")
@@ -28,7 +42,7 @@ object MemoryStore {
         checkContent(content)
         val f = safe(path)
         if (content.length.toLong() > MAX) throw IOException("Memory content is too large")
-        f.parentFile?.mkdirs(); f.writeText(content); return "Saved memory/${f.relativeTo(root!!).path}"
+        f.parentFile?.mkdirs(); f.writeText(content); return "Saved memory/${f.relativeTo(root!!).path}".also { revision++ }
     }
 
     fun append(path: String, content: String): String {

@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.jarvis.app.code.MemoryStore
 import com.jarvis.app.data.ChatStore
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.ui.components.*
@@ -62,6 +63,35 @@ fun MemoryScreen(onBack: () -> Unit) {
                             if (t.isNotEmpty()) { Prefs.memories.add(t); newMem = "" }
                         })
                 })
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    JText("AGENT MEMORY (LIVE)", 11, Gold, FontWeight.Medium, ls = 2.2f)
+                    Spacer(Modifier.weight(1f))
+                    JText(if (MemoryStore.revision == 0) "updates as Jarvis works" else "${MemoryStore.revision} update(s)", 10, Muted)
+                }
+                val entries = remember(MemoryStore.revision) { MemoryStore.entries() }
+                if (entries.isEmpty()) JText("Nothing yet. While Jarvis codes, it saves durable facts and decisions here in real time — check back to see what it added.", 12, Muted, lh = 17)
+                else entries.forEach { (path, size) ->
+                    var open by remember(path) { mutableStateOf(false) }
+                    Column(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Surface1)
+                            .border(1.dp, Gold.copy(alpha = 0.18f), RoundedCornerShape(12.dp)).clickable { open = !open }
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.Description, null, tint = Gold, modifier = Modifier.size(16.dp))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                JText(path, 13, Ivory, FontWeight.Medium)
+                                JText("$size bytes", 10, Muted)
+                            }
+                            Icon(if (open) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, null, tint = Muted, modifier = Modifier.size(18.dp))
+                        }
+                        if (open) {
+                            val body = remember(path) { try { MemoryStore.read(path) } catch (e: Exception) { "Could not read: ${e.message}" } }
+                            JText(body.take(4000), 12, Ivory, lh = 17, modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp))
+                        }
+                    }
+                }
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 JText("CUSTOM INSTRUCTIONS", 11, Gold, FontWeight.Medium, ls = 2.2f)

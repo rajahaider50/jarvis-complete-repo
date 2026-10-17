@@ -36,6 +36,7 @@ object Prefs {
     var wakeEngine by mutableStateOf("vosk")   // vosk = offline phrase (no key) | porcupine = offline, needs key | basic = Android speech loop
     var callProvider by mutableStateOf("")      // id of the custom provider used for voice calls ("" = Gemini Live)
     var goodChat by mutableStateOf("")          // last Gemini chat model that worked
+    var workspaceModel by mutableStateOf("")    // Workspace coding route: "" = Auto (all providers, step-by-step), "custom:<id>" = one provider (manual)
     var webSearch by mutableStateOf(false)      // Google Search grounding (needs a plan that includes it)
     var voskLang by mutableStateOf("en")        // language of the offline wake-word model
     var pvKey by mutableStateOf("")             // Picovoice AccessKey (free, for the offline wake word)
@@ -72,6 +73,7 @@ object Prefs {
         webSearch = sp.getBoolean("wsearch", false)
         callProvider = sp.getString("callprov", "") ?: ""
         goodChat = sp.getString("goodchat", "") ?: ""
+        workspaceModel = sp.getString("wsmodel", "") ?: ""
         voskLang = sp.getString("vlang", "en") ?: "en"
         pvKey = sp.getString("pvkey", "") ?: ""
         pvKeyword = sp.getString("pvkw", "JARVIS") ?: "JARVIS"
@@ -121,6 +123,7 @@ object Prefs {
             .putString("aname", assistantName).putString("wake", wakePhrase).putBoolean("wakeOn", wakeEnabled).putString("wlang", wakeLang)
             .putBoolean("onb", onboarded).putBoolean("greet", greetOnHome)
             .putString("callprov", callProvider).putString("goodchat", goodChat).putBoolean("wsearch", webSearch).putString("vlang", voskLang).putInt("ui", uiStyle).putString("weng", wakeEngine).putString("pvkey", pvKey).putString("pvkw", pvKeyword)
+            .putString("wsmodel", workspaceModel)
             .putString("catUrl", catalogUrl)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .apply()

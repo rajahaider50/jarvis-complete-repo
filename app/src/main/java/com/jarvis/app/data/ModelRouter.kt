@@ -35,12 +35,32 @@ object ModelRouter {
     /** Preferred is honored; fallback providers are included so one limit cannot stop the request. */
     fun rank(preferred: CustomProvider?, task: Task, estimatedTokens: Int, needsTools: Boolean): List<Candidate> {
         val providers = (listOfNotNull(preferred) + CustomProviders.fallbacks()).distinctBy { it.id }
+        return rankFrom(providers, task, estimatedTokens, needsTools, manualSingle = false, allEligible = false)
+    }
+
+    /**
+     * Workspace coding routing. Only custom providers are ever used here (never Gemini).
+     * [onlyProviderId] == null → Auto: step through every provider's usable models, best score first, so when one
+     * model's limit runs out the next suitable model + provider is used automatically, provider after provider.
+     * [onlyProviderId] != null → Manual: exactly that provider's model, nothing else.
+     */
+    fun rankWorkspace(onlyProviderId: String?, task: Task, estimatedTokens: Int, needsTools: Boolean): List<Candidate> {
+        val manual = !onlyProviderId.isNullOrBlank()
+        val providers = if (manual) CustomProviders.list.filter { it.id == onlyProviderId } else CustomProviders.list.toList()
+        return rankFrom(providers, task, estimatedTokens, needsTools, manualSingle = manual, allEligible = true)
+    }
+
+    private fun rankFrom(providers: List<CustomProvider>, task: Task, estimatedTokens: Int, needsTools: Boolean, manualSingle: Boolean, allEligible: Boolean): List<Candidate> {
         val now = System.currentTimeMillis()
         val out = ArrayList<Candidate>()
         providers.forEach { p ->
-            val models = if (p.modelId.isNotBlank()) {
-                listOf(p.models.firstOrNull { it.id == p.modelId } ?: ProviderModel(p.modelId, source = "manual"))
-            } else CustomProviders.eligibleModels(p)
+            val chosen = listOf(p.models.firstOrNull { it.id == p.modelId } ?: p.models.firstOrNull() ?: ProviderModel(p.modelId, source = "manual")).filter { it.id.isNotBlank() }
+            val models = when {
+                manualSingle -> chosen
+                allEligible -> CustomProviders.eligibleModels(p).ifEmpty { chosen }
+                p.modelId.isNotBlank() -> listOf(p.models.firstOrNull { it.id == p.modelId } ?: ProviderModel(p.modelId, source = "manual"))
+                else -> CustomProviders.eligibleModels(p)
+            }
             models.forEach { m ->
                 val h = get(p.id, m.id)
                 resetDay(h)

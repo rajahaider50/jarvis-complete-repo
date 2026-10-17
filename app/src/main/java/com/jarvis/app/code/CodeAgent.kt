@@ -7,20 +7,15 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.jarvis.app.data.AppLog
-import com.jarvis.app.data.CustomProvider
-import com.jarvis.app.data.CustomProviders
 import com.jarvis.app.data.GeminiClient
-import com.jarvis.app.data.ModelCatalog
 import com.jarvis.app.data.ModelRouter
 import com.jarvis.app.data.OpenAiCompat
 import com.jarvis.app.data.Prefs
-import com.jarvis.app.data.ProviderModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -61,60 +56,6 @@ object CodeAgent {
         suspend fun step(onThought: (String) -> Unit): Turn
         fun results(list: List<Pair<Call, String>>)
         fun say(text: String)
-    }
-
-    // ------------------------------------------------------------------ Gemini
-    private class GeminiBackend(val key: String, val models: List<String>) : Backend {
-        private val contents = JSONArray()
-        private var system = ""
-        private var idx = 0
-        override val label: String get() = models.getOrElse(idx) { "" }
-
-        override suspend fun begin(system: String, user: String) { this.system = system; say(user) }
-        override fun say(text: String) { contents.put(JSONObject().put("role", "user").put("parts", JSONArray().put(JSONObject().put("text", text)))) }
-
-        override fun results(list: List<Pair<Call, String>>) {
-            val parts = JSONArray()
-            list.forEach { (c, r) -> parts.put(JSONObject().put("functionResponse", JSONObject().put("name", c.name).put("response", JSONObject().put("result", r)))) }
-            contents.put(JSONObject().put("role", "user").put("parts", parts))
-        }
-
-        override suspend fun step(onThought: (String) -> Unit): Turn {
-            var last: Exception? = null
-            while (idx < models.size) {
-                try {
-                    val body = JSONObject().put("contents", contents)
-                        .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", system))))
-                        .put("tools", JSONArray().put(AgentTools.gemini()))
-                        .put("generationConfig", JSONObject().put("thinkingConfig", JSONObject().put("includeThoughts", true)))
-                    val j = try { GeminiClient.generate(key, models[idx], body) }
-                    catch (e: GeminiClient.GeminiHttpException) {
-                        if (e.code == 400) { body.remove("generationConfig"); GeminiClient.generate(key, models[idx], body) } else throw e
-                    }
-                    val content = j.optJSONArray("candidates")?.optJSONObject(0)?.optJSONObject("content") ?: throw IOException("The model sent an empty answer")
-                    val parts = content.optJSONArray("parts") ?: JSONArray()
-                    val text = StringBuilder(); val calls = ArrayList<Call>()
-                    for (k in 0 until parts.length()) {
-                        val p = parts.getJSONObject(k)
-                        val fc = p.optJSONObject("functionCall")
-                        if (fc != null) calls.add(Call("c$k", fc.getString("name"), fc.optJSONObject("args") ?: JSONObject()))
-                        else if (p.optBoolean("thought", false)) onThought(p.optString("text"))
-                        else text.append(p.optString("text"))
-                    }
-                    contents.put(content)
-                    return Turn(text.toString(), calls)
-                } catch (e: CancellationException) { throw e }
-                catch (e: Exception) {
-                    last = e
-                    val code = (e as? GeminiClient.GeminiHttpException)?.code
-                    AppLog.i("CodeAgent", "${models[idx]}: ${GeminiClient.shortReason(e)}")
-                    if (code == 503) { delay(1500); idx++; continue }
-                    if (code == 429 || code == 404 || code == 400) { idx++; continue }
-                    throw e
-                }
-            }
-            throw last ?: IOException("No Gemini model is available")
-        }
     }
 
     // ------------------------------------------------------------------ custom provider (OpenAI-compatible), with router failover
@@ -202,23 +143,18 @@ object CodeAgent {
             "4. For PDF, PNG, DOCX, XLSX or PPTX call use_skill documents first, then make_document. For csv, md, txt, html, svg, json and code use write_file.\n" +
             "5. Every file, import, link, script, style and image you reference must exist. When all files are written call verify_project and fix every problem.\n" +
             "6. End with finish(summary, deliver): deliver=zip for projects with many files, file (+file_path) for one deliverable, none if nothing is to be downloaded. Write the summary in the user's language, 2-4 lines, naming the files and how to use them.\n" +
-            "7. Do not invent facts. If the task is vague, choose sensible defaults and mention them in the summary.\n" + Skills.promptBlock()
+            "7. Do not invent facts. If the task is vague, choose sensible defaults and mention them in the summary.\n" +
+            "SKILLS: before doing the work, open every skill whose description matches this task with use_skill(name) and follow it exactly — this is how the work reaches a high standard.\n" + Skills.promptBlock()
 
-    private suspend fun makeBackend(prompt: String): Backend {
-        val custom = CustomProviders.selected()
-        if (custom != null) {
-            val est = ModelRouter.estimateTokens(listOf(GeminiClient.Turn("user", prompt)), "")
-            val cands = ModelRouter.rank(custom, ModelRouter.Task.CODING, est, needsTools = true)
-            if (cands.isNotEmpty()) return ProviderBackend(cands)
-            val m = custom.models.firstOrNull { it.id == custom.modelId } ?: ProviderModel(custom.modelId, source = "manual")
-            return ProviderBackend(listOf(ModelRouter.Candidate(custom, m, 0.0)))
-        }
-        val key = Prefs.apiKey.trim()
-        if (key.isEmpty()) throw IOException("Add your Gemini API key, or choose a custom provider in the Chat model menu.")
-        if (!ModelCatalog.ready) ModelCatalog.refresh()
-        val models = ModelCatalog.chatCandidates(ModelCatalog.Task.COMPLEX).map { it.id }.take(8)
-        if (models.isEmpty()) throw IOException("No Gemini chat model was found for this key.")
-        return GeminiBackend(key, models)
+    private fun makeBackend(prompt: String): Backend {
+        val est = ModelRouter.estimateTokens(listOf(GeminiClient.Turn("user", prompt)), "")
+        val manualId = Prefs.workspaceModel.removePrefix("custom:").takeIf { Prefs.workspaceModel.startsWith("custom:") }
+        val cands = ModelRouter.rankWorkspace(manualId, ModelRouter.Task.CODING, est, needsTools = true)
+        if (cands.isEmpty()) throw IOException(
+            if (manualId != null) "The selected provider has no usable model for coding right now. Choose another provider, or switch the Workspace to Auto."
+            else "No custom provider model is ready for coding. Add a provider in Settings > Providers — Gemini is not used in the Workspace."
+        )
+        return ProviderBackend(cands)
     }
 
     fun start(prompt: String, attached: List<String>) {

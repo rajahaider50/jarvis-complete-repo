@@ -51,6 +51,7 @@ import com.jarvis.app.code.TaskStateStore
 import com.jarvis.app.code.Workspace
 import com.jarvis.app.data.AppLog
 import com.jarvis.app.data.CustomProviders
+import com.jarvis.app.data.Prefs
 import com.jarvis.app.ui.components.*
 import com.jarvis.app.ui.theme.*
 import kotlinx.coroutines.Dispatchers
@@ -128,6 +129,7 @@ private fun ProjectBar() {
     var menu by remember { mutableStateOf(false) }
     var newDlg by remember { mutableStateOf(false) }
     var delDlg by remember { mutableStateOf(false) }
+    var provMenu by remember { mutableStateOf(false) }
     val p = Workspace.current
     val shape = RoundedCornerShape(16.dp)
     Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -145,7 +147,29 @@ private fun ProjectBar() {
             }
             Icon(Icons.Outlined.DeleteOutline, "Delete project", tint = Muted, modifier = Modifier.size(24.dp).clickable { delDlg = true })
         }
-        JText("Model: " + (CustomProviders.selected()?.let { it.name + " · " + it.modelId } ?: "Gemini (automatic)") + "  ·  change it in Chat", 11, Muted)
+        Box(Modifier.fillMaxWidth()) {
+            val manual = Prefs.workspaceModel.startsWith("custom:")
+            val label = if (manual) CustomProviders.list.firstOrNull { it.id == Prefs.workspaceModel.removePrefix("custom:") }?.let { it.name + " · " + it.modelId } ?: "Manual" else "Auto · all providers, step by step"
+            Row(
+                Modifier.fillMaxWidth().clip(shape).background(Surface1).border(1.dp, Gold.copy(alpha = 0.2f), shape).clickable { provMenu = true }.padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Outlined.SmartToy, null, tint = Gold, modifier = Modifier.size(18.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    JText(if (manual) "MANUAL MODEL" else "AUTO MODEL", 9, Muted, FontWeight.Medium, ls = 1.6f)
+                    JText(label, 12, Ivory, FontWeight.Medium)
+                }
+                Icon(Icons.Outlined.ExpandMore, null, tint = Muted, modifier = Modifier.size(18.dp))
+            }
+            DropdownMenu(expanded = provMenu, onDismissRequest = { provMenu = false }) {
+                DropdownMenuItem(text = { JText("Auto — every provider, step by step", 13, if (!manual) Gold else Ivory) }, onClick = { Prefs.workspaceModel = ""; Prefs.save(); provMenu = false })
+                if (CustomProviders.list.isEmpty()) {
+                    DropdownMenuItem(text = { JText("No providers yet — add one in Settings > Providers", 12, Muted) }, onClick = { provMenu = false })
+                } else CustomProviders.list.toList().forEach { p ->
+                    DropdownMenuItem(text = { JText("${p.name} · ${p.modelId}", 13, if (Prefs.workspaceModel == "custom:${p.id}") Gold else Ivory) }, onClick = { Prefs.workspaceModel = "custom:${p.id}"; Prefs.save(); provMenu = false })
+                }
+            }
+        }
     }
     if (newDlg) NameDialog("New project", "Project name", { Workspace.create(it); newDlg = false }, { newDlg = false })
     if (delDlg && p != null) AlertDialog(
