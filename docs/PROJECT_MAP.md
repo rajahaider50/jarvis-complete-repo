@@ -1,13 +1,19 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 17:16 · 197 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 17:48 · 198 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- FEATURES.md
-- Pending.md
+- Planning.md
 - Task.md
-- docs/HANDOFF_STATE.md
+- app/src/main/AndroidManifest.xml
+- app/src/main/java/com/jarvis/app/live/AppControl.kt
+- app/src/main/java/com/jarvis/app/live/JarvisAccessibilityService.kt
+- app/src/main/java/com/jarvis/app/live/PhoneTools.kt
+- app/src/main/java/com/jarvis/app/live/ScreenShareRequestActivity.kt
+- app/src/main/java/com/jarvis/app/live/ScreenShareService.kt
+- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
+- app/src/main/res/xml/accessibility_service_config.xml
+- docs/CHANGES_20261017_screenstream-phase1-4-single-projection.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -68,14 +74,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CallEngine.kt` · 48 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
 - `CallHost.kt` · 94 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
 - `CallService.kt` · 86 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
-- `JarvisAccessibilityService.kt` · 185 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService
+- `JarvisAccessibilityService.kt` · 236 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService
 - `LiveClient.kt` · 421 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `PhoneTools.kt` · 138 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 - `ScreenRecordRequestActivity.kt` · 39 · Invisible screen that shows Android's own "start recording?" question so the assistant can · ScreenRecordRequestActivity · uses: AppLog.kt
 - `ScreenRecordService.kt` · 256 · In-app screen recorder: captures the screen (MediaProjection -> H.264) and mixes both side · ScreenRecordService · uses: AppLog.kt
-- `ScreenShareRequestActivity.kt` · 40 · An invisible screen that shows Android's own "start recording or casting?" question, so th · ScreenShareRequestActivity · uses: AppLog.kt
-- `ScreenShareService.kt` · 95 · Foreground service that captures the screen (MediaProjection) and hands ~1 JPEG frame/seco · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
+- `ScreenShareRequestActivity.kt` · 26 · Kept for compatibility. Screen sharing no longer needs Android's MediaProjection question, · ScreenShareRequestActivity · uses: AppLog.kt
+- `ScreenShareService.kt` · 141 · Shares the screen with the live call WITHOUT opening a second MediaProjection session (tha · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
 - `VoskModels.kt` · 61 · The small offline speech models (about 40 MB each) used by the keyless wake phrase engine. · VoskModels · uses: AppLog.kt
 - `WakeService.kt` · 356 · Listens in the background for your wake phrase (any name / command you chose). When heard, · WakeService · uses: AppLog.kt, AssistantActivity.kt, MainActivity.kt, Prefs.kt
 
@@ -103,7 +109,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
-- `LiveVoiceScreen.kt` · 321 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
+- `LiveVoiceScreen.kt` · 312 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
 - `ProfileScreen.kt` · 140 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
@@ -160,7 +166,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `FEATURES.md` · 31 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 16 lines
-- `Planning.md` · 15 lines
+- `Planning.md` · 27 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
 - `Task.md` · 10 lines
@@ -178,7 +184,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `app/src/main/res/values/colors.xml` · 2 lines
 - `app/src/main/res/values/strings.xml` · 5 lines
 - `app/src/main/res/values/themes.xml` · 15 lines
-- `app/src/main/res/xml/accessibility_service_config.xml` · 10 lines
+- `app/src/main/res/xml/accessibility_service_config.xml` · 11 lines
 - `app/src/main/res/xml/device_admin.xml` · 7 lines
 - `app/src/main/res/xml/recognition_service.xml` · 3 lines
 - `app/src/main/res/xml/voice_interaction_service.xml` · 7 lines
@@ -216,6 +222,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
 - `docs/CHANGES_20261017_phases2-5-router-resume-network-skills.md` · 48 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
+- `docs/CHANGES_20261017_screenstream-phase1-4-single-projection.md` · 35 lines
 - `docs/CHANGES_20261017_visual-themes-soundfx.md` · 51 lines
 - `docs/CHANGES_20261017_workspace-provider-only.md` · 50 lines
 - `docs/HANDOFF_STATE.md` · 32 lines
