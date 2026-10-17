@@ -113,7 +113,7 @@ fun JarvisApp() {
         if (pending != null && Prefs.onboarded) { go(pending); Launch.route.value = null }
     }
     val ctx = LocalContext.current
-    val entry = currentBackStackEntryAsState().value
+    val entry = nav.currentBackStackEntryAsState().value
     Box(Modifier.fillMaxSize()) {
     NavHost(
         navController = nav,
