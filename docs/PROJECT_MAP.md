@@ -1,22 +1,13 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 17:06 · 197 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 17:16 · 197 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/AndroidManifest.xml
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/data/NavState.kt
-- app/src/main/java/com/jarvis/app/data/Prefs.kt
-- app/src/main/java/com/jarvis/app/live/AiPanel.kt
-- app/src/main/java/com/jarvis/app/live/AppControl.kt
-- app/src/main/java/com/jarvis/app/live/CallCamera.kt
-- app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/live/PhoneTools.kt
-- app/src/main/java/com/jarvis/app/live/ScreenRecordRequestActivity.kt
-- app/src/main/java/com/jarvis/app/ui/components/AiOptionsOverlay.kt
-- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
-- docs/CHANGES_20261017_live-call-phase5-ai-control.md
+- Complete.md
+- FEATURES.md
+- Pending.md
+- Task.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -165,10 +156,10 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 18 lines
-- `FEATURES.md` · 26 lines
+- `Complete.md` · 23 lines
+- `FEATURES.md` · 31 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 12 lines
+- `Pending.md` · 16 lines
 - `Planning.md` · 15 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
@@ -227,7 +218,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
 - `docs/CHANGES_20261017_visual-themes-soundfx.md` · 51 lines
 - `docs/CHANGES_20261017_workspace-provider-only.md` · 50 lines
-- `docs/HANDOFF_STATE.md` · 26 lines
+- `docs/HANDOFF_STATE.md` · 32 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
