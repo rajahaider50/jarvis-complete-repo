@@ -1,14 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 16:39 · 186 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 16:45 · 186 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/AndroidManifest.xml
 - app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/live/CallService.kt
-- app/src/main/java/com/jarvis/app/ui/components/MiniCallBar.kt
-- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
-- docs/CHANGES_20261017_live-call-phase3-minimize.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
