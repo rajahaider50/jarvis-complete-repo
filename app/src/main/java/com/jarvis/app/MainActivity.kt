@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -114,6 +115,7 @@ fun JarvisApp() {
     }
     val ctx = LocalContext.current
     val entry = nav.currentBackStackEntryAsState().value
+    SideEffect { com.jarvis.app.data.NavState.route = entry?.destination?.route ?: "home" }
     Box(Modifier.fillMaxSize()) {
     NavHost(
         navController = nav,
@@ -153,5 +155,6 @@ fun JarvisApp() {
                 modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 2.dp)
             )
         }
+        com.jarvis.app.ui.components.AiOptionsOverlay()
     }
 }

@@ -91,11 +91,11 @@ fun LiveVoiceScreen(onClose: () -> Unit, onChat: () -> Unit, onApi: () -> Unit) 
 @Composable
 private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () -> Unit, onApi: () -> Unit) {
     val ctx = LocalContext.current
-    var cam by remember { mutableStateOf(0) }      // 0 off, 1 front, 2 back
+    val cam = com.jarvis.app.live.CallCamera.mode   // 0 off, 1 front, 2 back (shared with the assistant's set_camera)
     var share by remember { mutableStateOf(false) }
     var overlayOk by remember { mutableStateOf(Settings.canDrawOverlays(ctx)) }
 
-    val camPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) { cam = 1; CallService.setCamera(ctx, true) } }
+    val camPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) { com.jarvis.app.live.CallCamera.mode = 1; CallService.setCamera(ctx, true) } }
     val notifPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     val btPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     val capture = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -110,10 +110,10 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
         val d = r.data
         if (r.resultCode == Activity.RESULT_OK && d != null) ScreenRecordService.start(ctx, r.resultCode, d)
     }
-    LaunchedEffect(Unit) { while (true) { overlayOk = Settings.canDrawOverlays(ctx); kotlinx.coroutines.delay(1000) } }
+    LaunchedEffect(Unit) { while (true) { overlayOk = Settings.canDrawOverlays(ctx); share = ScreenShareService.running; kotlinx.coroutines.delay(1000) } }
     DisposableEffect(Unit) {
         // Leaving the screen does NOT hang up (Home keeps the call alive as a bubble); only the screen-share hook is released.
-        onDispose { ScreenShareService.frameSink = null; CallService.setCamera(ctx, false) }
+        onDispose { ScreenShareService.frameSink = null; com.jarvis.app.live.CallCamera.mode = 0; CallService.setCamera(ctx, false) }
     }
 
     val mode = when {
@@ -226,10 +226,10 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
         ) {
             RoundBtn(if (live.muted) Icons.Outlined.MicOff else Icons.Outlined.Mic, 52, if (live.muted) Gold.copy(alpha = 0.3f) else Surface1, Ivory) { live.toggleMute() }
             RoundBtn(if (cam == 0) Icons.Outlined.VideocamOff else Icons.Outlined.Videocam, 52, if (cam != 0) Gold.copy(alpha = 0.3f) else Surface1, Ivory) {
-                if (cam != 0) { cam = 0; CallService.setCamera(ctx, false) }
-                else if (has(ctx, Manifest.permission.CAMERA)) { cam = 1; CallService.setCamera(ctx, true) } else camPerm.launch(Manifest.permission.CAMERA)
+                if (cam != 0) { com.jarvis.app.live.CallCamera.mode = 0; CallService.setCamera(ctx, false) }
+                else if (has(ctx, Manifest.permission.CAMERA)) { com.jarvis.app.live.CallCamera.mode = 1; CallService.setCamera(ctx, true) } else camPerm.launch(Manifest.permission.CAMERA)
             }
-            if (cam != 0) RoundBtn(Icons.Outlined.FlipCameraAndroid, 52, Surface1, Ivory) { cam = if (cam == 1) 2 else 1 }
+            if (cam != 0) RoundBtn(Icons.Outlined.FlipCameraAndroid, 52, Surface1, Ivory) { com.jarvis.app.live.CallCamera.mode = if (cam == 1) 2 else 1 }
             RoundBtn(Icons.Outlined.ScreenShare, 52, if (share) Gold.copy(alpha = 0.3f) else Surface1, Ivory) {
                 if (share) { ScreenShareService.stop(ctx); share = false }
                 else {

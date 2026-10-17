@@ -86,6 +86,12 @@
             android:theme="@style/Theme.Jarvis.Overlay"
             android:excludeFromRecents="true"
             android:taskAffinity="" />
+        <activity
+            android:name=".live.ScreenRecordRequestActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Jarvis.Overlay"
+            android:excludeFromRecents="true"
+            android:taskAffinity="" />
         <service
             android:name=".live.JarvisAccessibilityService"
             android:exported="true"

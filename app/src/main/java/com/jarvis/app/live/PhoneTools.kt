@@ -48,7 +48,15 @@ object PhoneTools {
         Tool("media_control", "Control playing video or music. action: play_pause, next, previous, mute, unmute, volume_up, volume_down", listOf("action" to "STRING")),
         Tool("wait_seconds", "Wait for an app or page to finish loading (1 to 6 seconds)", listOf("seconds" to "NUMBER")),
         Tool("open_app", "Open an installed app by its name", listOf("name" to "STRING")),
-        Tool("open_url", "Open a web address in the browser", listOf("url" to "STRING"))
+        Tool("open_url", "Open a web address in the browser", listOf("url" to "STRING")),
+        Tool("get_app_state", "Read the current state of the JARVIS app: which screen is open, the selected orb style, assistant theme, interface style, colour theme, mute, camera and whether screen recording or screen sharing is on"),
+        Tool("show_options", "Show a page of five options as popups on the screen and read them out. category is orb, theme, interface or color. page starts at 0 (5 options per page). Use this whenever the user wants to change how the assistant looks", listOf("category" to "STRING", "page" to "INTEGER")),
+        Tool("select_option", "Apply an option that was shown with show_options. category and id must match the shown options", listOf("category" to "STRING", "id" to "STRING")),
+        Tool("close_options", "Close the option popups on the screen"),
+        Tool("set_screen_recording", "Start or stop recording this call (screen video plus your voice and the user's voice). Android shows a question the user must confirm", listOf("enabled" to "BOOLEAN")),
+        Tool("set_screen_share", "Start or stop sharing the phone screen with this call so you can see it. Android shows a question the user must confirm", listOf("enabled" to "BOOLEAN")),
+        Tool("set_camera", "Turn the call camera on or off. mode is off, front or back", listOf("mode" to "STRING")),
+        Tool("navigate", "Open a screen of the JARVIS app: home, chat, control, profile, api, providers, voices, themes, themelab, memory, assistant, code, skills, uistyle, access, console", listOf("screen" to "STRING"))
     )
 
     /** Gemini Live format. */
@@ -84,6 +92,7 @@ object PhoneTools {
         val x = args.optDouble("x", 50.0).toFloat()
         val y = args.optDouble("y", 50.0).toFloat()
         when (name) {
+            in AppControl.names -> AppControl.execute(ctx, name, args)
             "set_flashlight" -> if (DeviceControl.setTorch(ctx, args.optBoolean("on"))) "ok" else "this phone has no flashlight"
             "set_volume" -> { DeviceControl.setMusicVolumePercent(ctx, args.optInt("percent", 50)); "ok" }
             "device_status" -> com.jarvis.app.data.RealFacts.phoneFacts()

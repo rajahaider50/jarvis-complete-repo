@@ -44,6 +44,7 @@ object Prefs {
     var greetOnHome by mutableStateOf(true)
     var catalogUrl by mutableStateOf("")        // remote model_catalog.json URL ("" = bundled only)
     var assistantTheme by mutableStateOf("classic")  // selected AssistantTheme id
+    var aiControl by mutableStateOf(true)       // let the assistant change orb/theme/interface and recording from a call
     var fxEnabled by mutableStateOf(true)       // sound effects on/off
     var fxVolume by mutableStateOf(0.7f)        // sound effects volume 0..1
     val memories = mutableStateListOf<String>()
@@ -84,6 +85,7 @@ object Prefs {
         greetOnHome = sp.getBoolean("greet", true)
         catalogUrl = sp.getString("catUrl", "") ?: ""
         assistantTheme = sp.getString("atheme", "classic") ?: "classic"
+        aiControl = sp.getBoolean("aicontrol", true)
         fxEnabled = sp.getBoolean("fxon", true)
         fxVolume = sp.getFloat("fxvol", 0.7f)
         memories.clear()
@@ -138,6 +140,7 @@ object Prefs {
             .putString("wsmodel", workspaceModel)
             .putString("catUrl", catalogUrl)
             .putString("atheme", assistantTheme).putBoolean("fxon", fxEnabled).putFloat("fxvol", fxVolume)
+            .putBoolean("aicontrol", aiControl)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .putString("livemodels", JSONArray(liveModels.toList()).toString())
             .apply()

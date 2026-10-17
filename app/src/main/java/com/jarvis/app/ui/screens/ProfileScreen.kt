@@ -96,6 +96,18 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Layers, "Interface style") { onNav("uistyle") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Security, "Access & permissions") { onNav("access") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Terminal, "Console (errors)") { onNav("console") }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.AutoAwesome, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("AI control in calls", 15, Ivory)
+                            JText("Let ${Prefs.assistantName} change orb, theme, recording by voice", 11, Muted)
+                        }
+                        JToggle(Prefs.aiControl) { Prefs.aiControl = it; Prefs.save() }
+                    }
                 }
             }
         }
