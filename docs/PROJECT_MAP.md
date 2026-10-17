@@ -1,17 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 07:01 · 160 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 07:08 · 160 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- FEATURES.md
-- app/src/main/assets/model_catalog.json
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/data/CustomProviders.kt
-- app/src/main/java/com/jarvis/app/data/ModelCatalogFile.kt
-- app/src/main/java/com/jarvis/app/data/Prefs.kt
-- app/src/main/java/com/jarvis/app/data/ProbeService.kt
 - app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
-- docs/CHANGES_20261017_phase1-providers-catalog.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
