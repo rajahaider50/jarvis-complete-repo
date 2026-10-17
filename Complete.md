@@ -1,4 +1,5 @@
 # COMPLETE (newest first: date - what - files)
+- 2026-10-17 - Upgrade Phase 1: provider model discovery with real metadata (price/context/tools/free), free-only filter + Unverified group, manual model entry, offline model catalog (bundled + remote update), real model probes - data/CustomProviders.kt, data/ModelCatalogFile.kt, data/ProbeService.kt, data/Prefs.kt, MainActivity.kt, ui/screens/ProvidersScreen.kt, app/src/main/assets/model_catalog.json. Build APK green (runs 48/49)
 - 2026-10-17 - Premium interface styles: unique layout per style (engine 5: 4 home / 3 control / 3 settings archetypes + 5 nav bars) - ui/styles/IfaceScreens.kt, ui/styles/IfaceCatalog.kt, ui/styles/StyleKit.kt, ui/components/Components.kt, ui/screens/UiStyleScreen.kt
 - 2026-10-17 - Interface styles 5 -> 50 (25 native Android premium + 25 iOS premium) - ui/styles/IfaceCatalog.kt, ui/theme/Color.kt, data/Prefs.kt, ui/components/Components.kt, ui/styles/StyleKit.kt, ui/screens/UiStyleScreen.kt
 - 2026-10-17 - Voice orb styles 50 -> 100 (+50 iOS/premium) and colour themes 15 -> 50 (+35) - ui/components/SiriOrb.kt, ui/theme/Color.kt
