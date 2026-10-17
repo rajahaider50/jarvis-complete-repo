@@ -1,10 +1,11 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 07:12 · 160 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 07:14 · 160 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- docs/HANDOFF_STATE.md
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
+- app/src/main/java/com/jarvis/app/ui/screens/CodeScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -12,7 +13,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 129 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 130 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
@@ -26,7 +27,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### code/
 - `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: AppLog.kt
-- `CodeAgent.kt` · 247 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, Prefs.kt
+- `CodeAgent.kt` · 272 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, Prefs.kt
 - `CodeTaskService.kt` · 34 · Keeps the app process at foreground priority while a coding task is running. · CodeTaskService
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen
 - `MemoryStore.kt` · 62 · Topic-based markdown memory. It never runs content and rejects obvious secret material. · MemoryStore
@@ -85,7 +86,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ApiScreen.kt` · 132 · - · ApiScreen, AutoRow · uses: ModelCatalog.kt, Prefs.kt
 - `AssistantScreen.kt` · 213 · - · AssistantScreen, StatusRow · uses: AppLog.kt, Device.kt, Langs.kt, Prefs.kt, JarvisAccessibilityService.kt, VoskModels.kt
 - `ChatScreen.kt` · 285 · The model's live thinking and the answer as it is being written. · ChatScreen, ThinkingCard, ActionBar, Bubble · uses: ChatStore.kt, ImageUtil.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt, Speaker.kt
-- `CodeScreen.kt` · 418 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Mono, viewable, rememberSaveFile, NameDialog · uses: CodeAgent.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
+- `CodeScreen.kt` · 432 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Mono, viewable, rememberSaveFile, NameDialog · uses: CodeAgent.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
 - `HomeScreen.kt` · 217 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
