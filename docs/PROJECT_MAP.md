@@ -1,14 +1,11 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 07:22 · 161 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 07:30 · 161 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
+- app/src/main/AndroidManifest.xml
 - app/src/main/java/com/jarvis/app/MainActivity.kt
 - app/src/main/java/com/jarvis/app/code/CodeAgent.kt
-- app/src/main/java/com/jarvis/app/data/ChatStore.kt
-- app/src/main/java/com/jarvis/app/data/ModelRouter.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/RouterLogScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -16,7 +13,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 131 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 132 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
@@ -30,7 +27,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### code/
 - `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: AppLog.kt
-- `CodeAgent.kt` · 297 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, ModelRouter.kt, Prefs.kt
+- `CodeAgent.kt` · 324 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, ModelRouter.kt, Prefs.kt
 - `CodeTaskService.kt` · 34 · Keeps the app process at foreground priority while a coding task is running. · CodeTaskService
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen
 - `MemoryStore.kt` · 62 · Topic-based markdown memory. It never runs content and rejects obvious secret material. · MemoryStore
@@ -138,7 +135,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `.github/workflows/map.yml` · 21 lines
 - `.github/workflows/pack.yml` · 34 lines
 - `app/build.gradle.kts` · 48 lines
-- `app/src/main/AndroidManifest.xml` · 113 lines
+- `app/src/main/AndroidManifest.xml` · 118 lines
 - `app/src/main/assets/model_catalog.json` · 12 lines
 - `app/src/main/res/values/colors.xml` · 2 lines
 - `app/src/main/res/values/strings.xml` · 5 lines
