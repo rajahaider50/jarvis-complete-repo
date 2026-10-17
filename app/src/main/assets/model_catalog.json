@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "updated": "2026-10-17",
+  "note": "Fallback facts for well-known models. Only confirmed values are listed; anything missing stays unknown in the app. Refresh from Profile > Gemini API > Custom providers > Model catalog.",
+  "models": [
+    { "match": "gpt-4o-mini", "contextWindow": 128000, "supportsTools": true, "qualityTier": 3, "notes": "OpenAI · fast and cheap" },
+    { "match": "gpt-4o", "contextWindow": 128000, "supportsTools": true, "qualityTier": 4, "notes": "OpenAI · vision + tools" },
+    { "match": "llama-3.3-70b-versatile", "contextWindow": 131072, "supportsTools": true, "qualityTier": 4, "notes": "Groq · fast 70B" },
+    { "match": "llama-3.1-8b-instant", "contextWindow": 131072, "supportsTools": true, "qualityTier": 2, "notes": "Groq · very fast small model" }
+  ]
+}

@@ -14,13 +14,18 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** One model offered by a provider. Used by the smart router (`ModelRouter`) to score and pick models. */
+/** One model offered by a provider, with only real values. null = unknown (never guessed). */
 data class ProviderModel(
     val id: String,
-    val source: String = "manual",       // where it came from: "manual", "import", "discovery"
-    val contextWindow: Int? = null,       // tokens, null = unknown
-    val supportsTools: Boolean? = null,   // null = unknown
-    val qualityTier: Int? = null          // 1 (small) .. 5 (flagship), null = unknown
+    val source: String = "manual",        // api | catalog | probe | manual
+    val contextWindow: Int? = null,        // tokens, null = unknown
+    val supportsTools: Boolean? = null,    // null = unknown
+    val qualityTier: Int? = null,          // 1 (small) .. 5 (flagship), null = unknown
+    val isFree: Boolean? = null,           // true / false / null = unknown (unverified)
+    val pricePrompt: Double? = null,       // price per 1M prompt tokens as the API reports it, null = unknown
+    val priceCompletion: Double? = null,   // price per 1M completion tokens, null = unknown
+    val notes: String = "",
+    val lastVerifiedAt: Long = 0           // last successful probe, 0 = never
 )
 
 /** An AI model from any provider that speaks the OpenAI-compatible chat API (OpenAI, OpenRouter, Groq, DeepSeek, Mistral, Together, Ollama, LM Studio ...). */
@@ -42,7 +47,8 @@ data class CustomProvider(
     val ttsVoice: String = "",        // the voice in use
     val speechFrom: String = "",      // take speech-to-text / voices from another provider (its id)
     val models: List<ProviderModel> = emptyList(),  // models discovered/imported for this provider (smart router)
-    val dailyLimitTokens: Long = 0                  // optional daily token cap, 0 = none (smart router)
+    val dailyLimitTokens: Long = 0,                 // optional daily token cap, 0 = none (smart router)
+    val freeOnly: Boolean = true                    // only use free models unless a key with billing is added
 ) {
     fun voiceList(): List<String> = ttsVoices.split(',', '\n').map { it.trim() }.filter { it.isNotEmpty() }
 }
@@ -75,9 +81,10 @@ object CustomProviders {
                 val a = JSONArray(f.readText())
                 for (i in 0 until a.length()) {
                     val o = a.getJSONObject(i)
-                    list.add(CustomProvider(o.getString("id"), o.getString("n"), o.getString("u"), o.optString("k"), o.getString("m"),
+                    val base = CustomProvider(o.getString("id"), o.getString("n"), o.getString("u"), o.optString("k"), o.getString("m"),
                         o.optString("h"), o.optString("s"), o.optString("t"), o.optBoolean("v"), o.optBoolean("f"),
-                        o.optBoolean("tl", true), o.optString("stt"), o.optString("tts"), o.optString("tvs"), o.optString("tv"), o.optString("sf")))
+                        o.optBoolean("tl", true), o.optString("stt"), o.optString("tts"), o.optString("tvs"), o.optString("tv"), o.optString("sf"))
+                    list.add(base.copy(models = modelsFromJson(o.optJSONArray("models")), freeOnly = o.optBoolean("fo", true)))
                 }
             }
         } catch (e: Exception) { AppLog.w(e) }
@@ -87,8 +94,46 @@ object CustomProviders {
         val a = JSONArray()
         list.forEach { a.put(JSONObject().put("id", it.id).put("n", it.name).put("u", it.baseUrl).put("k", it.apiKey).put("m", it.modelId)
             .put("h", it.headers).put("s", it.systemPrompt).put("t", it.temperature).put("v", it.vision).put("f", it.fallback)
-            .put("tl", it.tools).put("stt", it.sttModel).put("tts", it.ttsModel).put("tvs", it.ttsVoices).put("tv", it.ttsVoice).put("sf", it.speechFrom)) }
+            .put("tl", it.tools).put("stt", it.sttModel).put("tts", it.ttsModel).put("tvs", it.ttsVoices).put("tv", it.ttsVoice).put("sf", it.speechFrom)
+            .put("fo", it.freeOnly).put("models", modelsToJson(it.models))) }
         try { file?.writeText(a.toString()) } catch (e: Exception) { AppLog.w(e) }
+    }
+
+    private fun modelsToJson(models: List<ProviderModel>): JSONArray {
+        val a = JSONArray()
+        models.forEach { m ->
+            val o = JSONObject().put("id", m.id).put("src", m.source)
+            m.contextWindow?.let { o.put("ctx", it) }
+            m.supportsTools?.let { o.put("tools", it) }
+            m.qualityTier?.let { o.put("tier", it) }
+            m.isFree?.let { o.put("free", it) }
+            m.pricePrompt?.let { o.put("pp", it) }
+            m.priceCompletion?.let { o.put("pc", it) }
+            if (m.notes.isNotBlank()) o.put("notes", m.notes)
+            if (m.lastVerifiedAt > 0) o.put("verified", m.lastVerifiedAt)
+            a.put(o)
+        }
+        return a
+    }
+
+    private fun modelsFromJson(a: JSONArray?): List<ProviderModel> {
+        if (a == null) return emptyList()
+        val out = ArrayList<ProviderModel>()
+        for (i in 0 until a.length()) {
+            val o = a.optJSONObject(i) ?: continue
+            val id = o.optString("id"); if (id.isBlank()) continue
+            out.add(ProviderModel(
+                id = id, source = o.optString("src", "manual"),
+                contextWindow = if (o.has("ctx")) o.optInt("ctx") else null,
+                supportsTools = if (o.has("tools")) o.optBoolean("tools") else null,
+                qualityTier = if (o.has("tier")) o.optInt("tier") else null,
+                isFree = if (o.has("free")) o.optBoolean("free") else null,
+                pricePrompt = if (o.has("pp")) o.optDouble("pp") else null,
+                priceCompletion = if (o.has("pc")) o.optDouble("pc") else null,
+                notes = o.optString("notes"), lastVerifiedAt = o.optLong("verified", 0)
+            ))
+        }
+        return out
     }
 
     fun upsert(p: CustomProvider) {
@@ -169,9 +214,17 @@ object CustomProviders {
 
     fun fallbacks(): List<CustomProvider> = list.filter { it.fallback }
 
-    /** Models the smart router may route to for a provider: its discovered list, or its single manual model. */
-    fun eligibleModels(p: CustomProvider): List<ProviderModel> =
+    /** Models the smart router may route to for a provider, honouring the "free only" switch. */
+    fun eligibleModels(p: CustomProvider): List<ProviderModel> {
+        val all = p.models.ifEmpty { if (p.modelId.isNotBlank()) listOf(ProviderModel(p.modelId, source = "manual")) else emptyList() }
+        return if (p.freeOnly) all.filter { it.isFree == true } else all
+    }
+
+    /** The models a provider actually discovered/imported (never empty when it has a manual [modelId]). */
+    fun modelsOf(p: CustomProvider): List<ProviderModel> =
         p.models.ifEmpty { if (p.modelId.isNotBlank()) listOf(ProviderModel(p.modelId, source = "manual")) else emptyList() }
+
+    fun isFreeKnown(m: ProviderModel): Boolean = m.isFree != null
 
     /** The provider whose speech-to-text and voices are used for [p] (itself, unless it borrows another one). */
     fun speechOf(p: CustomProvider): CustomProvider =
@@ -362,5 +415,59 @@ object OpenAiCompat {
         val j = JSONObject(read(open(p, "/models", false, 20000), p))
         val arr = j.optJSONArray("data") ?: JSONArray()
         (0 until arr.length()).mapNotNull { arr.optJSONObject(it)?.optString("id")?.takeIf { s -> s.isNotBlank() } }.sorted()
+    }
+
+    /**
+     * Asks the server for its models with as much real detail as it exposes (price, context size, tool support).
+     * Nothing is guessed: a field stays null when the server does not send it. A local catalog fills known gaps.
+     */
+    suspend fun fetchModelDetails(p: CustomProvider): List<ProviderModel> = withContext(Dispatchers.IO) {
+        val j = JSONObject(read(open(p, "/models", false, 20000), p))
+        val arr = j.optJSONArray("data") ?: JSONArray()
+        val out = ArrayList<ProviderModel>()
+        for (i in 0 until arr.length()) {
+            val o = arr.optJSONObject(i) ?: continue
+            val id = o.optString("id").trim(); if (id.isBlank()) continue
+            val pricing = o.optJSONObject("pricing")
+            val pp = num(pricing, "prompt")
+            val pc = num(pricing, "completion")
+            val ctx = o.optInt("context_length", 0).takeIf { it > 0 }
+                ?: o.optJSONObject("top_provider")?.optInt("context_length", 0)?.takeIf { it > 0 }
+                ?: o.optInt("context_window", 0).takeIf { it > 0 }
+            var tools: Boolean? = null
+            val params = o.optJSONArray("supported_parameters")
+            if (params != null) {
+                val names = (0 until params.length()).map { params.optString(it) }
+                if (names.any { it == "tools" || it == "tool_choice" || it == "function_calling" }) tools = true
+            }
+            o.optJSONObject("capabilities")?.let { c -> if (c.has("tools")) tools = c.optBoolean("tools") }
+            val free: Boolean? = when {
+                pp != null && pc != null -> pp == 0.0 && pc == 0.0
+                id.endsWith(":free", ignoreCase = true) -> true
+                id.contains("/free", ignoreCase = true) -> true
+                else -> null
+            }
+            val known = ModelCatalogFile.lookup(id)
+            out.add(
+                ProviderModel(
+                    id = id, source = "api", contextWindow = ctx ?: known?.contextWindow,
+                    supportsTools = tools ?: known?.supportsTools, qualityTier = known?.qualityTier,
+                    isFree = free, pricePrompt = pp, priceCompletion = pc,
+                    notes = known?.notes.orEmpty()
+                )
+            )
+        }
+        out.sortedBy { it.id }
+    }
+
+    private fun num(o: JSONObject?, key: String): Double? {
+        if (o == null || !o.has(key)) return null
+        val raw = o.opt(key) ?: return null
+        val v = when (raw) {
+            is Number -> raw.toDouble()
+            is String -> raw.toDoubleOrNull()
+            else -> null
+        }
+        return v
     }
 }

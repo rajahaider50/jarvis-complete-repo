@@ -41,6 +41,7 @@ object Prefs {
     var pvKey by mutableStateOf("")             // Picovoice AccessKey (free, for the offline wake word)
     var pvKeyword by mutableStateOf("JARVIS")   // built-in keyword name, or "custom" (your own .ppn file)
     var greetOnHome by mutableStateOf(true)
+    var catalogUrl by mutableStateOf("")        // remote model_catalog.json URL ("" = bundled only)
     val memories = mutableStateListOf<String>()
     val customVoices = mutableStateListOf<CustomVoice>()
 
@@ -75,6 +76,7 @@ object Prefs {
         pvKey = sp.getString("pvkey", "") ?: ""
         pvKeyword = sp.getString("pvkw", "JARVIS") ?: "JARVIS"
         greetOnHome = sp.getBoolean("greet", true)
+        catalogUrl = sp.getString("catUrl", "") ?: ""
         memories.clear()
         try {
             val a = JSONArray(sp.getString("mem", "[]"))
@@ -119,6 +121,7 @@ object Prefs {
             .putString("aname", assistantName).putString("wake", wakePhrase).putBoolean("wakeOn", wakeEnabled).putString("wlang", wakeLang)
             .putBoolean("onb", onboarded).putBoolean("greet", greetOnHome)
             .putString("callprov", callProvider).putString("goodchat", goodChat).putBoolean("wsearch", webSearch).putString("vlang", voskLang).putInt("ui", uiStyle).putString("weng", wakeEngine).putString("pvkey", pvKey).putString("pvkw", pvKeyword)
+            .putString("catUrl", catalogUrl)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .apply()
     }
