@@ -103,6 +103,7 @@ object ModelCatalog {
         return out.distinct()
     }
     fun ttsModel(): String? = ttsCandidates().firstOrNull()
-    fun liveCandidates(): List<String> = (listOfNotNull(liveModel()) + live.map { it.id }).distinct()
+    /** Live models in the user's saved priority order first, then every other Live model of the key. */
+    fun liveCandidates(): List<String> = (Prefs.liveModels.toList() + listOfNotNull(liveModel()) + live.map { it.id }).distinct()
     fun liveModel(): String? = live.firstOrNull { "flash" in it.id }?.id ?: live.firstOrNull()?.id
 }

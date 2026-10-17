@@ -68,6 +68,43 @@ fun ApiScreen(onBack: () -> Unit, onProviders: () -> Unit) {
                 Hairline(0.1f)
                 AutoRow("Live call", ModelCatalog.liveModel())
             }
+
+            JText("LIVE CALL MODELS", 11, Gold, FontWeight.Medium, ls = 2.2f)
+            JText("In this order the live call connects to these Gemini Live models. The top two are tried at the same time for the fastest start; if one fails the call moves to the next by itself.", 11, Muted, lh = 16)
+            var manualLive by remember { mutableStateOf("") }
+            Column(Modifier.fillMaxWidth().clip(card).background(Surface1).border(1.dp, Gold.copy(alpha = 0.16f), card).padding(horizontal = 14.dp)) {
+                val ids = (Prefs.liveModels.toList() + ModelCatalog.live.map { it.id }).distinct()   // saved order first, then the rest
+                if (ids.isEmpty()) JText("Connect first to see the Live models of your key.", 12, Muted, modifier = Modifier.padding(vertical = 12.dp))
+                ids.forEach { id ->
+                    val pos = Prefs.liveModels.indexOf(id)
+                    val on = pos >= 0
+                    Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.clickable {
+                            if (on) Prefs.liveModels.remove(id) else Prefs.liveModels.add(id); Prefs.save()
+                        }) { JRadio(on) }
+                        JText(id, 13, Ivory, modifier = Modifier.weight(1f))
+                        if (on) {
+                            JText("#${pos + 1}", 11, Gold)
+                            Icon(Icons.Outlined.KeyboardArrowUp, "Up", tint = if (pos > 0) Gold else Muted, modifier = Modifier.size(20.dp).clickable {
+                                if (pos > 0) { val t = Prefs.liveModels[pos - 1]; Prefs.liveModels[pos - 1] = id; Prefs.liveModels[pos] = t; Prefs.save() }
+                            })
+                            Icon(Icons.Outlined.KeyboardArrowDown, "Down", tint = if (pos < Prefs.liveModels.size - 1) Gold else Muted, modifier = Modifier.size(20.dp).clickable {
+                                if (pos < Prefs.liveModels.size - 1) { val t = Prefs.liveModels[pos + 1]; Prefs.liveModels[pos + 1] = id; Prefs.liveModels[pos] = t; Prefs.save() }
+                            })
+                        }
+                    }
+                    if (id != ids.last()) Hairline(0.1f)
+                }
+                Hairline(0.1f)
+                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    JField(manualLive, { manualLive = it }, "Add a model id manually", Modifier.weight(1f))
+                    Icon(Icons.Outlined.Add, "Add", tint = Gold, modifier = Modifier.size(24.dp).clickable {
+                        val id = manualLive.trim().removePrefix("models/")
+                        if (id.isNotBlank() && !Prefs.liveModels.contains(id)) { Prefs.liveModels.add(id); Prefs.save(); manualLive = "" }
+                    })
+                }
+            }
+
             JText("ALL MODELS OF YOUR KEY", 11, Gold, FontWeight.Medium, ls = 2.2f)
             JText("These are the real models Google gives your key. Auto picks one for each job and switches to the next one by itself when a model is out of quota. Tap a chat model only if you want to force it.", 11, Muted, lh = 16)
             Column(Modifier.fillMaxWidth().clip(card).background(Surface1).border(1.dp, Gold.copy(alpha = 0.16f), card).padding(horizontal = 14.dp)) {

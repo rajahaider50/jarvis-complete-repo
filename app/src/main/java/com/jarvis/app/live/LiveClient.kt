@@ -44,14 +44,24 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     /** Called when Gemini Live cannot be used at all (quota, no model ...), so a backup provider can take over the call. */
     var onUnavailable: (() -> Unit)? = null
     private var liveModels = listOf<String>()
-    private var modelIdx = 0
 
     private val okc get() = Http.client   // one shared client: creating a new one on every call made the Live screen slow to open
     private var ws: WebSocket? = null
-    private var attempt = 0
     private var gotSetup = false
-    @Volatile private var connId = 0
     private var newTurn = true
+
+    // --- fast connect: race the top Live models in parallel, the first to finish setup wins ---
+    private class Trial(val idx: Int, val model: String) {
+        @Volatile var socket: WebSocket? = null
+        @Volatile var done = false
+    }
+    @Volatile private var winner = -1
+    private var batchStart = 0
+    private var batchTrials: List<Trial> = emptyList()
+    private var simple = false
+    private var retriedSimple = false
+    @Volatile private var lastReason = ""
+    private val timeoutHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     @Volatile private var recording = false
     private var recorder: AudioRecord? = null
@@ -70,45 +80,122 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private fun ui(block: () -> Unit) { scope.launch(Dispatchers.Main) { block() } }
 
     companion object {
+        private const val PARALLEL = 2                 // Live models tried at the same time
+        private const val CONNECT_TIMEOUT_MS = 2500L   // per-batch connect deadline, then try the next models
+
         /** Touch the shared HTTP client so the first real call does not pay for DNS/TLS/OkHttp warm-up. */
         fun prewarm() { Http.client }
     }
 
     // ---------- connection ----------
     override fun start() {
-        error = null; attempt = 0; modelIdx = 0; userText = ""; aiText = ""
-        connStarted = 0L
+        error = null; userText = ""; aiText = ""; connStarted = 0L
+        winner = -1; gotSetup = false; simple = false; retriedSimple = false; lastReason = ""
         liveModels = ModelCatalog.liveCandidates()
         AppLog.i("Timing", "live_connect_start models=${liveModels.size}")
-        connect()
+        nextBatch(0)
     }
 
-    private fun connect() {
+    /** Opens up to [PARALLEL] candidate models starting at [from]; the first that sends setupComplete wins. */
+    @Synchronized
+    private fun nextBatch(from: Int) {
+        if (winner >= 0) return
         val key = Prefs.apiKey
         if (key.isBlank()) { fail("Add your Gemini API key in Profile > Gemini API"); return }
-        val model = liveModels.getOrNull(modelIdx)
-        if (model == null) { fail("No Live-capable model was found for your key. Open Profile > Gemini API and tap Test & Load Models."); return }
-        modelName = model; state = State.CONNECTING; gotSetup = false; info = "Connecting…"
+        if (liveModels.isEmpty()) { fail("No Live-capable model was found for your key. Open Profile > Gemini API and tap Test & Load Models."); return }
+        if (from >= liveModels.size) { noModelLeft(); return }
+        batchStart = from
+        val trials = (from until minOf(from + PARALLEL, liveModels.size)).map { Trial(it, liveModels[it]) }
+        batchTrials = trials
+        ui { state = State.CONNECTING; info = "Connecting…" }
         if (connStarted == 0L) connStarted = System.currentTimeMillis()
+        AppLog.i("Timing", "live_connect_batch $from → ${trials.joinToString { it.model }}")
+        trials.forEach { open(it, key) }
+        timeoutHandler.postDelayed({
+            if (winner >= 0 || batchTrials !== trials) return@postDelayed   // already connected, or a newer batch took over
+            trials.forEach { closeTrial(it) }
+            advanceIfDone()
+        }, CONNECT_TIMEOUT_MS)
+    }
+
+    private fun open(t: Trial, key: String) {
         val req = Request.Builder()
             .url("wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=$key").build()
-        val id = ++connId
-        ws = okc.newWebSocket(req, object : WebSocketListener() {
+        t.socket = okc.newWebSocket(req, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
-                if (id != connId) return
-                webSocket.send(buildSetup(model).toString())
+                t.socket = webSocket
+                if (winner >= 0 && winner != t.idx) { webSocket.close(1000, "stale"); return }
+                webSocket.send(buildSetup(t.model).toString())
             }
-            override fun onMessage(webSocket: WebSocket, text: String) { if (id == connId) handle(text) }
-            override fun onMessage(webSocket: WebSocket, bytes: ByteString) { if (id == connId) handle(bytes.utf8()) }
+            override fun onMessage(webSocket: WebSocket, text: String) { onFrame(t, text) }
+            override fun onMessage(webSocket: WebSocket, bytes: ByteString) { onFrame(t, bytes.utf8()) }
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                if (id != connId) return
-                webSocket.close(1000, null); ended(code, reason)
+                try { webSocket.close(1000, null) } catch (e: Exception) { AppLog.w(e) }
+                trialEnded(t, code, reason)
             }
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                if (id != connId) return
-                ended(-1, t.message ?: "connection failed")
+            override fun onFailure(webSocket: WebSocket, e: Throwable, response: Response?) {
+                trialEnded(t, -1, e.message ?: "connection failed")
             }
         })
+    }
+
+    private fun onFrame(t: Trial, raw: String) {
+        if (raw.contains("setupComplete")) {
+            val j = try { JSONObject(raw) } catch (e: Exception) { AppLog.w(e); return }
+            if (j.has("setupComplete")) { won(t); return }
+        }
+        if (winner != t.idx) return         // only the winning socket drives the session
+        handle(raw)
+    }
+
+    /** A candidate finished setup: adopt it, close the losers. */
+    @Synchronized
+    private fun won(t: Trial) {
+        if (winner >= 0) { try { t.socket?.close(1000, "stale") } catch (e: Exception) { AppLog.w(e) }; return }
+        winner = t.idx
+        gotSetup = true
+        ws = t.socket
+        batchTrials.filter { it !== t }.forEach { closeTrial(it) }
+        AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · ${t.model}")
+        ui { modelName = t.model; state = State.LIVE; info = "Live"; startPlayback(); startAudio() }
+    }
+
+    @Synchronized
+    private fun closeTrial(t: Trial) {
+        if (t.done) return
+        t.done = true
+        try { t.socket?.close(1000, "done") } catch (e: Exception) { AppLog.w(e) }
+    }
+
+    @Synchronized
+    private fun trialEnded(t: Trial, code: Int, reason: String) {
+        val wasDone = t.done
+        t.done = true
+        if (winner == t.idx) { ended(code, reason); return }    // the live (winning) socket closed
+        if (winner >= 0) return                                 // a losing socket: ignore
+        if (reason.isNotBlank()) lastReason = reason
+        if (wasDone && !batchTrials.contains(t)) return
+        if (batchTrials.contains(t)) advanceIfDone()
+    }
+
+    @Synchronized
+    private fun advanceIfDone() {
+        if (winner >= 0) return
+        val b = batchTrials
+        if (b.isNotEmpty() && b.all { it.done }) nextBatch(batchStart + PARALLEL)
+    }
+
+    private fun noModelLeft() {
+        if (!retriedSimple) {                                   // some accounts/models reject tools or nested config: try a minimal setup once
+            retriedSimple = true; simple = true
+            AppLog.i("LiveClient", "All live models failed; retrying with a minimal setup")
+            nextBatch(0)
+            return
+        }
+        val why = lastReason.ifBlank { "no model accepted the connection" }
+        val quota = why.contains("quota", true) || why.contains("exhausted", true) || why.contains("exceeded", true) || why.contains("billing", true)
+        fail(if (quota) "Gemini Live has no quota left on this key ($why). Use a custom provider for calls, or try again later." else "Live connection closed: $why")
+        onUnavailable?.invoke()
     }
 
     private fun ended(code: Int, reason: String) {
@@ -116,18 +203,12 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             if (state == State.IDLE) return@ui
             stopAudio()
             val why = reason.ifBlank { "code $code" }
-            AppLog.e("LiveClient", "Live connection closed · model=$modelName · setup=$gotSetup · attempt=$attempt · code=$code · $why")
+            AppLog.e("LiveClient", "Live connection closed · model=$modelName · setup=$gotSetup · code=$code · $why")
             val keyProblem = why.contains("API key", true) || why.contains("permission", true) || why.contains("API_KEY", true)
-            val quota = why.contains("quota", true) || why.contains("exhausted", true) || why.contains("exceeded", true) || why.contains("billing", true)
             if (!gotSetup && !keyProblem) {
-                if (!quota && attempt < 2) {
-                    attempt++; info = "Retrying ($attempt)…"; ws = null; connect()
-                } else if (modelIdx + 1 < liveModels.size) {
-                    modelIdx++; attempt = 0; info = "Trying ${liveModels[modelIdx]}…"; ws = null; connect()      // next Live model of your key
-                } else {
-                    fail(if (quota) "Gemini Live has no quota left on this key ($why). Use a custom provider for calls, or try again later." else "Live connection closed: $why")
-                    onUnavailable?.invoke()
-                }
+                winner = -1; ws = null
+                if (why.isNotBlank()) lastReason = why
+                nextBatch(batchStart + PARALLEL)                // the model that won the race then dropped without setup: continue with the next
             } else if (!gotSetup) {
                 fail("Live connection closed: $why")
             } else {
@@ -165,14 +246,16 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private fun buildSetup(model: String): JSONObject {
         val speech = JSONObject().put("voiceConfig", JSONObject().put("prebuiltVoiceConfig", JSONObject().put("voiceName", Prefs.voice)))
         val setup = JSONObject().put("model", "models/$model")
-        if (attempt < 3) {
+        if (!simple) {
             setup.put("generationConfig", JSONObject().put("responseModalities", JSONArray().put("AUDIO")).put("speechConfig", speech))
+            setup.put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemText()))))
+            setup.put("inputAudioTranscription", JSONObject()).put("outputAudioTranscription", JSONObject())
+            setup.put("tools", tools(withSearch = Prefs.webSearch))
         } else {
+            // minimal setup for keys/models that reject tools or nested generationConfig
             setup.put("responseModalities", JSONArray().put("AUDIO")).put("speechConfig", speech)
+            setup.put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemText()))))
         }
-        setup.put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemText()))))
-        if (attempt <= 1) setup.put("inputAudioTranscription", JSONObject()).put("outputAudioTranscription", JSONObject())
-        if (attempt <= 1) setup.put("tools", tools(withSearch = attempt == 0 && Prefs.webSearch))
         return JSONObject().put("setup", setup)
     }
 
@@ -303,19 +386,25 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     override fun switchLanguage(code: String) {
         Prefs.lang = code; Prefs.save()
         if (state == State.IDLE) return
-        connId++
-        val old = ws; ws = null
-        try { old?.close(1000, "lang") } catch (e: Exception) { AppLog.w(e); }
+        stopSession()
         stopAudio(); userText = ""; aiText = ""; newTurn = true
         start()
     }
 
     override fun stop() {
         state = State.IDLE
-        connId++
+        stopSession()
+        stopAudio()
+    }
+
+    @Synchronized
+    private fun stopSession() {
+        winner = -1
+        try { timeoutHandler.removeCallbacksAndMessages(null) } catch (e: Exception) { AppLog.w(e); }
+        batchTrials.forEach { t -> t.done = true; try { t.socket?.close(1000, "bye") } catch (e: Exception) { AppLog.w(e) } }
+        batchTrials = emptyList()
         val old = ws; ws = null
         try { old?.close(1000, "bye") } catch (e: Exception) { AppLog.w(e); }
-        stopAudio()
     }
 }
 

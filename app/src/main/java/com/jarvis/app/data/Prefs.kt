@@ -48,6 +48,7 @@ object Prefs {
     var fxVolume by mutableStateOf(0.7f)        // sound effects volume 0..1
     val memories = mutableStateListOf<String>()
     val customVoices = mutableStateListOf<CustomVoice>()
+    val liveModels = mutableStateListOf<String>()   // saved order of Gemini Live models used for calls (first = tried first)
 
     fun init(c: Context) {
         sp = c.applicationContext.getSharedPreferences("jarvis", Context.MODE_PRIVATE)
@@ -98,6 +99,11 @@ object Prefs {
                 customVoices.add(CustomVoice(o.getString("n"), o.getString("b"), o.getString("s")))
             }
         } catch (e: Exception) { AppLog.w(e); }
+        liveModels.clear()
+        try {
+            val a = JSONArray(sp.getString("livemodels", "[]"))
+            for (i in 0 until a.length()) liveModels.add(a.getString(i))
+        } catch (e: Exception) { AppLog.w(e); }
         applyTheme()
     }
 
@@ -133,6 +139,7 @@ object Prefs {
             .putString("catUrl", catalogUrl)
             .putString("atheme", assistantTheme).putBoolean("fxon", fxEnabled).putFloat("fxvol", fxVolume)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
+            .putString("livemodels", JSONArray(liveModels.toList()).toString())
             .apply()
     }
 }
