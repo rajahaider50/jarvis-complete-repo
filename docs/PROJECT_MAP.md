@@ -1,31 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 11:38 · 182 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 11:43 · 182 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/audio/AudioLevel.kt
-- app/src/main/java/com/jarvis/app/data/Prefs.kt
-- app/src/main/java/com/jarvis/app/ui/screens/HomeScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ThemeLabScreen.kt
-- app/src/main/java/com/jarvis/app/ui/theme/AssistantState.kt
-- app/src/main/java/com/jarvis/app/ui/theme/AssistantTheme.kt
-- app/src/main/java/com/jarvis/app/ui/theme/ClassicTheme.kt
-- app/src/main/java/com/jarvis/app/ui/theme/PerformanceTier.kt
-- app/src/main/java/com/jarvis/app/ui/theme/ThemeRegistry.kt
-- app/src/main/java/com/jarvis/app/ui/theme/ThemeRepository.kt
-- app/src/main/java/com/jarvis/app/ui/theme/anim/AnimUtils.kt
-- app/src/main/java/com/jarvis/app/ui/theme/fx/FxPlayer.kt
-- app/src/main/java/com/jarvis/app/ui/theme/fx/FxProfile.kt
-- app/src/main/java/com/jarvis/app/ui/theme/fx/SynthFx.kt
 - app/src/main/java/com/jarvis/app/ui/theme/hud/HudThemes.kt
-- app/src/main/java/com/jarvis/app/ui/theme/orbs/OrbShaders.kt
-- app/src/main/java/com/jarvis/app/ui/theme/orbs/OrbThemes.kt
-- app/src/main/java/com/jarvis/app/ui/theme/orbs/ParticleSphere.kt
-- app/src/main/java/com/jarvis/app/ui/theme/orbs/ShaderOrb.kt
-- docs/CHANGES_20261017_visual-themes-soundfx.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -153,7 +131,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `SynthFx.kt` · 46 · - · SynthFx
 
 ### ui/theme/hud/
-- `HudThemes.kt` · 227 · ------------------------------------------------------------------- Arc Reactor · label, HudTheme, HudArcReactor, HudRadar, HudGlobe, HudAmber, HudFrost · uses: AssistantState.kt, AssistantTheme.kt, AnimUtils.kt, FxProfile.kt, ParticleSphere.kt
+- `HudThemes.kt` · 228 · ------------------------------------------------------------------- Arc Reactor · label, HudTheme, HudArcReactor, HudRadar, HudGlobe, HudAmber, HudFrost · uses: AssistantState.kt, AssistantTheme.kt, AnimUtils.kt, FxProfile.kt, ParticleSphere.kt
 
 ### ui/theme/orbs/
 - `OrbShaders.kt` · 128 · AGSL (RuntimeShader) sources, Android 13+ only. Every source declares and uses resolution, · OrbShaders
