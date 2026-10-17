@@ -1,15 +1,31 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 11:23 · 164 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 11:38 · 182 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
-- app/src/main/java/com/jarvis/app/code/MemoryStore.kt
-- app/src/main/java/com/jarvis/app/data/ModelRouter.kt
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/audio/AudioLevel.kt
 - app/src/main/java/com/jarvis/app/data/Prefs.kt
-- app/src/main/java/com/jarvis/app/ui/screens/CodeScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/MemoryScreen.kt
-- docs/CHANGES_20261017_workspace-provider-only.md
+- app/src/main/java/com/jarvis/app/ui/screens/HomeScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ThemeLabScreen.kt
+- app/src/main/java/com/jarvis/app/ui/theme/AssistantState.kt
+- app/src/main/java/com/jarvis/app/ui/theme/AssistantTheme.kt
+- app/src/main/java/com/jarvis/app/ui/theme/ClassicTheme.kt
+- app/src/main/java/com/jarvis/app/ui/theme/PerformanceTier.kt
+- app/src/main/java/com/jarvis/app/ui/theme/ThemeRegistry.kt
+- app/src/main/java/com/jarvis/app/ui/theme/ThemeRepository.kt
+- app/src/main/java/com/jarvis/app/ui/theme/anim/AnimUtils.kt
+- app/src/main/java/com/jarvis/app/ui/theme/fx/FxPlayer.kt
+- app/src/main/java/com/jarvis/app/ui/theme/fx/FxProfile.kt
+- app/src/main/java/com/jarvis/app/ui/theme/fx/SynthFx.kt
+- app/src/main/java/com/jarvis/app/ui/theme/hud/HudThemes.kt
+- app/src/main/java/com/jarvis/app/ui/theme/orbs/OrbShaders.kt
+- app/src/main/java/com/jarvis/app/ui/theme/orbs/OrbThemes.kt
+- app/src/main/java/com/jarvis/app/ui/theme/orbs/ParticleSphere.kt
+- app/src/main/java/com/jarvis/app/ui/theme/orbs/ShaderOrb.kt
+- docs/CHANGES_20261017_visual-themes-soundfx.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -17,13 +33,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 134 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 137 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
 - `DeviceAdmin.kt` · 32 · Lets the app lock the screen on your command. It can do nothing else (the policy list only · JarvisAdminReceiver, DeviceAdmin · uses: AppLog.kt
 
 ### audio/
+- `AudioLevel.kt` · 19 · Turns 16-bit PCM into a 0..1 loudness value so themes can react to the voice. · AudioLevel
 - `AudioRouter.kt` · 129 · Call audio routing. AUTO = wired headset > Bluetooth > earpiece when the phone is at your  · Route, AudioRouter · uses: AppLog.kt
 - `PcmPlayer.kt` · 47 · - · PcmPlayer · uses: AppLog.kt
 - `Speaker.kt` · 79 · Speaks ONLY with Gemini's own voices. There is deliberately no phone / Google default-voic · Speaker · uses: AppLog.kt, GeminiClient.kt, ModelCatalog.kt, Prefs.kt
@@ -52,7 +69,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ModelCatalogFile.kt` · 102 · A small offline catalog of well-known models, so a provider that does not report · ModelCatalogFile
 - `ModelRouter.kt` · 172 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 132 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 139 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
@@ -93,14 +110,15 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CodeScreen.kt` · 456 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Mono, viewable, rememberSaveFile, NameDialog · uses: CodeAgent.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, Prefs.kt
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
-- `HomeScreen.kt` · 217 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
-- `LiveVoiceScreen.kt` · 290 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
+- `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
+- `LiveVoiceScreen.kt` · 295 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
-- `ProfileScreen.kt` · 127 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
+- `ProfileScreen.kt` · 128 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
 - `ProvidersScreen.kt` · 357 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `RouterLogScreen.kt` · 59 · Shows the smart router's real local health: what it used today, what is cooling down and h · RouterWarn, RouterLogScreen, maybeProvider · uses: ModelRouter.kt
 - `SkillsScreen.kt` · 172 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, Color2, SkillEditor · uses: Skills.kt, AppLog.kt
+- `ThemeLabScreen.kt` · 110 · Debug screen: shows every theme at once with live state/level/sound controls. · ThemeLabScreen · uses: AudioLevel.kt, Components.kt, AssistantState.kt, AssistantTheme.kt, ThemeRepository.kt, ThemeRegistry.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt
 - `UiStyleScreen.kt` · 153 · 50 interface styles: 25 native-Android premium and 25 iOS premium. · StyleInfo, STYLES, UiStyleScreen, StyleRow, Mini, MiniModern · uses: Prefs.kt, IfaceCatalog.kt
 - `VoiceScreen.kt` · 241 · - · VOICES, VoiceScreen, VoiceCard, AddVoiceDialog · uses: AppLog.kt, PcmPlayer.kt, Speaker.kt, Prefs.kt, Langs.kt, Voices.kt
@@ -116,9 +134,32 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `StyleKit.kt` · 201 · What the Home screen controller hands to every interface style. · HomeUi, Warn, gemStatus, AuroraNav, NovaNav, AuroraHeader, NovaHeader · uses: ModelCatalog.kt, Prefs.kt, Device.kt, Components.kt
 
 ### ui/theme/
+- `AssistantState.kt` · 5 · The four states every assistant theme must react to. · AssistantState
+- `AssistantTheme.kt` · 19 · One selectable assistant visual. [Render] draws it for the current state and voice [level] · ThemeCategory, AssistantTheme · uses: FxProfile.kt
+- `ClassicTheme.kt` · 32 · Keeps the app's original animated orb available as a theme (the default). · ClassicTheme · uses: Prefs.kt, SiriOrb.kt, FxProfile.kt
 - `Color.kt` · 130 · 50 color styles. The first one is the original Figma "Royal Gold". · Palette, Palettes, Bg
+- `PerformanceTier.kt` · 20 · Decides whether to draw the lighter version (fewer particles/details) on weak or saving de · PerformanceTier
 - `Theme.kt` · 33 · - · JarvisTheme
+- `ThemeRegistry.kt` · 32 · The only place themes are listed. · ThemeRegistry · uses: FxProfile.kt, HudThemes.kt, OrbShaders.kt, OrbThemes.kt
+- `ThemeRepository.kt` · 35 · Persists the selected assistant theme id using the app's existing settings storage (Prefs) · ThemeRepository, Fx · uses: Prefs.kt, FxProfile.kt, FxPlayer.kt
 - `Type.kt` · 10 · Figma uses Playfair Display (headings) and Inter (body). · JarvisSerif, JarvisSans
+
+### ui/theme/anim/
+- `AnimUtils.kt` · 68 · Time that advances at a changeable speed WITHOUT jumping when the speed changes. · rememberPhase, speedFor, arcRing, tickRing · uses: AssistantState.kt
+
+### ui/theme/fx/
+- `FxPlayer.kt` · 48 · Single entry point for sound effects. It never throws and always falls back to the synth. · FxPlayer
+- `FxProfile.kt` · 34 · - · FxEvent, FxSpec, FxProfile, FxPresets
+- `SynthFx.kt` · 46 · - · SynthFx
+
+### ui/theme/hud/
+- `HudThemes.kt` · 227 · ------------------------------------------------------------------- Arc Reactor · label, HudTheme, HudArcReactor, HudRadar, HudGlobe, HudAmber, HudFrost · uses: AssistantState.kt, AssistantTheme.kt, AnimUtils.kt, FxProfile.kt, ParticleSphere.kt
+
+### ui/theme/orbs/
+- `OrbShaders.kt` · 128 · AGSL (RuntimeShader) sources, Android 13+ only. Every source declares and uses resolution, · OrbShaders
+- `OrbThemes.kt` · 26 · - · ShaderOrbTheme, ParticleSphereTheme · uses: AssistantTheme.kt, AssistantState.kt, FxProfile.kt
+- `ParticleSphere.kt` · 63 · - · fibonacciSphere, ParticleSphere · uses: AssistantState.kt, AnimUtils.kt
+- `ShaderOrb.kt` · 65 · - · ShaderOrb, ShaderOrbApi33, FallbackOrb · uses: AssistantState.kt, AnimUtils.kt
 
 ## Resources, manifest, build, CI, docs
 
@@ -178,6 +219,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
 - `docs/CHANGES_20261017_phases2-5-router-resume-network-skills.md` · 48 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
+- `docs/CHANGES_20261017_visual-themes-soundfx.md` · 51 lines
 - `docs/CHANGES_20261017_workspace-provider-only.md` · 50 lines
 - `docs/HANDOFF_STATE.md` · 23 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
