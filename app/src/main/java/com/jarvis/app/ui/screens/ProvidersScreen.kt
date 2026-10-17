@@ -121,7 +121,7 @@ private fun ColumnScope.ProviderList(onEdit: (CustomProvider) -> Unit) {
         JText("MODEL CATALOG", 11, Gold, FontWeight.Medium, ls = 2.2f)
         JText("Offline facts (context size, tool support) for well-known models. Currently ${ModelCatalogFile.count()} models from the ${ModelCatalogFile.source} catalog v${ModelCatalogFile.version}. Paste a URL to a newer model_catalog.json to update it.", 11, Muted, lh = 15)
         JField(catUrl, { catUrl = it }, "https://example.com/model_catalog.json (optional)", Modifier.fillMaxWidth())
-        OutlineButton(if (catBusy) "Updating…" else "Save URL and update now", Icons.Outlined.CloudDownload, {
+        OutlineButton(if (catBusy) "Updating…" else "Save URL and update now", Icons.Outlined.Download, {
             if (!catBusy) scope.launch {
                 catBusy = true; catMsg = ""; catOk = null
                 Prefs.catalogUrl = catUrl.trim(); Prefs.save()
@@ -215,7 +215,7 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
                 if (items.isNotEmpty()) {
                     JText("$group · ${items.size}", 11, Muted, FontWeight.Medium)
                     items.forEach { m ->
-                        ModelRow(m, m.id == model, probing == m.id) { model = m.id } {
+                        ModelRow(m, m.id == model, probing == m.id, onClick = { model = m.id }, onProbe = {
                             if (probing.isBlank() && url.isNotBlank()) scope.launch {
                                 probing = m.id; result = ""; ok = null
                                 val r = ProbeService.probe(current(), m.id, testTools = true)
@@ -225,7 +225,7 @@ private fun ColumnScope.ProviderEditor(start: CustomProvider, onDone: () -> Unit
                                 else "Test failed: ${r.error}"
                                 ok = r.ok; probing = ""
                             }
-                        }
+                        })
                     }
                 }
             }
@@ -344,7 +344,7 @@ private fun ModelRow(m: ProviderModel, selected: Boolean, testing: Boolean, onCl
             JText(meta, 10, Muted)
         }
         if (m.isFree == true) JText("free", 10, Gold)
-        if (testing) Icon(Icons.Outlined.HourglassEmpty, "Testing", tint = Gold, modifier = Modifier.size(18.dp))
+        if (testing) Icon(Icons.Outlined.Refresh, "Testing", tint = Gold, modifier = Modifier.size(18.dp))
         else Icon(Icons.Outlined.Info, if (m.lastVerifiedAt > 0) "Verified · test again" else "Test this model", tint = if (m.lastVerifiedAt > 0) Gold else Muted,
             modifier = Modifier.size(18.dp).clickable { onProbe() })
     }
