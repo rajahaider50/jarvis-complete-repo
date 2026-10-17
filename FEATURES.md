@@ -19,3 +19,7 @@ Updated 2026-10-17.
 | Workspace coding agent and skills | existing | `code/CodeAgent.kt`, `code/Skills.kt`, `code/Workspace.kt` |
 | SKILL.md skills + bundled 95-skill pack + zip/URL import | active — Phase 5 | `code/Skills.kt`, `assets/skills_pack.json`, `ui/screens/SkillsScreen.kt` |
 | File-based non-sensitive agent memory tools | active — Phase 5 | `code/MemoryStore.kt`, `code/AgentTools.kt`, `ui/screens/MemoryScreen.kt` |
+| Workspace coding uses custom providers only (no Gemini) | active | `data/ModelRouter.rankWorkspace`, `code/CodeAgent.makeBackend`, `ui/screens/CodeScreen.kt` |
+| Workspace Auto/Manual provider model selection + step-by-step failover | active | `data/Prefs.workspaceModel`, `data/ModelRouter.rankWorkspace` |
+| Live agent memory review in the Memory screen | active | `code/MemoryStore.kt` (`revision`, `entries`), `ui/screens/MemoryScreen.kt` |
+| Visual assistant themes (10) + classic, Theme Lab, sound FX, audio level | active | `ui/theme/**`, `ui/screens/ThemeLabScreen.kt`, `audio/AudioLevel.kt` |

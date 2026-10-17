@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jarvis.app.audio.AudioLevel
+import com.jarvis.app.data.Prefs
 import com.jarvis.app.ui.components.ScreenScaffold
 import com.jarvis.app.ui.components.SubHeader
 import com.jarvis.app.ui.theme.AssistantState
@@ -90,6 +91,12 @@ fun ThemeLabScreen(onBack: () -> Unit) {
                         Text(e.name, color = Color(0xFFC9C4B8), fontSize = 9.sp)
                     }
                 }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = Prefs.fxEnabled, onClick = { Prefs.fxEnabled = !Prefs.fxEnabled; Prefs.save() }, label = { Text("Sound FX", fontSize = 10.sp) })
+                Text("Vol", color = Color.White, fontSize = 11.sp)
+                Slider(value = Prefs.fxVolume, onValueChange = { Prefs.fxVolume = it; Prefs.save() }, modifier = Modifier.weight(1f).padding(horizontal = 6.dp))
+                Text("%.2f".format(Prefs.fxVolume), color = Color.White, fontSize = 11.sp)
             }
             LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.weight(1f), contentPadding = PaddingValues(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(ThemeRegistry.all, key = { it.id }) { theme ->

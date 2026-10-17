@@ -1,4 +1,7 @@
 # PENDING (not done yet). Delete a line when finished and add it to Complete.md.
+- [ ] Phone test: Workspace coding with two providers — Auto should switch models/provider when a limit is hit; Manual uses only the chosen provider; with no provider it must refuse (no Gemini).
+- [ ] Phone test: Memory screen shows live AGENT MEMORY entries while a coding task writes memory.
+- [ ] Phone test: Profile > Theme Lab — all 11 visuals animate in every state, level slider reacts, long-press sets active, FX sounds + volume work; API<33 shows fallback orbs.
 - [ ] Open generated PPTX once in PowerPoint/Google Slides to confirm it opens.
 - [ ] Check Vosk / Porcupine / jna dependency versions resolve in Gradle.
 - [ ] Phone test of both call engines (Gemini Live and provider pipeline).

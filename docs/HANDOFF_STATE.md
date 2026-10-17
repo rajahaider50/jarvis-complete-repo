@@ -1,7 +1,8 @@
 # HANDOFF STATE (newest entry on top; each AI adds one entry when it finishes)
 
 ## Current state
-- **JARVIS UPGRADE GUIDE: all 5 phases implemented and building green.** Phase 1 providers/catalog/probes (runs 48/49), Phase 2 task state + resume (51/52), Phase 3 smart router + failover + router log (53/54), Phase 4 network/power auto-resume + foreground service (55/56), Phase 5 SKILL.md skills + 95-skill pack + memory tools (59/60). Latest commit 7e213500.
+- **Two new features complete and building green.** (1) Workspace coding is provider-only (no Gemini) with Auto (all providers, step-by-step failover) / Manual (one provider) selection and a live agent-memory review section — run 62 green. (2) Full visual themes + sound FX system per JARVIS_VISUAL_THEMES_GUIDE: 10 themes + classic, Theme Lab, SynthFx/FxPlayer, AudioLevel, PerformanceTier — run 66 green.
+- **JARVIS UPGRADE GUIDE: all 5 phases implemented and building green.** Phase 1 providers/catalog/probes (runs 48/49), Phase 2 task state + resume (51/52), Phase 3 smart router + failover + router log (53/54), Phase 4 network/power auto-resume + foreground service (55/56), Phase 5 SKILL.md skills + 95-skill pack + memory tools (59/60).
 - No longer dead code: `ModelRouter` (chat + coding + router log), `TaskStateStore` (checkpoints + resume card), `NetworkMonitor` + `CodeTaskService` (manifest + auto-resume), `MemoryStore` (agent memory tools).
 - App version: v8 workspace + documents, Custom-provider JSON import, green `Build APK`.
 - Done: 50 interface styles (5 layout engines), 100 orb styles, 50 themes, Gemini chat/live fallback, custom providers with discovery/free filter/catalog/probes, console, accessibility tools, call bubble, wake word, code/documents workspace, provider JSON import.
@@ -11,6 +12,8 @@
 - Install the debug APK and test end to end: provider discovery + free filter + probes; a coding task killed mid-run and resumed; router log; network drop/resume; skill pack install + a group enable + import a SKILL.md.
 
 ## Log
+- 2026-10-17: Visual themes + sound FX system added (JARVIS_VISUAL_THEMES_GUIDE). 10 themes + classic, Theme Lab, SynthFx/FxPlayer, AudioLevel, PerformanceTier. Build green (run 66; one fix: HUD `label` needed @Composable). See docs/CHANGES_20261017_visual-themes-soundfx.md.
+- 2026-10-17: Workspace now provider-only (no Gemini) with Auto/Manual selection + step-by-step failover; Memory screen shows live agent memory. Build green (run 62). See docs/CHANGES_20261017_workspace-provider-only.md.
 - 2026-10-17: Phases 2-5 done (see docs/CHANGES_20261017_phases2-5-router-resume-network-skills.md). Build green (runs 59/60 after adding two missing imports in SkillsScreen).
 - 2026-10-17: Upgrade Guide Phase 1 done (providers + catalog + probes). Build green (runs 48/49).
 - 2026-10-17: Premium interface styles now have unique LAYOUTS (engine 5). Build green.
