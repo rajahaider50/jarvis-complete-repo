@@ -1,17 +1,22 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 16:53 · 190 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 17:06 · 197 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
 - app/src/main/AndroidManifest.xml
-- app/src/main/java/com/jarvis/app/live/AudioMixer.kt
-- app/src/main/java/com/jarvis/app/live/CallAudioTap.kt
-- app/src/main/java/com/jarvis/app/live/CallEngine.kt
-- app/src/main/java/com/jarvis/app/live/CallHost.kt
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/data/NavState.kt
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
+- app/src/main/java/com/jarvis/app/live/AiPanel.kt
+- app/src/main/java/com/jarvis/app/live/AppControl.kt
+- app/src/main/java/com/jarvis/app/live/CallCamera.kt
 - app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/live/ScreenRecordService.kt
+- app/src/main/java/com/jarvis/app/live/PhoneTools.kt
+- app/src/main/java/com/jarvis/app/live/ScreenRecordRequestActivity.kt
+- app/src/main/java/com/jarvis/app/ui/components/AiOptionsOverlay.kt
 - app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
-- docs/CHANGES_20261017_live-call-phase4-recorder.md
+- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
+- docs/CHANGES_20261017_live-call-phase5-ai-control.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -19,7 +24,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 158 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 161 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
@@ -54,8 +59,9 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ModelCatalog.kt` · 110 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog
 - `ModelCatalogFile.kt` · 102 · A small offline catalog of well-known models, so a provider that does not report · ModelCatalogFile
 - `ModelRouter.kt` · 172 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
+- `NavState.kt` · 11 · The screen the app is showing right now, so the assistant knows where the user is (get_app · NavState
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 146 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 149 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
@@ -63,15 +69,19 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `Weather.kt` · 72 · Today's weather from Open-Meteo (free, no key) using the phone's last known location. · Weather
 
 ### live/
+- `AiPanel.kt` · 85 · The floating option popups the assistant shows during a call ("5-5"): orb styles, colour t · AiPanel · uses: Prefs.kt, SiriOrb.kt, IfaceCatalog.kt, Color.kt, ThemeRegistry.kt
+- `AppControl.kt` · 102 · App-control tools the Gemini Live model can call during a call: show option popups ("5-5") · AppControl · uses: MainActivity.kt, AppLog.kt, NavState.kt, Prefs.kt, SiriOrb.kt
 - `AudioMixer.kt` · 66 · Joins the two sides of a live call into one 44.1 kHz mono stream for the in-app screen rec · AudioMixer
 - `CallAudioTap.kt` · 15 · A tap into the live call's raw audio, used by the in-app screen recorder to mix both sides · CallAudioTap
+- `CallCamera.kt` · 14 · The live call camera, owned by the app (not the screen) so both the UI and the assistant c · CallCamera
 - `CallEngine.kt` · 48 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
 - `CallHost.kt` · 94 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
 - `CallService.kt` · 86 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
 - `JarvisAccessibilityService.kt` · 185 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService
-- `LiveClient.kt` · 420 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
-- `PhoneTools.kt` · 129 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
+- `LiveClient.kt` · 421 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
+- `PhoneTools.kt` · 138 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
+- `ScreenRecordRequestActivity.kt` · 39 · Invisible screen that shows Android's own "start recording?" question so the assistant can · ScreenRecordRequestActivity · uses: AppLog.kt
 - `ScreenRecordService.kt` · 256 · In-app screen recorder: captures the screen (MediaProjection -> H.264) and mixes both side · ScreenRecordService · uses: AppLog.kt
 - `ScreenShareRequestActivity.kt` · 40 · An invisible screen that shows Android's own "start recording or casting?" question, so th · ScreenShareRequestActivity · uses: AppLog.kt
 - `ScreenShareService.kt` · 95 · Foreground service that captures the screen (MediaProjection) and hands ~1 JPEG frame/seco · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
@@ -84,6 +94,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `OverlayLifecycleOwner.kt` · 35 · Compose needs a lifecycle, a saved-state registry and a view-model store to run. An overla · OverlayLifecycleOwner
 
 ### ui/components/
+- `AiOptionsOverlay.kt` · 100 · The option popups the assistant shows during a call. Five animated cards; the user answers · AiOptionsOverlay · uses: AiPanel.kt, Color.kt
 - `Components.kt` · 259 · The bottom bar follows the chosen interface style. · goldBrush, JText, Hairline, JarvisOrb, GoldButton, GoldIconBox, ScreenScaffold
 - `MiniCallBar.kt` · 64 · A small "call is running" bar shown on every screen except the call itself. Tapping it ret · MiniCallBar · uses: Prefs.kt, CallEngine.kt, CallHost.kt
 - `SiriOrb.kt` · 1340 · mode: 0 idle, 1 listening (reacts to level), 2 thinking, 3 speaking. style: 0..99 (see ORB · ORB_STYLES, SiriOrb, glow, ball, soft, warm, blobs · uses: Prefs.kt
@@ -104,7 +115,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `LiveVoiceScreen.kt` · 321 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
-- `ProfileScreen.kt` · 128 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
+- `ProfileScreen.kt` · 140 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
 - `ProvidersScreen.kt` · 357 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `RouterLogScreen.kt` · 59 · Shows the smart router's real local health: what it used today, what is cooling down and h · RouterWarn, RouterLogScreen, maybeProvider · uses: ModelRouter.kt
 - `SkillsScreen.kt` · 172 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, Color2, SkillEditor · uses: Skills.kt, AppLog.kt
@@ -170,7 +181,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `.github/workflows/map.yml` · 21 lines
 - `.github/workflows/pack.yml` · 34 lines
 - `app/build.gradle.kts` · 48 lines
-- `app/src/main/AndroidManifest.xml` · 124 lines
+- `app/src/main/AndroidManifest.xml` · 130 lines
 - `app/src/main/assets/model_catalog.json` · 12 lines
 - `app/src/main/assets/skills_pack.json` · 766 lines
 - `app/src/main/res/values/colors.xml` · 2 lines
@@ -208,6 +219,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_live-call-phase2-live-models.md` · 32 lines
 - `docs/CHANGES_20261017_live-call-phase3-minimize.md` · 36 lines
 - `docs/CHANGES_20261017_live-call-phase4-recorder.md` · 36 lines
+- `docs/CHANGES_20261017_live-call-phase5-ai-control.md` · 23 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
