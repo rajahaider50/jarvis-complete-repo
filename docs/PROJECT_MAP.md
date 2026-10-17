@@ -1,9 +1,14 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 11:43 · 182 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 11:55 · 182 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/ui/theme/hud/HudThemes.kt
+- Complete.md
+- FEATURES.md
+- Pending.md
+- Task.md
+- app/src/main/java/com/jarvis/app/ui/screens/ThemeLabScreen.kt
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -96,7 +101,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ProvidersScreen.kt` · 357 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `RouterLogScreen.kt` · 59 · Shows the smart router's real local health: what it used today, what is cooling down and h · RouterWarn, RouterLogScreen, maybeProvider · uses: ModelRouter.kt
 - `SkillsScreen.kt` · 172 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, Color2, SkillEditor · uses: Skills.kt, AppLog.kt
-- `ThemeLabScreen.kt` · 110 · Debug screen: shows every theme at once with live state/level/sound controls. · ThemeLabScreen · uses: AudioLevel.kt, Components.kt, AssistantState.kt, AssistantTheme.kt, ThemeRepository.kt, ThemeRegistry.kt
+- `ThemeLabScreen.kt` · 117 · Debug screen: shows every theme at once with live state/level/sound controls. · ThemeLabScreen · uses: AudioLevel.kt, Prefs.kt, Components.kt, AssistantState.kt, AssistantTheme.kt, ThemeRepository.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt
 - `UiStyleScreen.kt` · 153 · 50 interface styles: 25 native-Android premium and 25 iOS premium. · StyleInfo, STYLES, UiStyleScreen, StyleRow, Mini, MiniModern · uses: Prefs.kt, IfaceCatalog.kt
 - `VoiceScreen.kt` · 241 · - · VOICES, VoiceScreen, VoiceCard, AddVoiceDialog · uses: AppLog.kt, PcmPlayer.kt, Speaker.kt, Prefs.kt, Langs.kt, Voices.kt
@@ -142,14 +147,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 16 lines
-- `FEATURES.md` · 22 lines
+- `Complete.md` · 18 lines
+- `FEATURES.md` · 26 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 9 lines
+- `Pending.md` · 12 lines
 - `Planning.md` · 15 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
-- `Task.md` · 11 lines
+- `Task.md` · 10 lines
 - `build.gradle.kts` · 5 lines
 - `gradle.properties` · 5 lines
 - `settings.gradle.kts` · 8 lines
@@ -199,7 +204,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
 - `docs/CHANGES_20261017_visual-themes-soundfx.md` · 51 lines
 - `docs/CHANGES_20261017_workspace-provider-only.md` · 50 lines
-- `docs/HANDOFF_STATE.md` · 23 lines
+- `docs/HANDOFF_STATE.md` · 26 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
