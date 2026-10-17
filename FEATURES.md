@@ -23,3 +23,8 @@ Updated 2026-10-17.
 | Workspace Auto/Manual provider model selection + step-by-step failover | active | `data/Prefs.workspaceModel`, `data/ModelRouter.rankWorkspace` |
 | Live agent memory review in the Memory screen | active | `code/MemoryStore.kt` (`revision`, `entries`), `ui/screens/MemoryScreen.kt` |
 | Visual assistant themes (10) + classic, Theme Lab, sound FX, audio level | active | `ui/theme/**`, `ui/screens/ThemeLabScreen.kt`, `audio/AudioLevel.kt` |
+| Live call: instant screen open, prefetch, throttled UI | active — LC Phase 1 | `ui/screens/LiveVoiceScreen.kt`, `live/CallHost.kt`, `live/LiveClient.kt`, `MainActivity.kt` |
+| Live call: saved Live Call Models + parallel fast connect | active — LC Phase 2 | `data/Prefs.liveModels`, `data/ModelCatalog.liveCandidates`, `ui/screens/ApiScreen.kt`, `live/LiveClient.kt` |
+| Live call: keeps running in-app (down-arrow + mini bar) | active — LC Phase 3 | `live/CallService.kt`, `ui/components/MiniCallBar.kt`, `MainActivity.kt`, `ui/screens/LiveVoiceScreen.kt` |
+| Live call: in-app recorder (screen + both voices) + mic-silent fix | active — LC Phase 4 | `live/ScreenRecordService.kt`, `live/CallAudioTap.kt`, `live/AudioMixer.kt`, `live/CallEngine.kt`, `ui/screens/LiveVoiceScreen.kt` |
+| Live call: AI control — 5-5 option popups + app tools | active — LC Phase 5 | `live/AiPanel.kt`, `live/AppControl.kt`, `live/PhoneTools.kt`, `live/LiveClient.kt`, `ui/components/AiOptionsOverlay.kt`, `data/NavState.kt`, `data/Prefs.aiControl` |

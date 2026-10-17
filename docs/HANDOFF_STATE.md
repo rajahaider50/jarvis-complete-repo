@@ -1,7 +1,8 @@
 # HANDOFF STATE (newest entry on top; each AI adds one entry when it finishes)
 
 ## Current state
-- **Two new features complete and building green.** (1) Workspace coding is provider-only (no Gemini) with Auto (all providers, step-by-step failover) / Manual (one provider) selection and a live agent-memory review section — run 62 green. (2) Full visual themes + sound FX system per JARVIS_VISUAL_THEMES_GUIDE: 10 themes + classic, Theme Lab, SynthFx/FxPlayer, AudioLevel, PerformanceTier — run 66 green.
+- **JARVIS LIVE CALL UPDATE: all phases implemented and building green.** Phase 1 instant open/lag (run 39049063340), Phase 2 saved Live Call Models + parallel fast connect (39049749611), Phase 3 down-arrow minimise + mini bar (39050810331), Phase 4 in-app recorder (screen + both voices) + mic-silent fix (39051398001), Phase 5 AI control: 5-5 option popups + app tools (39052284373).
+- **Two new features complete and building green.** (1) Workspace coding is provider-only (no Gemini) with Auto / Manual selection and a live agent-memory review section — run 62 green. (2) Full visual themes + sound FX system per JARVIS_VISUAL_THEMES_GUIDE: 10 themes + classic, Theme Lab, SynthFx/FxPlayer, AudioLevel, PerformanceTier — run 66 green.
 - **JARVIS UPGRADE GUIDE: all 5 phases implemented and building green.** Phase 1 providers/catalog/probes (runs 48/49), Phase 2 task state + resume (51/52), Phase 3 smart router + failover + router log (53/54), Phase 4 network/power auto-resume + foreground service (55/56), Phase 5 SKILL.md skills + 95-skill pack + memory tools (59/60).
 - No longer dead code: `ModelRouter` (chat + coding + router log), `TaskStateStore` (checkpoints + resume card), `NetworkMonitor` + `CodeTaskService` (manifest + auto-resume), `MemoryStore` (agent memory tools).
 - App version: v8 workspace + documents, Custom-provider JSON import, green `Build APK`.
@@ -12,6 +13,11 @@
 - Install the debug APK and test end to end: provider discovery + free filter + probes; a coding task killed mid-run and resumed; router log; network drop/resume; skill pack install + a group enable + import a SKILL.md.
 
 ## Log
+- 2026-10-17: Live call phase 5 (AI control). Assistant shows 5-5 option popups via show_options(select_option); new tools get_app_state, close_options, set_camera, set_screen_recording, set_screen_share, navigate; `AppControl`, `AiPanel`, `AiOptionsOverlay`, `NavState`, `CallCamera`, `ScreenRecordRequestActivity`, `Prefs.aiControl` + Profile toggle. Build green (run 39052284373). See docs/CHANGES_20261017_live-call-phase5-ai-control.md.
+- 2026-10-17: Live call phase 4 (in-app recorder + mic fix). Screen video + both voices to Movies/Jarvis; mic-silent detection. Build green (run 39051398001). See docs/CHANGES_20261017_live-call-phase4-recorder.md.
+- 2026-10-17: Live call phase 3 (background). Down-arrow minimise + MiniCallBar on other screens; camera FGS type. Build green (run 39050810331; fix: `nav.currentBackStackEntryAsState()` receiver). See docs/CHANGES_20261017_live-call-phase3-minimize.md.
+- 2026-10-17: Live call phase 2 (fast connect). Saved Live Call Models + parallel 2-trial race (2.5s). Build green (run 39049749611). See docs/CHANGES_20261017_live-call-phase2-live-models.md.
+- 2026-10-17: Live call phase 1 (lag). Removed fixed delay, off-main-thread setup, throttled level UI, prewarm. Build green (run 39049063340). See docs/CHANGES_20261017_live-call-phase1-lag.md.
 - 2026-10-17: Visual themes + sound FX system added (JARVIS_VISUAL_THEMES_GUIDE). 10 themes + classic, Theme Lab, SynthFx/FxPlayer, AudioLevel, PerformanceTier. Build green (run 66; one fix: HUD `label` needed @Composable). See docs/CHANGES_20261017_visual-themes-soundfx.md.
 - 2026-10-17: Workspace now provider-only (no Gemini) with Auto/Manual selection + step-by-step failover; Memory screen shows live agent memory. Build green (run 62). See docs/CHANGES_20261017_workspace-provider-only.md.
 - 2026-10-17: Phases 2-5 done (see docs/CHANGES_20261017_phases2-5-router-resume-network-skills.md). Build green (runs 59/60 after adding two missing imports in SkillsScreen).

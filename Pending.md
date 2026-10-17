@@ -1,4 +1,8 @@
 # PENDING (not done yet). Delete a line when finished and add it to Complete.md.
+- [ ] Phone test: live call opens instantly and connects in about a second using the saved Live Call Models (ApiScreen).
+- [ ] Phone test: down-arrow minimises the call; mini bar shows on other screens; call keeps running; camera keeps working.
+- [ ] Phone test: record a call (video + both voices) and confirm the file in Movies/Jarvis; mic-silent warning shows.
+- [ ] Phone test: AI control — "orb/theme/interface/colors dikhao", "aur dikhao", "teesra"; camera/recording/share/navigate by voice; Profile AI-control toggle off blocks it.
 - [ ] Phone test: Workspace coding with two providers — Auto should switch models/provider when a limit is hit; Manual uses only the chosen provider; with no provider it must refuse (no Gemini).
 - [ ] Phone test: Memory screen shows live AGENT MEMORY entries while a coding task writes memory.
 - [ ] Phone test: Profile > Theme Lab — all 11 visuals animate in every state, level slider reacts, long-press sets active, FX sounds + volume work; API<33 shows fallback orbs.
