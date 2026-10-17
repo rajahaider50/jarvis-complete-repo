@@ -1,11 +1,13 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 07:30 · 161 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 07:39 · 162 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/AndroidManifest.xml
+- app/src/main/assets/skills_pack.json
 - app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/code/CodeAgent.kt
+- app/src/main/java/com/jarvis/app/code/AgentTools.kt
+- app/src/main/java/com/jarvis/app/code/Skills.kt
+- app/src/main/java/com/jarvis/app/ui/screens/SkillsScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -13,7 +15,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 132 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 134 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
@@ -26,13 +28,13 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `WavUtil.kt` · 60 · Small helpers to move audio between phone PCM and the WAV files that speech servers use. · WavUtil
 
 ### code/
-- `AgentTools.kt` · 118 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: AppLog.kt
+- `AgentTools.kt` · 133 · The tools the code agent works with: a real project folder, an editor, document makers, sk · AgentTools · uses: AppLog.kt
 - `CodeAgent.kt` · 324 · The coding / document agent. It uses the model you chose in Chat (a Gemini model or a cust · CodeAgent · uses: AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalog.kt, ModelRouter.kt, Prefs.kt
 - `CodeTaskService.kt` · 34 · Keeps the app process at foreground priority while a coding task is running. · CodeTaskService
 - `DocGen.kt` · 362 · Real file generators that run on the phone: PDF and PNG are DRAWN (shapes, gradients, icon · DocGen
 - `MemoryStore.kt` · 62 · Topic-based markdown memory. It never runs content and rejects obvious secret material. · MemoryStore
 - `NetworkMonitor.kt` · 57 · Process-level network state used by coding mode; callbacks are delivered on the main threa · NetworkMonitor · uses: AppLog.kt
-- `Skills.kt` · 100 · Skills are short instruction packs. The agent sees only each skill's name and one line; wh · Skills · uses: AppLog.kt
+- `Skills.kt` · 195 · Skills are short instruction packs. The agent sees only each skill's name and one line; wh · Skills · uses: AppLog.kt
 - `TaskStateStore.kt` · 122 · Crash-safe local state for the one coding task that may need to resume. · TaskStateStore · uses: AppLog.kt
 - `Workspace.kt` · 236 · Projects on the phone: folders of real files that you and the AI can create, edit, delete, · Workspace · uses: AppLog.kt
 
@@ -96,7 +98,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ProfileScreen.kt` · 127 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
 - `ProvidersScreen.kt` · 357 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `RouterLogScreen.kt` · 59 · Shows the smart router's real local health: what it used today, what is cooling down and h · RouterWarn, RouterLogScreen, maybeProvider · uses: ModelRouter.kt
-- `SkillsScreen.kt` · 86 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, SkillEditor · uses: Skills.kt, AppLog.kt
+- `SkillsScreen.kt` · 170 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, Color2, SkillEditor · uses: Skills.kt, AppLog.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt
 - `UiStyleScreen.kt` · 153 · 50 interface styles: 25 native-Android premium and 25 iOS premium. · StyleInfo, STYLES, UiStyleScreen, StyleRow, Mini, MiniModern · uses: Prefs.kt, IfaceCatalog.kt
 - `VoiceScreen.kt` · 241 · - · VOICES, VoiceScreen, VoiceCard, AddVoiceDialog · uses: AppLog.kt, PcmPlayer.kt, Speaker.kt, Prefs.kt, Langs.kt, Voices.kt
@@ -137,6 +139,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `app/build.gradle.kts` · 48 lines
 - `app/src/main/AndroidManifest.xml` · 118 lines
 - `app/src/main/assets/model_catalog.json` · 12 lines
+- `app/src/main/assets/skills_pack.json` · 766 lines
 - `app/src/main/res/values/colors.xml` · 2 lines
 - `app/src/main/res/values/strings.xml` · 5 lines
 - `app/src/main/res/values/themes.xml` · 15 lines
