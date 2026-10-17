@@ -1,9 +1,10 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 07:08 · 160 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 07:12 · 160 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
+- Complete.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -116,7 +117,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 14 lines
+- `Complete.md` · 15 lines
 - `FEATURES.md` · 21 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 9 lines
@@ -169,7 +170,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
-- `docs/HANDOFF_STATE.md` · 20 lines
+- `docs/HANDOFF_STATE.md` · 22 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
