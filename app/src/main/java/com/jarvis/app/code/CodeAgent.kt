@@ -44,6 +44,7 @@ object CodeAgent {
         var editorPath by mutableStateOf("")
         var editorText by mutableStateOf("")
         var editorSeq by mutableStateOf(0)
+        var state: TaskStateStore.State? = null
         val outputs = mutableStateListOf<String>()
         fun showInEditor(path: String, text: String) { editorPath = path; editorText = text.take(20000); editorSeq++ }
     }
@@ -185,19 +186,41 @@ object CodeAgent {
         runs.add(run); current = run
         job = scope.launch {
             try { execute(run, attached) }
-            catch (e: CancellationException) { run.status = 3; throw e }
-            catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2 }
+            catch (e: CancellationException) { run.status = 3; run.state?.let { TaskStateStore.pause(it, p, "Stopped by the user.") }; throw e }
+            catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2; run.state?.let { TaskStateStore.pause(it, p, "Interrupted: ${e.message}") } }
         }
     }
 
+    /** Restarts the last unfinished task from its saved checkpoint, keeping the original goal. */
+    fun resumeTask() {
+        val st = TaskStateStore.pending ?: return
+        if (busy) return
+        val p = Workspace.projects.firstOrNull { it.id == st.projectId } ?: return
+        Workspace.current = p
+        val run = Run(p, st.originalGoal)
+        run.state = st
+        runs.add(run); current = run
+        job = scope.launch {
+            try { execute(run, emptyList(), st) }
+            catch (e: CancellationException) { run.status = 3; TaskStateStore.pause(st, p, "Stopped by the user."); throw e }
+            catch (e: Exception) { AppLog.e("CodeAgent", e); run.error = e.message ?: "The agent stopped"; run.status = 2; TaskStateStore.pause(st, p, "Interrupted: ${e.message}") }
+        }
+    }
+
+    fun discardPending() = TaskStateStore.pending?.let { TaskStateStore.complete(it) }
+
     fun stop() { job?.cancel(); current?.let { if (it.status == 0) it.status = 3 } }
 
-    private suspend fun execute(run: Run, attached: List<String>) {
+    private suspend fun execute(run: Run, attached: List<String>, resume: TaskStateStore.State? = null) {
         val p = run.project
+        val state = resume ?: TaskStateStore.begin(p, run.prompt)
+        run.state = state
+        if (resume != null) TaskStateStore.resume(state)
         val backend = makeBackend()
         run.model = backend.label
         val files = Workspace.tree(p).take(60).joinToString(", ") { it.path }.ifBlank { "(empty)" }
         backend.begin(systemPrompt(p), run.prompt + (if (attached.isNotEmpty()) "\n\nThe user added these files to the project: ${attached.joinToString()}" else "") + "\n\nProject files now: $files")
+        if (resume != null) backend.say(TaskStateStore.resumePrompt(state))
         var fixRounds = 0; var done = false; var empty = 0
         for (round in 1..45) {
             val t = backend.step { run.thought += it }
@@ -221,11 +244,13 @@ object CodeAgent {
                 results.add(c to r)
             }
             backend.results(results)
+            TaskStateStore.checkpoint(state, p, run.editorPath, run.editorText)
             if (done) break
         }
         if (run.summary.isBlank()) run.summary = if (done) "Done." else "The work stopped before the agent said it was finished. Everything written so far is in the project."
         if (!done && run.outputs.isEmpty()) deliver(run, JSONObject().put("deliver", "zip"))
         run.status = 1
+        if (done) TaskStateStore.complete(state) else TaskStateStore.pause(state, p, "Reached the step limit before finish. Everything so far is saved.")
     }
 
     /** Puts the result where you can view / download it: a single file, or a zip of the project. */

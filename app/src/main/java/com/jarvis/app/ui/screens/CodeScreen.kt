@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jarvis.app.code.CodeAgent
+import com.jarvis.app.code.TaskStateStore
 import com.jarvis.app.code.Workspace
 import com.jarvis.app.data.AppLog
 import com.jarvis.app.data.CustomProviders
@@ -178,6 +179,19 @@ private fun ColumnScope.AgentTab(onView: (File) -> Unit) {
     val last = runs.lastOrNull()
     LaunchedEffect(runs.size, last?.steps?.size, last?.status, last?.editorSeq) { scroll.animateScrollTo(scroll.maxValue) }
     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(scroll).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        val pending = TaskStateStore.pending
+        if (pending != null && !CodeAgent.busy) {
+            val card = RoundedCornerShape(16.dp)
+            Column(Modifier.fillMaxWidth().clip(card).background(Surface1).border(1.dp, Gold.copy(alpha = 0.4f), card).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                JText("UNFINISHED TASK", 11, Gold, FontWeight.Medium, ls = 2.2f)
+                JText(pending.originalGoal.take(180), 13, Ivory, lh = 19)
+                JText("Saved ${pending.completedFiles.size} file(s) · status: ${pending.status}", 11, Muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GoldButton("Resume task", Icons.Outlined.PlayArrow, { CodeAgent.resumeTask() }, Modifier.weight(1f))
+                    OutlineButton("Discard", Icons.Outlined.Delete, { CodeAgent.discardPending() }, Modifier.weight(1f))
+                }
+            }
+        }
         if (runs.isEmpty()) {
             JText("Tell the agent what to build or fix. It writes the files in an editor (not in the chat), checks that everything is connected, and gives you a zip or a single file to download. Attach a zip or files with the clip to start from your own work.", 13, Muted, lh = 19)
             listOf("Build a responsive landing page website for my business", "Make a one-page PDF CV with a logo and icons", "Create an Excel monthly budget with formulas", "Find and fix the bugs in my project").forEach { s ->
