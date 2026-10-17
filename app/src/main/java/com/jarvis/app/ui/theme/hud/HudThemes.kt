@@ -39,6 +39,7 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
+@Composable
 private fun label(text: String, color: Color, size: Int = 11, weight: FontWeight = FontWeight.Medium) =
     Text(text, color = color, fontSize = size.sp, fontFamily = FontFamily.Monospace, fontWeight = weight)
 
