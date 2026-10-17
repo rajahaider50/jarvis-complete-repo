@@ -1,9 +1,17 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 16:45 · 186 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 16:53 · 190 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/AndroidManifest.xml
+- app/src/main/java/com/jarvis/app/live/AudioMixer.kt
+- app/src/main/java/com/jarvis/app/live/CallAudioTap.kt
+- app/src/main/java/com/jarvis/app/live/CallEngine.kt
+- app/src/main/java/com/jarvis/app/live/CallHost.kt
+- app/src/main/java/com/jarvis/app/live/LiveClient.kt
+- app/src/main/java/com/jarvis/app/live/ScreenRecordService.kt
+- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
+- docs/CHANGES_20261017_live-call-phase4-recorder.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -55,13 +63,16 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `Weather.kt` · 72 · Today's weather from Open-Meteo (free, no key) using the phone's last known location. · Weather
 
 ### live/
-- `CallEngine.kt` · 46 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
-- `CallHost.kt` · 93 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
+- `AudioMixer.kt` · 66 · Joins the two sides of a live call into one 44.1 kHz mono stream for the in-app screen rec · AudioMixer
+- `CallAudioTap.kt` · 15 · A tap into the live call's raw audio, used by the in-app screen recorder to mix both sides · CallAudioTap
+- `CallEngine.kt` · 48 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
+- `CallHost.kt` · 94 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
 - `CallService.kt` · 86 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
 - `JarvisAccessibilityService.kt` · 185 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService
-- `LiveClient.kt` · 414 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
+- `LiveClient.kt` · 420 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `PhoneTools.kt` · 129 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
+- `ScreenRecordService.kt` · 256 · In-app screen recorder: captures the screen (MediaProjection -> H.264) and mixes both side · ScreenRecordService · uses: AppLog.kt
 - `ScreenShareRequestActivity.kt` · 40 · An invisible screen that shows Android's own "start recording or casting?" question, so th · ScreenShareRequestActivity · uses: AppLog.kt
 - `ScreenShareService.kt` · 95 · Foreground service that captures the screen (MediaProjection) and hands ~1 JPEG frame/seco · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
 - `VoskModels.kt` · 61 · The small offline speech models (about 40 MB each) used by the keyless wake phrase engine. · VoskModels · uses: AppLog.kt
@@ -90,7 +101,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
-- `LiveVoiceScreen.kt` · 299 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
+- `LiveVoiceScreen.kt` · 321 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
 - `ProfileScreen.kt` · 128 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
@@ -159,7 +170,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `.github/workflows/map.yml` · 21 lines
 - `.github/workflows/pack.yml` · 34 lines
 - `app/build.gradle.kts` · 48 lines
-- `app/src/main/AndroidManifest.xml` · 119 lines
+- `app/src/main/AndroidManifest.xml` · 124 lines
 - `app/src/main/assets/model_catalog.json` · 12 lines
 - `app/src/main/assets/skills_pack.json` · 766 lines
 - `app/src/main/res/values/colors.xml` · 2 lines
@@ -196,6 +207,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_live-call-phase1-lag.md` · 40 lines
 - `docs/CHANGES_20261017_live-call-phase2-live-models.md` · 32 lines
 - `docs/CHANGES_20261017_live-call-phase3-minimize.md` · 36 lines
+- `docs/CHANGES_20261017_live-call-phase4-recorder.md` · 36 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
