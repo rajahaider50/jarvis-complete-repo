@@ -1,18 +1,17 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-16 22:34 · 156 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 07:01 · 160 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- Planning.md
-- Task.md
-- app/src/main/java/com/jarvis/app/ui/components/Components.kt
-- app/src/main/java/com/jarvis/app/ui/screens/UiStyleScreen.kt
-- app/src/main/java/com/jarvis/app/ui/styles/IfaceCatalog.kt
-- app/src/main/java/com/jarvis/app/ui/styles/IfaceScreens.kt
-- app/src/main/java/com/jarvis/app/ui/styles/StyleKit.kt
-- docs/CHANGES_20261017_interfaces-layouts.md
-- docs/HANDOFF_STATE.md
+- FEATURES.md
+- app/src/main/assets/model_catalog.json
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/data/CustomProviders.kt
+- app/src/main/java/com/jarvis/app/data/ModelCatalogFile.kt
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
+- app/src/main/java/com/jarvis/app/data/ProbeService.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ProvidersScreen.kt
+- docs/CHANGES_20261017_phase1-providers-catalog.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -20,7 +19,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 128 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 129 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
@@ -46,15 +45,17 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ### data/
 - `AppLog.kt` · 130 · The app-wide console. Every handled error (every catch block), every crash and the importa · AppLog
 - `ChatStore.kt` · 232 · - · Msg, SessionMeta, ChatStore
-- `CustomProviders.kt` · 367 · One model offered by a provider. Used by the smart router (`ModelRouter`) to score and pic · ProviderModel, CustomProvider, ImportSummary, CustomProviders, OpenAiCompat · uses: WavUtil.kt, PhoneTools.kt
+- `CustomProviders.kt` · 474 · One model offered by a provider, with only real values. null = unknown (never guessed). · ProviderModel, CustomProvider, ImportSummary, CustomProviders, OpenAiCompat · uses: WavUtil.kt, PhoneTools.kt
 - `Device.kt` · 142 · Real phone controls. Android does not let apps flip Wi-Fi/Bluetooth/Airplane directly, so  · Stats, DeviceStats, DeviceControl
 - `GeminiClient.kt` · 255 · Minimal Gemini API client (REST, v1beta). No model names are hard-coded: · GeminiClient
 - `ImageUtil.kt` · 31 · - · ImageUtil
 - `Langs.kt` · 45 · - · Lang, Langs
 - `ModelCatalog.kt` · 109 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog
+- `ModelCatalogFile.kt` · 102 · A small offline catalog of well-known models, so a provider that does not report · ModelCatalogFile
 - `ModelRouter.kt` · 138 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 126 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 129 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
 - `Voices.kt` · 20 · Gender of each Gemini prebuilt voice + the language rule that keeps grammar matching the v · Voices
@@ -99,7 +100,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `MemoryScreen.kt` · 99 · - · MemoryScreen · uses: ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
 - `ProfileScreen.kt` · 127 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
-- `ProvidersScreen.kt` · 257 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, Prefs.kt
+- `ProvidersScreen.kt` · 352 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `SkillsScreen.kt` · 86 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, SkillEditor · uses: Skills.kt, AppLog.kt
 - `ThemeScreen.kt` · 88 · - · ThemeScreen · uses: Prefs.kt
 - `UiStyleScreen.kt` · 153 · 50 interface styles: 25 native-Android premium and 25 iOS premium. · StyleInfo, STYLES, UiStyleScreen, StyleRow, Mini, MiniModern · uses: Prefs.kt, IfaceCatalog.kt
@@ -124,7 +125,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 - `.gitignore` · 9 lines
 - `Complete.md` · 14 lines
-- `FEATURES.md` · 22 lines
+- `FEATURES.md` · 21 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 9 lines
 - `Planning.md` · 15 lines
@@ -140,6 +141,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `.github/workflows/pack.yml` · 34 lines
 - `app/build.gradle.kts` · 48 lines
 - `app/src/main/AndroidManifest.xml` · 113 lines
+- `app/src/main/assets/model_catalog.json` · 12 lines
 - `app/src/main/res/values/colors.xml` · 2 lines
 - `app/src/main/res/values/strings.xml` · 5 lines
 - `app/src/main/res/values/themes.xml` · 15 lines
@@ -173,6 +175,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_interfaces-layouts.md` · 34 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
+- `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
 - `docs/CHANGES_20261017_provider-json-import.md` · 25 lines
 - `docs/HANDOFF_STATE.md` · 20 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
