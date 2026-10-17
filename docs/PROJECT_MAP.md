@@ -1,13 +1,14 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 16:31 · 184 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 16:39 · 186 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/data/ModelCatalog.kt
-- app/src/main/java/com/jarvis/app/data/Prefs.kt
-- app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ApiScreen.kt
-- docs/CHANGES_20261017_live-call-phase2-live-models.md
+- app/src/main/AndroidManifest.xml
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/live/CallService.kt
+- app/src/main/java/com/jarvis/app/ui/components/MiniCallBar.kt
+- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
+- docs/CHANGES_20261017_live-call-phase3-minimize.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -15,7 +16,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 138 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 158 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
@@ -61,7 +62,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ### live/
 - `CallEngine.kt` · 46 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
 - `CallHost.kt` · 93 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
-- `CallService.kt` · 67 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
+- `CallService.kt` · 86 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
 - `JarvisAccessibilityService.kt` · 185 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService
 - `LiveClient.kt` · 414 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `PhoneTools.kt` · 129 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
@@ -78,6 +79,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### ui/components/
 - `Components.kt` · 259 · The bottom bar follows the chosen interface style. · goldBrush, JText, Hairline, JarvisOrb, GoldButton, GoldIconBox, ScreenScaffold
+- `MiniCallBar.kt` · 64 · A small "call is running" bar shown on every screen except the call itself. Tapping it ret · MiniCallBar · uses: Prefs.kt, CallEngine.kt, CallHost.kt
 - `SiriOrb.kt` · 1340 · mode: 0 idle, 1 listening (reacts to level), 2 thinking, 3 speaking. style: 0..99 (see ORB · ORB_STYLES, SiriOrb, glow, ball, soft, warm, blobs · uses: Prefs.kt
 - `VoiceWave.kt` · 47 · Siri-style layered voice waves that follow the voice level. · VoiceWave
 
@@ -93,7 +95,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
-- `LiveVoiceScreen.kt` · 297 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
+- `LiveVoiceScreen.kt` · 299 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
 - `ProfileScreen.kt` · 128 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
@@ -162,7 +164,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `.github/workflows/map.yml` · 21 lines
 - `.github/workflows/pack.yml` · 34 lines
 - `app/build.gradle.kts` · 48 lines
-- `app/src/main/AndroidManifest.xml` · 118 lines
+- `app/src/main/AndroidManifest.xml` · 119 lines
 - `app/src/main/assets/model_catalog.json` · 12 lines
 - `app/src/main/assets/skills_pack.json` · 766 lines
 - `app/src/main/res/values/colors.xml` · 2 lines
@@ -198,6 +200,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_interfaces-layouts.md` · 34 lines
 - `docs/CHANGES_20261017_live-call-phase1-lag.md` · 40 lines
 - `docs/CHANGES_20261017_live-call-phase2-live-models.md` · 32 lines
+- `docs/CHANGES_20261017_live-call-phase3-minimize.md` · 36 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
