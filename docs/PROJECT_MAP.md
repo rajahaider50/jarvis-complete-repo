@@ -1,13 +1,13 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 16:21 · 183 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-17 16:31 · 184 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/live/CallHost.kt
+- app/src/main/java/com/jarvis/app/data/ModelCatalog.kt
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
 - app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
-- docs/CHANGES_20261017_live-call-phase1-lag.md
+- app/src/main/java/com/jarvis/app/ui/screens/ApiScreen.kt
+- docs/CHANGES_20261017_live-call-phase2-live-models.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -47,11 +47,11 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `GeminiClient.kt` · 255 · Minimal Gemini API client (REST, v1beta). No model names are hard-coded: · GeminiClient
 - `ImageUtil.kt` · 31 · - · ImageUtil
 - `Langs.kt` · 45 · - · Lang, Langs
-- `ModelCatalog.kt` · 109 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog
+- `ModelCatalog.kt` · 110 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog
 - `ModelCatalogFile.kt` · 102 · A small offline catalog of well-known models, so a provider that does not report · ModelCatalogFile
 - `ModelRouter.kt` · 172 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 139 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 146 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
@@ -63,7 +63,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CallHost.kt` · 93 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
 - `CallService.kt` · 67 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
 - `JarvisAccessibilityService.kt` · 185 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService
-- `LiveClient.kt` · 325 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
+- `LiveClient.kt` · 414 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `PhoneTools.kt` · 129 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 - `ScreenShareRequestActivity.kt` · 40 · An invisible screen that shows Android's own "start recording or casting?" question, so th · ScreenShareRequestActivity · uses: AppLog.kt
@@ -86,7 +86,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### ui/screens/
 - `AccessScreen.kt` · 91 · One place for every permission the assistant needs. Tap a row that is not allowed to fix i · Access, AccessScreen · uses: Device.kt, JarvisAccessibilityService.kt
-- `ApiScreen.kt` · 132 · - · ApiScreen, AutoRow · uses: ModelCatalog.kt, Prefs.kt
+- `ApiScreen.kt` · 169 · - · ApiScreen, AutoRow · uses: ModelCatalog.kt, Prefs.kt
 - `AssistantScreen.kt` · 213 · - · AssistantScreen, StatusRow · uses: AppLog.kt, Device.kt, Langs.kt, Prefs.kt, JarvisAccessibilityService.kt, VoskModels.kt
 - `ChatScreen.kt` · 285 · The model's live thinking and the answer as it is being written. · ChatScreen, ThinkingCard, ActionBar, Bubble · uses: ChatStore.kt, ImageUtil.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt, Speaker.kt
 - `CodeScreen.kt` · 456 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Mono, viewable, rememberSaveFile, NameDialog · uses: CodeAgent.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, Prefs.kt
@@ -197,6 +197,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_interfaces-50.md` · 24 lines
 - `docs/CHANGES_20261017_interfaces-layouts.md` · 34 lines
 - `docs/CHANGES_20261017_live-call-phase1-lag.md` · 40 lines
+- `docs/CHANGES_20261017_live-call-phase2-live-models.md` · 32 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
