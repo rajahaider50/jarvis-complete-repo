@@ -1,9 +1,12 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 07:29 · 203 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 07:35 · 205 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
 - app/src/main/java/com/jarvis/app/live/CursorController.kt
+- app/src/main/java/com/jarvis/app/live/CursorPanel.kt
+- app/src/main/java/com/jarvis/app/ui/screens/CursorLabScreen.kt
+- docs/CHANGES_20261017_cursor-phase-A3-A4-panel.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -64,8 +67,9 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CallEngine.kt` · 48 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
 - `CallHost.kt` · 94 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
 - `CallService.kt` · 86 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
-- `CursorController.kt` · 222 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
+- `CursorController.kt` · 272 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
 - `CursorGeometry.kt` · 41 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
+- `CursorPanel.kt` · 275 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
 - `JarvisAccessibilityService.kt` · 316 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService · uses: Prefs.kt
 - `LiveClient.kt` · 421 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `PhoneTools.kt` · 138 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
@@ -100,7 +104,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CodeScreen.kt` · 456 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Mono, viewable, rememberSaveFile, NameDialog · uses: CodeAgent.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, Prefs.kt
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
-- `CursorLabScreen.kt` · 157 · Cursor Lab: proves the normalized coordinate system (center 0,0; right/up positive; 2 deci · targets, targetNames, CursorLabScreen · uses: CursorController.kt, CursorGeometry.kt, JarvisAccessibilityService.kt, Components.kt
+- `CursorLabScreen.kt` · 165 · Cursor Lab: proves the normalized coordinate system (center 0,0; right/up positive; 2 deci · targets, targetNames, CursorLabScreen · uses: CursorController.kt, CursorGeometry.kt, CursorPanel.kt, JarvisAccessibilityService.kt, Components.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
 - `LiveVoiceScreen.kt` · 312 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
@@ -205,6 +209,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_build-fixes.md` · 19 lines
 - `docs/CHANGES_20261017_cursor-phase-A1-coordinates.md` · 26 lines
 - `docs/CHANGES_20261017_cursor-phase-A2-overlay.md` · 28 lines
+- `docs/CHANGES_20261017_cursor-phase-A3-A4-panel.md` · 21 lines
 - `docs/CHANGES_20261017_interfaces-50.md` · 24 lines
 - `docs/CHANGES_20261017_interfaces-layouts.md` · 34 lines
 - `docs/CHANGES_20261017_live-call-phase1-lag.md` · 40 lines
