@@ -53,7 +53,7 @@ import java.util.Locale
  * dump you can copy or save to a file.
  */
 @Composable
-fun DiagnosticsScreen(onBack: () -> Unit) {
+fun DiagnosticsScreen(onBack: () -> Unit, onNav: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var note by remember { mutableStateOf("") }
@@ -97,6 +97,14 @@ fun DiagnosticsScreen(onBack: () -> Unit) {
                     Row(Modifier.fillMaxWidth()) { JText("cursor windows", 12, Muted, modifier = Modifier.weight(1f)); JText("${CursorController.positions().size}", 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("cursor add ok / fail", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.cursorAdds} / ${Diag.cursorAddFails}", 12, Ivory) }
                     JText(CursorController.list(), 11, Muted)
+                } }
+
+                item { Card("Pointer & gestures (Masla A)") {
+                    Row(Modifier.fillMaxWidth()) { JText("gestures ok / bad", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.gesturesCompleted} / ${Diag.gesturesFailed}", 12, if (Diag.gesturesFailed > 0) Gold else Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("last gesture outcome", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.lastGesture, 12, Ivory) }
+                    JText(JarvisAccessibilityService.gestureCapabilities(), 11, Muted)
+                    JText(CursorController.windowReport(), 11, Muted)
+                    GoldButton("Tap Test (real taps, ±65 targets)", null, { onNav("taptest") }, Modifier.padding(top = 6.dp))
                 } }
 
                 item {

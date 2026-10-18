@@ -113,23 +113,21 @@ object AppControl {
                     "long", "hold", "press" -> CursorController.ClickType.LONG
                     else -> CursorController.ClickType.TAP
                 }
-                var result = "clicking"
-                var okFlag = false
-                CursorController.select(id)
-                CursorController.click(id, type) { ok -> okFlag = ok; result = if (ok) "clicked cursor #$id" else "click was blocked (rate limit or busy)" }
-                Thread.sleep(150)
+                CursorController.select(id); CursorPanel.refresh()
+                val r = CursorController.clickResult(id, type)
                 val pkg = JarvisAccessibilityService.foregroundPackage()
-                val p = CursorController.pointOf(id)
-                if (okFlag && p != null) {
-                    val label = explicit ?: CursorController.labelOf(id)
-                    if (!label.isNullOrBlank() && label != id.toString()) {
-                        ClickMemory.remember(pkg, label, p.first, p.second, source = "ai_success")
-                        CursorController.lastAiTarget = label; CursorController.lastAiPoint = p
+                if (r.outcome == CursorController.ClickOutcome.COMPLETED && r.id > 0) {
+                    val label = explicit ?: CursorController.labelOf(r.id)
+                    if (!label.isNullOrBlank() && label != r.id.toString()) {
+                        ClickMemory.remember(pkg, label, r.normX, r.normY, source = "ai_success")
+                        CursorController.lastAiTarget = label; CursorController.lastAiPoint = r.normX to r.normY
                     }
-                } else if (!okFlag && p != null) {
-                    ClickMemory.fail(pkg, p.first, p.second)
+                } else if (r.outcome != CursorController.ClickOutcome.NO_CURSOR) {
+                    ClickMemory.fail(pkg, r.normX, r.normY)
                 }
-                result
+                "outcome=${r.outcome.name.lowercase()} | cursor #${r.id} norm=${CursorGeometry.fmt(r.normX)},${CursorGeometry.fmt(r.normY)} " +
+                    "px=(${r.px.toInt()},${r.py.toInt()}) | cursorTouchableAtClick=${r.touchableBefore} | window[${r.cursorScreen}] | " +
+                    "under_cursor: ${r.underCursor} | effect=${r.effect}"
             }
             "cursor_swipe" -> {
                 val id = args.optInt("id", CursorController.selectedId ?: 1)

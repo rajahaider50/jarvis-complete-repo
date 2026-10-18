@@ -61,7 +61,7 @@ object PhoneTools {
         Tool("get_screen_info", "Read the cursor coordinate system, the screen size, the foreground app and the current cursors"),
         Tool("cursor_create", "Place a new AI cursor on the screen. Coordinates are -100..+100 (centre 0). X right is +, Y up is +. Up to 10 cursors with their own number and colour", listOf("x" to "NUMBER", "y" to "NUMBER", "label" to "STRING")),
         Tool("cursor_move", "Move a cursor to a coordinate. mode is absolute (x,y are the target) or relative (x,y are added to the current spot). It slides smoothly so the user can follow", listOf("id" to "INTEGER", "x" to "NUMBER", "y" to "NUMBER", "mode" to "STRING")),
-        Tool("cursor_click", "Click where a cursor is. type is tap, double or long", listOf("id" to "INTEGER", "type" to "STRING")),
+        Tool("cursor_click", "Click where a cursor is. type is tap, double or long. The result is the TRUTH: outcome (completed/cancelled/rejected/timeout/rate_limited/no_service), the screen pixel, what is under_cursor and effect (changed/no_change). If outcome is not completed, or under_cursor is not the thing you wanted, move the cursor and try again — never tell the user you clicked when you did not. Optional target = a name so this spot is remembered", listOf("id" to "INTEGER", "type" to "STRING", "target" to "STRING")),
         Tool("cursor_swipe", "Swipe from a cursor to another coordinate (scroll / next)", listOf("id" to "INTEGER", "to_x" to "NUMBER", "to_y" to "NUMBER", "duration_ms" to "INTEGER")),
         Tool("click_all", "Click every cursor on the screen at the same time"),
         Tool("cursor_remove", "Remove one cursor", listOf("id" to "INTEGER")),

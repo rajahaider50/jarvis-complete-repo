@@ -3,18 +3,24 @@ package com.jarvis.app.live
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityService.ScreenshotResult
 import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.GestureDescription
 import android.graphics.Bitmap
 import android.graphics.Path
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import com.jarvis.app.data.Prefs
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home on any app,
@@ -265,6 +271,97 @@ class JarvisAccessibilityService : AccessibilityService() {
             }
         }
 
+        // ---------- truthful gestures: the real outcome, not a guess (bugfix Masla A / §2.1) ----------
+        enum class GestureOutcome { COMPLETED, CANCELLED, REJECTED, TIMEOUT, RATE_LIMITED, NO_SERVICE }
+
+        /** Every accessibility event seen — used as a "did the screen react" signal after a tap. */
+        @Volatile private var eventCount = 0L
+        fun eventsNow(): Long = eventCount
+
+        /** Pure evidence: what the service is allowed to do, the real display size and the stroke limit. */
+        fun gestureCapabilities(): String {
+            val s = inst ?: return "service OFF"
+            val caps = try { s.serviceInfo.capabilities } catch (e: Exception) { 0 }
+            val gestures = (caps and AccessibilityServiceInfo.CAPABILITY_CAN_PERFORM_GESTURES) != 0
+            val sz = CursorGeometry.screenSize(s)
+            return "canPerformGesturesCapability=$gestures caps=0x${Integer.toHexString(caps)} " +
+                "display=${sz.w}x${sz.h} maxStrokes=${GestureDescription.getMaxStrokeCount()}"
+        }
+
+        /** Dispatches a gesture built in SCREEN pixels and waits for the real result. Blocking — call off the main thread. */
+        private fun dispatchAwait(timeoutMs: Long, build: (GestureDescription.Builder, CursorGeometry.ScreenSize) -> Unit): GestureOutcome {
+            val s = inst ?: return GestureOutcome.NO_SERVICE
+            if (!allowClick()) return GestureOutcome.RATE_LIMITED
+            ScreenShareService.burst()
+            val sz = CursorGeometry.screenSize(s)
+            val b = GestureDescription.Builder()
+            build(b, sz)
+            val latch = CountDownLatch(1)
+            var outcome = GestureOutcome.TIMEOUT
+            val accepted = try {
+                s.dispatchGesture(b.build(), object : AccessibilityService.GestureResultCallback() {
+                    override fun onCompleted(gestureDescription: GestureDescription?) { outcome = GestureOutcome.COMPLETED; latch.countDown() }
+                    override fun onCancelled(gestureDescription: GestureDescription?) { outcome = GestureOutcome.CANCELLED; latch.countDown() }
+                }, Handler(Looper.getMainLooper()))
+            } catch (e: Exception) { Diag.fail("gesture.dispatchAwait", e); false }
+            if (!accepted) return GestureOutcome.REJECTED
+            try { latch.await(timeoutMs, TimeUnit.MILLISECONDS) } catch (e: InterruptedException) { }
+            return outcome
+        }
+
+        /** Tap a raw SCREEN pixel and report what really happened. */
+        fun tapPxAwait(px: Float, py: Float, durationMs: Long = 60, timeoutMs: Long = 2000): GestureOutcome =
+            dispatchAwait(timeoutMs) { b, _ ->
+                val path = Path(); path.moveTo(px, py)
+                b.addStroke(GestureDescription.StrokeDescription(path, 0, durationMs.coerceIn(20, 3000)))
+            }
+
+        fun doubleTapPxAwait(px: Float, py: Float, timeoutMs: Long = 2500): GestureOutcome =
+            dispatchAwait(timeoutMs) { b, _ ->
+                val path = Path(); path.moveTo(px, py)
+                b.addStroke(GestureDescription.StrokeDescription(path, 0, 40))
+                b.addStroke(GestureDescription.StrokeDescription(path, 140, 40))
+            }
+
+        fun longPressPxAwait(px: Float, py: Float, ms: Long = 700, timeoutMs: Long = 2500): GestureOutcome =
+            dispatchAwait(timeoutMs) { b, _ ->
+                val path = Path(); path.moveTo(px, py)
+                b.addStroke(GestureDescription.StrokeDescription(path, 0, ms.coerceIn(300, 3000)))
+            }
+
+        /** The real app/launcher window in front — OUR overlay windows are ignored on purpose. */
+        private fun activeApp(): AccessibilityWindowInfo? {
+            return try {
+                val ws = inst?.windows ?: return null
+                ws.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }.firstOrNull { it.isActive }
+                    ?: ws.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
+            } catch (e: Exception) { null }
+        }
+
+        /** Hit-test: which element sits under this SCREEN pixel (overlays ignored)? Pure evidence for a click. */
+        fun nodeAt(px: Int, py: Int): String {
+            val s = inst ?: return "service OFF"
+            val root = try { activeApp()?.root ?: s.rootInActiveWindow } catch (e: Exception) { null } ?: return "no window"
+            val tmp = Rect()
+            fun walk(n: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+                if (n == null) return null
+                n.getBoundsInScreen(tmp)
+                if (!tmp.contains(px, py) || !n.isVisibleToUser) return null
+                for (i in n.childCount - 1 downTo 0) walk(n.getChild(i))?.let { return it }
+                return n
+            }
+            val n = walk(root) ?: return "nothing (empty area)"
+            val hit = Rect(); n.getBoundsInScreen(hit)
+            val txt = (n.text ?: n.contentDescription)?.toString()?.trim().orEmpty()
+            var up: AccessibilityNodeInfo? = n
+            var target: AccessibilityNodeInfo? = null
+            while (up != null) { if (up.isClickable && up.isEnabled) { target = up; break }; up = up.parent }
+            val cr = Rect(); (target ?: n).getBoundsInScreen(cr)
+            return "pkg=${n.packageName} class=${n.className?.toString()?.substringAfterLast('.')} text='${txt.take(40)}' " +
+                "id=${n.viewIdResourceName?.substringAfterLast('/')} clickable=${n.isClickable} hit=[${hit.left},${hit.top},${hit.right},${hit.bottom}] " +
+                "clickTarget=${if (target != null) "[${cr.left},${cr.top},${cr.right},${cr.bottom}]" else "none"}"
+        }
+
         /** Swipe the finger: "up" moves to the next video / scrolls the feed down, "down" goes back, left / right switch pages. */
         fun swipe(direction: String): Boolean = gesture { b, w, h ->
             val p = Path()
@@ -335,6 +432,6 @@ class JarvisAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() { inst = this; Diag.log("a11y", "onServiceConnected (service is READY)"); CursorController.restoreIfAny() }
     override fun onUnbind(intent: android.content.Intent?): Boolean { Diag.log("a11y", "onUnbind -> clearing cursors"); try { CursorController.snapshotForRestore(); CursorController.panic() } catch (e: Exception) { }; inst = null; return super.onUnbind(intent) }
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) { }
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) { eventCount++ }
     override fun onInterrupt() { }
 }

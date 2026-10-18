@@ -49,6 +49,10 @@ object Diag {
     var framesDropped by mutableStateOf(0)
     var cursorAdds by mutableStateOf(0)
     var cursorAddFails by mutableStateOf(0)
+    var gestures by mutableStateOf(0)                 // every dispatched gesture (click/swipe)
+    var gesturesCompleted by mutableStateOf(0)
+    var gesturesFailed by mutableStateOf(0)
+    var lastGesture by mutableStateOf("-")            // outcome of the most recent gesture
     var foreignRecorder by mutableStateOf("-")        // package name of another app holding the mic, if any
     var tick by mutableStateOf(0)
 
@@ -70,6 +74,13 @@ object Diag {
 
     fun micZero() { micZeroRuns++; log("mic: ZERO buffer (run #$micZeroRuns)") }
 
+    /** Records a gesture outcome (the whole point of bugfix Masla A: never claim a click that did not happen). */
+    fun gestureOutcome(outcome: String) {
+        gestures++; lastGesture = outcome
+        if (outcome == "COMPLETED") gesturesCompleted++ else gesturesFailed++
+        log("gesture: outcome=$outcome (#$gestures, ok=$gesturesCompleted bad=$gesturesFailed)")
+    }
+
     /** Full text for clipboard / file. */
     fun dump(): String {
         val sb = StringBuilder()
@@ -79,6 +90,7 @@ object Diag {
         sb.append("ws=").append(wsState).append(" underruns=").append(underruns).append(" interrupted=").append(interrupted).append(" reconnects=").append(reconnects).append(" lastClose=").append(lastClose).append("\n")
         sb.append("toolCalls=").append(toolCalls).append(" lastTool=").append(lastTool).append(" framesSent=").append(framesSent).append(" framesDropped=").append(framesDropped).append("\n")
         sb.append("cursorAdds=").append(cursorAdds).append(" cursorAddFails=").append(cursorAddFails).append(" foreignRecorder=").append(foreignRecorder).append("\n")
+        sb.append("gestures=").append(gestures).append(" completed=").append(gesturesCompleted).append(" failed=").append(gesturesFailed).append(" lastGesture=").append(lastGesture).append("\n")
         sb.append("----- events (newest last) -----\n")
         events.forEach { sb.append(stamp.format(it.t)).append(" [").append(it.thread).append("] ").append(it.msg).append("\n") }
         return sb.toString()

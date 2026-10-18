@@ -208,6 +208,13 @@ object CursorController {
 
     fun positions(): List<Triple<Int, Float, Float>> = cursors.values.map { Triple(it.id, it.x, it.y) }
 
+    /** Where every cursor window really is on screen vs where the coordinate engine says it should be (pure evidence). */
+    fun windowReport(): String {
+        val list = cursors.values.toList()
+        if (list.isEmpty()) return "no cursor windows on screen"
+        return list.joinToString("\n") { c -> "#${c.id} " + windowLocOf(c) }
+    }
+
     private fun setTouchable(touchable: Boolean) {
         if (!isMainThread()) { onMain(Unit) { setTouchable(touchable) }; return }
         cursors.values.forEach { cur ->
@@ -263,6 +270,68 @@ object CursorController {
         if (id < 0) { cb?.invoke(false); return -1 }
         click(id, type, cb)
         return id
+    }
+
+    // ---------- truthful AI click: report the real outcome, not a guess (bugfix Masla A / §2.1) ----------
+    enum class ClickOutcome { COMPLETED, CANCELLED, REJECTED, TIMEOUT, RATE_LIMITED, NO_SERVICE, NO_CURSOR }
+
+    data class ClickResult(
+        val id: Int, val normX: Float, val normY: Float, val px: Float, val py: Float,
+        val outcome: ClickOutcome, val touchableBefore: Boolean,
+        val cursorScreen: String, val underCursor: String, val effect: String
+    )
+
+    private fun mapOutcome(o: JarvisAccessibilityService.GestureOutcome): ClickOutcome = when (o) {
+        JarvisAccessibilityService.GestureOutcome.COMPLETED -> ClickOutcome.COMPLETED
+        JarvisAccessibilityService.GestureOutcome.CANCELLED -> ClickOutcome.CANCELLED
+        JarvisAccessibilityService.GestureOutcome.REJECTED -> ClickOutcome.REJECTED
+        JarvisAccessibilityService.GestureOutcome.TIMEOUT -> ClickOutcome.TIMEOUT
+        JarvisAccessibilityService.GestureOutcome.RATE_LIMITED -> ClickOutcome.RATE_LIMITED
+        JarvisAccessibilityService.GestureOutcome.NO_SERVICE -> ClickOutcome.NO_SERVICE
+    }
+
+    /** Where the cursor window really is on screen compared with where the coordinate engine says it should be. */
+    private fun windowLocOf(cur: Cur): String = onMain("-") {
+        val v = cur.view ?: return@onMain "-"
+        val c = ctx ?: return@onMain "-"
+        val a = IntArray(2); v.getLocationOnScreen(a)
+        val exp = center(cur.x, cur.y)
+        val half = dp(sizeDp) / 2f
+        "gotTopLeft=(${a[0]},${a[1]}) gotCentre=(${a[0] + v.width / 2},${a[1] + v.height / 2}) " +
+            "expectedCentre=(${(exp.x).toInt()},${(exp.y).toInt()}) expectTopLeft=(${(exp.x - half).toInt()},${(exp.y - half).toInt()}) size=${v.width}px"
+    }
+
+    /**
+     * Clicks a cursor and reports EXACTLY what happened: gesture outcome, the real screen pixel, whether the cursor
+     * window was touchable at that moment, the element under the point and whether the screen reacted.
+     * Blocks ~0.8 s, so call it from a worker thread (the AI tool thread), never the main thread.
+     */
+    fun clickResult(id: Int, type: ClickType = ClickType.TAP, waitForEffectMs: Long = 800): ClickResult {
+        val cur = cursors[id] ?: return ClickResult(id, 0f, 0f, 0f, 0f, ClickOutcome.NO_CURSOR, true, "-", "no cursor", "-")
+        move(id, cur.x, cur.y)
+        val p = if (ctx != null) center(cur.x, cur.y) else PointF()
+        val touchableBefore = ((cur.lp?.flags ?: 0) and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) == 0
+        val cursorScreen = windowLocOf(cur)
+        setTouchable(false)
+        val ev0 = JarvisAccessibilityService.eventsNow()
+        val o = when (type) {
+            ClickType.TAP -> JarvisAccessibilityService.tapPxAwait(p.x, p.y)
+            ClickType.DOUBLE -> JarvisAccessibilityService.doubleTapPxAwait(p.x, p.y)
+            ClickType.LONG -> JarvisAccessibilityService.longPressPxAwait(p.x, p.y)
+        }
+        setTouchable(true)
+        val under = JarvisAccessibilityService.nodeAt(p.x.toInt(), p.y.toInt())
+        var effect = "no_change"
+        val t0 = System.currentTimeMillis()
+        while (System.currentTimeMillis() - t0 < waitForEffectMs) {
+            if (JarvisAccessibilityService.eventsNow() > ev0) { effect = "changed"; break }
+            try { Thread.sleep(60) } catch (e: InterruptedException) { break }
+        }
+        val res = ClickResult(id, cur.x, cur.y, p.x, p.y, mapOutcome(o), touchableBefore, cursorScreen, under, effect)
+        Diag.log("gesture", "click id=$id type=$type outcome=${res.outcome} px=(${p.x.toInt()},${p.y.toInt()}) " +
+            "norm=${CursorGeometry.fmt(cur.x)},${CursorGeometry.fmt(cur.y)} touchableAtClick=$touchableBefore effect=$effect window[$cursorScreen] under[$under]")
+        Diag.gestureOutcome(res.outcome.name)
+        return res
     }
 
     // ---------- grid ----------
