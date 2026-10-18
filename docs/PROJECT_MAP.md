@@ -1,12 +1,14 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 08:04 · 210 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 08:10 · 210 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/data/Prefs.kt
-- app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
-- docs/CHANGES_20261017_live-phase5-6-resumption.md
+- Complete.md
+- FEATURES.md
+- Pending.md
+- Planning.md
+- Task.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -161,14 +163,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 23 lines
-- `FEATURES.md` · 31 lines
+- `Complete.md` · 29 lines
+- `FEATURES.md` · 39 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 16 lines
-- `Planning.md` · 27 lines
+- `Pending.md` · 21 lines
+- `Planning.md` · 32 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
-- `Task.md` · 10 lines
+- `Task.md` · 16 lines
 - `build.gradle.kts` · 5 lines
 - `gradle.properties` · 5 lines
 - `settings.gradle.kts` · 8 lines
@@ -230,7 +232,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_screenstream-phase1-4-single-projection.md` · 35 lines
 - `docs/CHANGES_20261017_visual-themes-soundfx.md` · 51 lines
 - `docs/CHANGES_20261017_workspace-provider-only.md` · 50 lines
-- `docs/HANDOFF_STATE.md` · 32 lines
+- `docs/HANDOFF_STATE.md` · 43 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
