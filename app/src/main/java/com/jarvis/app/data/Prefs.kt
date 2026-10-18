@@ -32,6 +32,11 @@ object Prefs {
     var liveResume by mutableStateOf(true)      // keep the live call alive across drops (session resumption)
     var liveCompress by mutableStateOf(true)    // let the server compress a long call context
     var liveBargeIn by mutableStateOf(true)     // let the user interrupt the assistant (turn off if echo cuts it off)
+    var callVolume by mutableStateOf(70)        // live-call volume % (set once per call, not on every route change)
+    var autoEarpiece by mutableStateOf(false)   // AUTO route may move to the earpiece using the proximity sensor
+    var halfDuplex by mutableStateOf("auto")    // auto | on | off — stop sending the mic upstream while the assistant speaks
+    var shareQuality by mutableStateOf("detailed") // fast | detailed — screen-share frame size/quality
+    var noAudioModels by mutableStateOf("")     // live models that answered "AUDIO is not supported" (server code 1007)
     var resumeHandle by mutableStateOf("")      // last Gemini Live session-resumption handle
     var resumeAt by mutableStateOf(0L)          // when the handle was received (valid ~30 min)
     var assistantName by mutableStateOf("Jarvis")
@@ -98,6 +103,11 @@ object Prefs {
         liveResume = sp.getBoolean("liveresume", true)
         liveCompress = sp.getBoolean("livecompress", true)
         liveBargeIn = sp.getBoolean("livebargein", true)
+        callVolume = sp.getInt("callvol", 70)
+        autoEarpiece = sp.getBoolean("autoear", false)
+        halfDuplex = sp.getString("halfduplex", "auto") ?: "auto"
+        shareQuality = sp.getString("shareq", "detailed") ?: "detailed"
+        noAudioModels = sp.getString("noaudio", "") ?: ""
         resumeHandle = sp.getString("resumehandle", "") ?: ""
         resumeAt = sp.getLong("resumeat", 0L)
         fxEnabled = sp.getBoolean("fxon", true)
@@ -158,6 +168,9 @@ object Prefs {
             .putBoolean("aicursor", aiCursor).putInt("cursorrate", cursorClickRate)
             .putBoolean("liveresume", liveResume).putBoolean("livecompress", liveCompress)
             .putBoolean("livebargein", liveBargeIn)
+            .putInt("callvol", callVolume).putBoolean("autoear", autoEarpiece)
+            .putString("halfduplex", halfDuplex).putString("shareq", shareQuality)
+            .putString("noaudio", noAudioModels)
             .putString("resumehandle", resumeHandle).putLong("resumeat", resumeAt)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .putString("livemodels", JSONArray(liveModels.toList()).toString())

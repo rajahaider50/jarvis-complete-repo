@@ -25,6 +25,10 @@ abstract class CallEngine {
     var info by mutableStateOf("")
     /** True when the microphone keeps returning silence (for example another app/screen-recorder is holding it). */
     var micSilent by mutableStateOf(false)
+    /** True when the audio source had to change and the echo canceller is gone: speaker calls now need half-duplex. */
+    var aecLost by mutableStateOf(false)
+    /** True when the mic is being held back while the assistant speaks (half-duplex echo guard). */
+    var echoGuard by mutableStateOf(false)
 
     /** Called with (what you said, what the assistant said) when a turn is finished, so the call can be continued in chat. */
     var onTurn: ((user: String, ai: String) -> Unit)? = null

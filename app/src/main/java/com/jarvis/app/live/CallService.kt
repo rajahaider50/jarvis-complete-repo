@@ -77,7 +77,8 @@ class CallService : Service() {
                 startForeground(ID, n, type)
             } else startForeground(ID, n)
             running = true
-        } catch (e: Exception) { AppLog.w(e); stopSelf(); return START_NOT_STICKY }
+            Diag.log("fgs", "started type=microphone${if (camera) "+camera" else ""} at_foreground=$running sdk=${Build.VERSION.SDK_INT}")
+        } catch (e: Exception) { AppLog.w(e); Diag.fail("fgs.start", e); stopSelf(); return START_NOT_STICKY }
         return START_NOT_STICKY
     }
 

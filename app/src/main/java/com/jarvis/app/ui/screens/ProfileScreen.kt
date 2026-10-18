@@ -159,6 +159,70 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                         }
                         JToggle(Prefs.liveBargeIn) { Prefs.liveBargeIn = it; Prefs.save() }
                     }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().clickable {
+                            val steps = listOf(40, 55, 70, 85, 100)
+                            Prefs.callVolume = steps[(steps.indexOf(Prefs.callVolume).let { if (it < 0) 2 else it } + 1) % steps.size]
+                            Prefs.save()
+                            com.jarvis.app.audio.AudioRouter.applyVolume()
+                        }.padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.VolumeUp, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Call volume", 15, Ivory)
+                            JText("Set once when the call starts. It is no longer forced to maximum (max volume aimed at the same mic is the worst case for echo). Tap to change", 11, Muted)
+                        }
+                        JText("${Prefs.callVolume}%", 14, Gold, FontWeight.Medium)
+                    }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.Headphones, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Auto earpiece", 15, Ivory)
+                            JText("Hold the phone at your ear for 1.5 s to move to the earpiece; moving away returns to the speaker at once", 11, Muted)
+                        }
+                        JToggle(Prefs.autoEarpiece) { Prefs.autoEarpiece = it; Prefs.save() }
+                    }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().clickable {
+                            Prefs.halfDuplex = when (Prefs.halfDuplex) { "auto" -> "on"; "on" -> "off"; else -> "auto" }
+                            Prefs.save()
+                        }.padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.Hearing, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Echo guard (half-duplex)", 15, Ivory)
+                            JText("While ${Prefs.assistantName} speaks the mic is not sent upstream, so the speaker cannot interrupt it. A clearly loud voice still gets through. Auto = only without headphones and without echo cancellation", 11, Muted)
+                        }
+                        JText(Prefs.halfDuplex.replaceFirstChar { it.uppercase() }, 13, Gold, FontWeight.Medium)
+                    }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().clickable {
+                            Prefs.shareQuality = if (Prefs.shareQuality == "fast") "detailed" else "fast"
+                            Prefs.save()
+                        }.padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.ScreenShare, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Screen-share detail", 15, Ivory)
+                            JText("Detailed = 1280 px frames so ${Prefs.assistantName} can read small buttons (800 px when the phone is hot). Fast = 720 px, lighter on data", 11, Muted)
+                        }
+                        JText(Prefs.shareQuality.replaceFirstChar { it.uppercase() }, 13, Gold, FontWeight.Medium)
+                    }
+                    Hairline(0.12f)
+                    JText(
+                        "Quick A/B test for stalling: run the same call twice — once with headphones (echo canceller works) and once on speaker — then turn \"Let me interrupt\" off and on. If the interruptions stop with headphones or with interrupt off, it was echo, not the AI.",
+                        11, Muted, lh = 16, modifier = Modifier.padding(vertical = 10.dp)
+                    )
                 }
             }
         }

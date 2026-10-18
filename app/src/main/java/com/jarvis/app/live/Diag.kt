@@ -38,6 +38,9 @@ object Diag {
     var micRecoveries by mutableStateOf(0)
     var micOpens by mutableStateOf(0)
     var micReleases by mutableStateOf(0)
+    var micAecLost by mutableStateOf(0)               // how many times we had to leave VOICE_COMMUNICATION (AEC gone)
+    var lastRoute by mutableStateOf("-")              // last call audio route change
+    var lastInterrupt by mutableStateOf("-")          // why the assistant was interrupted (echo vs real speech)
     var wsState by mutableStateOf("idle")             // idle / connecting / live / reconnecting
     var underruns by mutableStateOf(0)
     var interrupted by mutableStateOf(0)
@@ -86,7 +89,9 @@ object Diag {
         val sb = StringBuilder()
         sb.append("JARVIS_DIAG dump ").append(stamp.format(System.currentTimeMillis())).append("\n")
         sb.append("mic state=").append(micState).append(" source=").append(micSource).append(" level=").append(String.format(Locale.US, "%.3f", micLevel))
-        sb.append(" opens=").append(micOpens).append(" releases=").append(micReleases).append(" zeroRuns=").append(micZeroRuns).append(" recoveries=").append(micRecoveries).append("\n")
+        sb.append(" opens=").append(micOpens).append(" releases=").append(micReleases).append(" zeroRuns=").append(micZeroRuns).append(" recoveries=").append(micRecoveries)
+        sb.append(" aecAvail=").append(MicCaptureHub.aecAvailable).append(" aecOn=").append(MicCaptureHub.aecEnabled).append(" aecLost=").append(micAecLost).append("\n")
+        sb.append("route=").append(lastRoute).append(" last_interrupt=").append(lastInterrupt).append("\n")
         sb.append("ws=").append(wsState).append(" underruns=").append(underruns).append(" interrupted=").append(interrupted).append(" reconnects=").append(reconnects).append(" lastClose=").append(lastClose).append("\n")
         sb.append("toolCalls=").append(toolCalls).append(" lastTool=").append(lastTool).append(" framesSent=").append(framesSent).append(" framesDropped=").append(framesDropped).append("\n")
         sb.append("cursorAdds=").append(cursorAdds).append(" cursorAddFails=").append(cursorAddFails).append(" foreignRecorder=").append(foreignRecorder).append("\n")

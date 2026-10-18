@@ -77,12 +77,16 @@ fun ApiScreen(onBack: () -> Unit, onProviders: () -> Unit) {
                 if (ids.isEmpty()) JText("Connect first to see the Live models of your key.", 12, Muted, modifier = Modifier.padding(vertical = 12.dp))
                 ids.forEach { id ->
                     val pos = Prefs.liveModels.indexOf(id)
-                    val on = pos >= 0
+                    val noAudio = ModelCatalog.isNoAudio(id)          // answered "AUDIO is not supported" (code 1007)
+                    val on = pos >= 0 && !noAudio
                     Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.clickable {
-                            if (on) Prefs.liveModels.remove(id) else Prefs.liveModels.add(id); Prefs.save()
+                        Box(Modifier.clickable(enabled = !noAudio) {
+                            if (pos >= 0) Prefs.liveModels.remove(id) else Prefs.liveModels.add(id); Prefs.save()
                         }) { JRadio(on) }
-                        JText(id, 13, Ivory, modifier = Modifier.weight(1f))
+                        Column(Modifier.weight(1f)) {
+                            JText(id, 13, if (noAudio) Muted else Ivory)
+                            if (noAudio) JText("No audio support (code 1007): this model cannot carry a live call, so it is skipped", 10, Muted)
+                        }
                         if (on) {
                             JText("#${pos + 1}", 11, Gold)
                             Icon(Icons.Outlined.KeyboardArrowUp, "Up", tint = if (pos > 0) Gold else Muted, modifier = Modifier.size(20.dp).clickable {

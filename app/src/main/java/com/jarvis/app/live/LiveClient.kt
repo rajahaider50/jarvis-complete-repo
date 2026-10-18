@@ -22,6 +22,7 @@ import com.jarvis.app.data.Langs
 import com.jarvis.app.data.ModelCatalog
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.data.Voices
+import com.jarvis.app.audio.AudioRouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,6 +70,10 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     // --- keeping the call alive across drops (session resumption) ---
     @Volatile private var reconnecting = false
     private var reconnectTries = 0
+    // make-before-break: while the new socket is being set up the OLD one stays live (audio keeps playing)
+    private var oldWs: WebSocket? = null
+    private var oldWinner = -1
+    private var lastMicSkip = 0L
 
     @Volatile private var recording = false
 
@@ -81,6 +86,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private var lastMicUi = 0L
     private var lastOutUi = 0L
     private var connStarted = 0L
+    @Volatile private var lastWriteAt = 0L          // last time the assistant's PCM was written to the speaker (echo window)
+    private var echoGuardOn = false
 
     // --- keep audio off the reader thread: tools run on their own thread, video frames never block the socket ---
     private val toolExec = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "live-tools") }
@@ -154,12 +161,22 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         reconnectTries++
         reconnecting = true
         Diag.reconnects++; Diag.wsState = "reconnecting"
-        Diag.log("ws", "reconnect #$reconnectTries ($why)")
-        AppLog.i("LiveClient", "reconnect #$reconnectTries ($why)")
+        // A goAway always gives us time before the socket dies: open the NEXT connection while this one is still up,
+        // so the assistant does not go silent in between (make-before-break). A real drop keeps the old behaviour.
+        val seamless = why.startsWith("server goAway") && ws != null && oldWs == null
+        if (seamless) {
+            oldWs = ws
+            oldWinner = winner
+            winner = -1                                     // let the new batch win, but keep handling the old socket
+            Diag.log("ws", "reconnect #$reconnectTries ($why) — make-before-break: keeping the old socket until the new one is ready")
+        } else {
+            Diag.log("ws", "reconnect #$reconnectTries ($why)")
+            stopSession()
+        }
+        AppLog.i("LiveClient", "reconnect #$reconnectTries ($why) seamless=$seamless")
         ui { if (state != State.IDLE) { state = State.CONNECTING; info = "Reconnecting…" } }
-        stopSession()
         waitingNet = true
-        val delay = backoffMs(reconnectTries)
+        val delay = if (seamless) 0L else backoffMs(reconnectTries)      // no dead time when we can overlap
         Diag.log("ws", "restart in ${delay}ms (or sooner if the network comes back)")
         timeoutHandler.postDelayed(restartRunnable, delay)
     }
@@ -214,11 +231,14 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             val j = try { JSONObject(raw) } catch (e: Exception) { AppLog.w(e); return }
             if (j.has("setupComplete")) { won(t); return }
         }
-        if (winner != t.idx) return         // only the winning socket drives the session
+        // During a make-before-break reconnect the old socket is still the one talking to the user until the new
+        // socket is ready, so keep handling its frames instead of dropping the rest of the sentence.
+        val oldStillLive = oldWs != null && t.idx == oldWinner
+        if (winner != t.idx && !oldStillLive) return
         handle(raw)
     }
 
-    /** A candidate finished setup: adopt it, close the losers. */
+    /** A candidate finished setup: adopt it, close the losers (and the previous socket after a seamless reconnect). */
     @Synchronized
     private fun won(t: Trial) {
         if (winner >= 0) { try { t.socket?.close(1000, "stale") } catch (e: Exception) { AppLog.w(e) }; return }
@@ -227,6 +247,12 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         reconnectTries = 0; reconnecting = false; waitingNet = false
         ws = t.socket
         batchTrials.filter { it !== t }.forEach { closeTrial(it) }
+        val old = oldWs
+        oldWs = null; oldWinner = -1
+        if (old != null && old !== ws) {
+            try { old.close(1000, "swapped") } catch (e: Exception) { AppLog.w(e) }
+            Diag.log("ws", "seamless swap done: the old socket is closed, the call never stopped")
+        }
         AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · ${t.model}")
         ui { modelName = t.model; state = State.LIVE; info = "Live"; startPlayback(); startAudio() }
     }
@@ -242,6 +268,10 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private fun trialEnded(t: Trial, code: Int, reason: String) {
         val wasDone = t.done
         t.done = true
+        // A model that cannot send audio can never carry a voice call: remember it and never waste a connection again.
+        if (code == 1007 || reason.contains("modalities", true)) {
+            if (reason.contains("AUDIO", true) || code == 1007) ModelCatalog.markNoAudio(t.model)
+        }
         if (winner == t.idx) { ended(code, reason); return }    // the live (winning) socket closed
         if (winner >= 0) return                                 // a losing socket: ignore
         if (reason.isNotBlank()) lastReason = reason
@@ -388,7 +418,11 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         val sc = j.optJSONObject("serverContent") ?: return
         if (sc.optBoolean("interrupted", false)) {
             Diag.interrupted++
-            Diag.log("Live", "interrupted -> flush playback (thread=${Thread.currentThread().name})")
+            // evidence: was this the user speaking, or the assistant's own voice coming back in through the speaker?
+            val since = if (lastWriteAt == 0L) -1L else System.currentTimeMillis() - lastWriteAt
+            val q = try { ws?.queueSize() ?: 0L } catch (e: Exception) { 0L }
+            Diag.lastInterrupt = "mic=${"%.3f".format(MicCaptureHub.level)} spoken_until_${since}ms_ago route=${AudioRouter.active} aec=${MicCaptureHub.aecEnabled} halfDuplex=${halfDuplexActive()} wsQueue=${q}B"
+            Diag.log("Live", "interrupted -> flush playback (mic=${"%.3f".format(MicCaptureHub.level)} assistant_spoke_until=${since}ms_ago route=${AudioRouter.active} aec=${MicCaptureHub.aecEnabled} halfDuplex=${halfDuplexActive()} echoGuard=$echoGuardOn wsQueue=${q}B)")
             playQ.clear(); playQBytes = 0
             try { track?.pause(); track?.flush(); track?.play() } catch (e: Exception) { AppLog.w(e); }
             ui { speaking = false }
@@ -455,16 +489,39 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         val now = System.currentTimeMillis()
         if (now - lastMicUi >= 50) { lastMicUi = now; ui { micLevel = if (muted) 0f else MicCaptureHub.level } }
         CallAudioTap.mic?.invoke(buf, n)                       // hand the mic PCM to the in-app recorder
-        if (!muted) {
+        if (!muted && !echoGuard(now)) {
             ws?.send(JSONObject().put("realtimeInput", JSONObject().put("audio",
                 JSONObject().put("data", Base64.encodeToString(buf, 0, n, Base64.NO_WRAP)).put("mimeType", "audio/pcm;rate=16000"))).toString())
         }
+    }
+
+    /**
+     * Half-duplex = hold the microphone back while the assistant's own voice is coming out of the speaker, so the
+     * echo cannot be mistaken for the user and cut the answer off. "auto" only does this when there is no headset and
+     * the echo canceller is not attached. A clearly loud voice always gets through, so barge-in still works.
+     */
+    private fun halfDuplexActive(): Boolean = when (Prefs.halfDuplex) {
+        "on" -> true
+        "off" -> false
+        else -> !(AudioRouter.hasWired || AudioRouter.hasBt) && !MicCaptureHub.aecEnabled
+    }
+
+    private fun echoGuard(now: Long): Boolean {
+        val active = halfDuplexActive()
+        val hold = active && (now - lastWriteAt < 300) && MicCaptureHub.level <= 0.35f
+        if (hold != echoGuardOn) {
+            echoGuardOn = hold
+            ui { echoGuard = hold }
+            if (hold) Diag.log("mic", "half-duplex: mic held back while the assistant speaks (aec=${MicCaptureHub.aecEnabled} headphones=${AudioRouter.hasWired || AudioRouter.hasBt})")
+        }
+        return hold
     }
 
     private fun startAudio() {
         if (recording) return
         MicCaptureHub.setContext(ctx)
         MicCaptureHub.onSilent = { s -> ui { micSilent = s } }
+        MicCaptureHub.onAecLost = { lost -> ui { aecLost = lost }; if (lost) Diag.log("mic", "echo cancellation lost: headphones recommended, half-duplex will guard the speaker") }
         MicCaptureHub.addListener(micListener)
         if (!MicCaptureHub.start()) {
             MicCaptureHub.removeListener(micListener)
@@ -479,20 +536,18 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         if (playing) return
         val rate = 24000
         val min = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
+        val bufBytes = maxOf(min, rate * 2)                 // ~1 s of audio, so a bursty network stream does not tuk-tuk
         val t = AudioTrack.Builder()
             .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
             .setAudioFormat(AudioFormat.Builder().setSampleRate(rate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
-            .setBufferSizeInBytes(maxOf(min, rate)).setTransferMode(AudioTrack.MODE_STREAM).build()
+            .setBufferSizeInBytes(bufBytes).setTransferMode(AudioTrack.MODE_STREAM).build()
         track = t; t.play(); playing = true
-        Diag.log("play", "AudioTrack started 24k buffer=${maxOf(min, rate)}B min=${min}B")
+        Diag.log("play", "AudioTrack started 24k buffer=${bufBytes}B min=${min}B")
         playThread = thread(name = "live-play") {
             try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO) } catch (e: Exception) { AppLog.w(e) }
-            // jitter pre-buffer: gather ~150 ms (250 ms max) before the first write, so a bursty network stream does not tuk-tuk
-            val pb = System.currentTimeMillis()
-            while (playing && playQBytes < 7200 && System.currentTimeMillis() - pb < 250) Thread.sleep(10)
-            Diag.log("play", "pre-buffered ${playQBytes}B in ${System.currentTimeMillis() - pb}ms")
             var urnCheck = 0L
             var urnLast = 0
+            var starving = true                                // nothing buffered: the next chunk starts a new answer
             while (playing) {
                 val nowU = System.currentTimeMillis()
                 if (nowU - urnCheck > 1000) {
@@ -502,8 +557,18 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                 }
                 val b = playQ.poll(100, TimeUnit.MILLISECONDS)
                 if (b == null) {
+                    starving = true
                     if (System.currentTimeMillis() - lastAudioAt > 700) ui { speaking = false; outLevel *= 0.5f }
                     continue
+                }
+                // pre-buffer at the START of every answer (not only once at call start): gather ~150 ms, max 250 ms
+                if (starving) {
+                    starving = false
+                    val pb = System.currentTimeMillis()
+                    while (playing && playQBytes < 7200 && System.currentTimeMillis() - pb < 250) Thread.sleep(10)
+                    val waited = System.currentTimeMillis() - pb
+                    if (playQBytes == 0) Diag.log("play", "pre-buffer timeout (0B after ${waited}ms) — starting anyway")
+                    else if (waited > 0) Diag.log("play", "pre-buffered ${playQBytes}B in ${waited}ms")
                 }
                 var sum = 0.0; var k = 0
                 while (k + 1 < b.size) { val s = ((b[k + 1].toInt() shl 8) or (b[k].toInt() and 0xFF)).toShort().toInt(); sum += s.toDouble() * s; k += 2 }
@@ -511,7 +576,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                 val now = System.currentTimeMillis()
                 if (now - lastOutUi >= 50) { lastOutUi = now; ui { speaking = true; outLevel = lvl } }
                 CallAudioTap.out?.invoke(b, b.size)                 // hand the assistant's PCM to the in-app recorder
-                try { t.write(b, 0, b.size) } catch (e: Exception) { AppLog.w(e); }
+                try { t.write(b, 0, b.size); lastWriteAt = System.currentTimeMillis() } catch (e: Exception) { AppLog.w(e); }
                 playQBytes = (playQBytes - b.size).coerceAtLeast(0)
             }
         }
@@ -521,11 +586,13 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         recording = false; playing = false
         MicCaptureHub.removeListener(micListener)
         MicCaptureHub.onSilent = null
+        MicCaptureHub.onAecLost = null
         MicCaptureHub.stop()
         try { track?.stop() } catch (e: Exception) { AppLog.w(e); }
         try { track?.release() } catch (e: Exception) { AppLog.w(e); }
         track = null; playQ.clear(); playQBytes = 0
         micLevel = 0f; outLevel = 0f; speaking = false
+        echoGuardOn = false; echoGuard = false; lastWriteAt = 0L
         Diag.micState = "idle"; Diag.micLevel = 0f
         Diag.log("mic", "AudioTrack released")
     }
@@ -551,6 +618,9 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private fun stopSession() {
         winner = -1
         waitingNet = false
+        val prev = oldWs
+        oldWs = null; oldWinner = -1
+        try { prev?.close(1000, "bye") } catch (e: Exception) { AppLog.w(e) }
         Diag.wsState = "idle"
         try { timeoutHandler.removeCallbacksAndMessages(null) } catch (e: Exception) { AppLog.w(e); }
         batchTrials.forEach { t -> t.done = true; try { t.socket?.close(1000, "bye") } catch (e: Exception) { AppLog.w(e) } }

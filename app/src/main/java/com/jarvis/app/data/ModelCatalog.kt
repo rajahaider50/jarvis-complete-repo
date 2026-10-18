@@ -103,7 +103,29 @@ object ModelCatalog {
         return out.distinct()
     }
     fun ttsModel(): String? = ttsCandidates().firstOrNull()
-    /** Live models in the user's saved priority order first, then every other Live model of the key. */
-    fun liveCandidates(): List<String> = (Prefs.liveModels.toList() + listOfNotNull(liveModel()) + live.map { it.id }).distinct()
+    /** Live models in the user's saved priority order first, then every other Live model of the key.
+     *  Models that cannot send audio (server 1007) are left out; if that would leave nothing at all, keep them,
+     *  because a wrong model that fails is better than "no live model at all" with no explanation. */
+    fun liveCandidates(): List<String> {
+        val all = (Prefs.liveModels.toList() + listOfNotNull(liveModel()) + live.map { it.id }).distinct()
+        val ok = all.filterNot { isNoAudio(it) }
+        return if (ok.isEmpty()) all else ok
+    }
     fun liveModel(): String? = live.firstOrNull { "flash" in it.id }?.id ?: live.firstOrNull()?.id
+
+    /**
+     * A live model that answered "the requested combination of response modalities (AUDIO) is not supported"
+     * (server code 1007) can never run a voice call. Remember it so no connection is wasted on it again.
+     */
+    fun noAudio(): List<String> = Prefs.noAudioModels.split(',').map { it.trim() }.filter { it.isNotBlank() }
+
+    fun isNoAudio(id: String): Boolean = id.isNotBlank() && noAudio().contains(id)
+
+    fun markNoAudio(id: String) {
+        val clean = id.trim().removePrefix("models/")
+        if (clean.isBlank() || isNoAudio(clean)) return
+        Prefs.noAudioModels = (noAudio() + clean).joinToString(",")
+        Prefs.save()
+        AppLog.i("ModelCatalog", "live model $clean has no audio support: removed from calls (can be re-added by hand)")
+    }
 }
