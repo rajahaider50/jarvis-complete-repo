@@ -1,16 +1,14 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 09:14 · 221 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 09:24 · 222 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
+- Complete.md
+- FEATURES.md
 - Planning.md
 - Task.md
-- app/src/main/java/com/jarvis/app/live/AppControl.kt
-- app/src/main/java/com/jarvis/app/live/CursorController.kt
-- app/src/main/java/com/jarvis/app/live/CursorPanel.kt
-- app/src/main/java/com/jarvis/app/live/JarvisAccessibilityService.kt
-- docs/CHANGES_20261018_bugfix-masla2-cursor-mainthread.md
-- docs/REPORT_20261018_masla2_cursor.md
+- docs/HANDOFF_STATE.md
+- docs/REPORT_20261018_bugfix-final-summary.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -169,14 +167,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 29 lines
-- `FEATURES.md` · 39 lines
+- `Complete.md` · 33 lines
+- `FEATURES.md` · 43 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 25 lines
-- `Planning.md` · 38 lines
+- `Planning.md` · 42 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
-- `Task.md` · 23 lines
+- `Task.md` · 24 lines
 - `build.gradle.kts` · 5 lines
 - `gradle.properties` · 5 lines
 - `settings.gradle.kts` · 8 lines
@@ -242,8 +240,9 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261018_bugfix-masla2-cursor-mainthread.md` · 34 lines
 - `docs/CHANGES_20261018_bugfix-masla3-call-stability.md` · 46 lines
 - `docs/CHANGES_20261018_bugfix-phase1-diagnostics.md` · 50 lines
-- `docs/HANDOFF_STATE.md` · 43 lines
+- `docs/HANDOFF_STATE.md` · 50 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
+- `docs/REPORT_20261018_bugfix-final-summary.md` · 57 lines
 - `docs/REPORT_20261018_masla1_mic_recording.md` · 63 lines
 - `docs/REPORT_20261018_masla2_cursor.md` · 50 lines
 - `docs/REPORT_20261018_masla3_call_stalling.md` · 65 lines
