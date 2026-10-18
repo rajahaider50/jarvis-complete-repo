@@ -33,6 +33,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.Locale
 import kotlin.concurrent.thread
 import kotlin.math.sqrt
 
@@ -116,6 +117,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         if (reconnectTries >= MAX_RECONNECT) { ui { if (state != State.IDLE) { state = State.ERROR; error = "Call lost: $why" } }; return }
         reconnectTries++
         reconnecting = true
+        Diag.reconnects++; Diag.wsState = "reconnecting"
+        Diag.log("ws", "reconnect #$reconnectTries ($why)")
         AppLog.i("LiveClient", "reconnect #$reconnectTries ($why)")
         ui { if (state != State.IDLE) { state = State.CONNECTING; info = "Reconnecting…" } }
         stopSession()
@@ -138,6 +141,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         val trials = (from until minOf(from + PARALLEL, liveModels.size)).map { Trial(it, liveModels[it]) }
         batchTrials = trials
         ui { state = State.CONNECTING; info = "Connecting…" }
+        Diag.wsState = "connecting"
+        Diag.log("ws", "connecting batch from=$from models=${trials.joinToString { it.model }}")
         if (connStarted == 0L) connStarted = System.currentTimeMillis()
         AppLog.i("Timing", "live_connect_batch $from → ${trials.joinToString { it.model }}")
         trials.forEach { open(it, key) }
@@ -205,6 +210,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         if (winner == t.idx) { ended(code, reason); return }    // the live (winning) socket closed
         if (winner >= 0) return                                 // a losing socket: ignore
         if (reason.isNotBlank()) lastReason = reason
+        Diag.log("ws", "trial closed model=${t.model} code=$code reason=${reason.take(120)}")
         if (wasDone && !batchTrials.contains(t)) return
         if (batchTrials.contains(t)) advanceIfDone()
     }
@@ -234,6 +240,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             if (state == State.IDLE) return@ui
             stopAudio()
             val why = reason.ifBlank { "code $code" }
+            Diag.lastClose = "code=$code $why"
+            Diag.log("ws", "CLOSED code=$code why=${why.take(160)} setup=$gotSetup")
             AppLog.e("LiveClient", "Live connection closed · model=$modelName · setup=$gotSetup · code=$code · $why")
             val keyProblem = why.contains("API key", true) || why.contains("permission", true) || why.contains("API_KEY", true)
             if (!gotSetup && !keyProblem) {
@@ -300,7 +308,10 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             setup.put("responseModalities", JSONArray().put("AUDIO")).put("speechConfig", speech)
             setup.put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemText()))))
         }
-        return JSONObject().put("setup", setup)
+        return JSONObject().put("setup", setup).also { out ->
+            Diag.log("Live", "setup built: simple=$simple hasTools=${setup.has("tools")} cursorTools=${out.toString().contains("cursor_create")} " +
+                "resumption=${setup.has("sessionResumption")} compression=${setup.has("contextWindowCompression")} webSearch=${Prefs.webSearch}")
+        }
     }
 
     // ---------- incoming ----------
@@ -308,6 +319,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         val j = try { JSONObject(raw) } catch (e: Exception) { AppLog.w(e); return }
         if (j.has("setupComplete")) {
             gotSetup = true; reconnectTries = 0; reconnecting = false
+            Diag.wsState = "live"
+            Diag.log("Live", "setupComplete")
             AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · $modelName")
             ui { state = State.LIVE; info = "Live"; startPlayback(); startAudio() }
             return
@@ -322,6 +335,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         // the server will soon disconnect: resume on a fresh socket before it closes
         j.optJSONObject("goAway")?.let { gw ->
             val left = gw.optString("timeLeft")
+            Diag.log("Live", "goAway timeLeft=$left -> resume")
             AppLog.i("LiveClient", "goAway timeLeft=$left")
             reconnect("server goAway $left")
             return
@@ -329,6 +343,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         j.optJSONObject("toolCall")?.let { onTool(it) }
         val sc = j.optJSONObject("serverContent") ?: return
         if (sc.optBoolean("interrupted", false)) {
+            Diag.interrupted++
+            Diag.log("Live", "interrupted -> flush playback (thread=${Thread.currentThread().name})")
             playQ.clear()
             try { track?.pause(); track?.flush(); track?.play() } catch (e: Exception) { AppLog.w(e); }
             ui { speaking = false }
@@ -349,14 +365,20 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
 
     private fun onTool(tc: JSONObject) {
         val calls = tc.optJSONArray("functionCalls") ?: return
+        val t0 = System.currentTimeMillis()
+        Diag.log("tool", "toolCall on thread=${Thread.currentThread().name} count=${calls.length()}")
         val resp = JSONArray()
         for (i in 0 until calls.length()) {
             val c = calls.getJSONObject(i)
             val name = c.optString("name"); val args = c.optJSONObject("args") ?: JSONObject()
-            val result = PhoneTools.execute(ctx, name, args)
+            Diag.toolCalls++; Diag.lastTool = name
+            Diag.log("tool", "-> $name ${args.toString().take(200)}")
+            val result = try { PhoneTools.execute(ctx, name, args) } catch (e: Exception) { Diag.fail("tool:$name", e); "error: ${e.message}" }
+            Diag.log("tool", "<- $name = ${result.take(160)}")
             resp.put(JSONObject().put("id", c.optString("id")).put("name", name).put("response", JSONObject().put("result", result)))
         }
         ws?.send(JSONObject().put("toolResponse", JSONObject().put("functionResponses", resp)).toString())
+        Diag.log("tool", "toolResponse sent (blocked reader thread for ${System.currentTimeMillis() - t0}ms)")
     }
 
     // ---------- outgoing media ----------
@@ -383,27 +405,32 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         try { if (AcousticEchoCanceler.isAvailable()) AcousticEchoCanceler.create(rec.audioSessionId)?.enabled = true } catch (e: Exception) { AppLog.w(e); }
         try { if (NoiseSuppressor.isAvailable()) NoiseSuppressor.create(rec.audioSessionId)?.enabled = true } catch (e: Exception) { AppLog.w(e); }
         recorder = rec; recording = true; rec.startRecording()
+        Diag.micOpens++; Diag.micState = "recording"; Diag.micSource = "VOICE_COMMUNICATION"; Diag.micLevel = 0f
+        Diag.log("mic", "AudioRecord OPEN 16k mono VOICE_COMMUNICATION (thread=${Thread.currentThread().name})")
         recThread = thread(name = "live-mic") {
             val buf = ByteArray(3200)
+            Diag.log("mic", "capture thread started")
             while (recording) {
                 val n = rec.read(buf, 0, buf.size)
-                if (n <= 0) continue
+                if (n <= 0) { Diag.log("mic", "read returned $n"); continue }
                 var sum = 0.0
                 var k = 0
                 while (k + 1 < n) { val s = ((buf[k + 1].toInt() shl 8) or (buf[k].toInt() and 0xFF)).toShort().toInt(); sum += s.toDouble() * s; k += 2 }
                 val rms = sqrt(sum / (n / 2)) / 32768.0
                 val lvl = (rms * 7).toFloat().coerceIn(0f, 1f)
+                Diag.micLevel = lvl
                 val now = System.currentTimeMillis()
                 if (now - lastMicUi >= 50) { lastMicUi = now; ui { micLevel = if (muted) 0f else lvl } }
                 CallAudioTap.mic?.invoke(buf, n)                       // hand the mic PCM to the in-app recorder
                 if (sum == 0.0) silentRun++ else silentRun = 0         // ~100 ms per buffer
                 val silent = silentRun >= 10
-                if (silent != micSilent) ui { micSilent = silent }
+                if (silent != micSilent) { ui { micSilent = silent }; if (silent) Diag.micZero() else Diag.log("mic", "audio returned (level=${String.format(Locale.US, "%.3f", lvl)})") }
                 if (!muted) {
                     ws?.send(JSONObject().put("realtimeInput", JSONObject().put("audio",
                         JSONObject().put("data", Base64.encodeToString(buf, 0, n, Base64.NO_WRAP)).put("mimeType", "audio/pcm;rate=16000"))).toString())
                 }
             }
+            Diag.log("mic", "capture thread ended")
         }
     }
 
@@ -416,8 +443,17 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             .setAudioFormat(AudioFormat.Builder().setSampleRate(rate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
             .setBufferSizeInBytes(maxOf(min, rate)).setTransferMode(AudioTrack.MODE_STREAM).build()
         track = t; t.play(); playing = true
+        Diag.log("play", "AudioTrack started 24k buffer=${maxOf(min, rate)}B min=${min}B")
         playThread = thread(name = "live-play") {
+            var urnCheck = 0L
+            var urnLast = 0
             while (playing) {
+                val nowU = System.currentTimeMillis()
+                if (nowU - urnCheck > 1000) {
+                    urnCheck = nowU
+                    val u = try { t.underrunCount } catch (e: Exception) { urnLast }
+                    if (u > urnLast) { Diag.underruns += (u - urnLast); Diag.log("play", "underrun +${u - urnLast} (total=$u) queue=${playQ.size}"); urnLast = u }
+                }
                 val b = playQ.poll(100, TimeUnit.MILLISECONDS)
                 if (b == null) {
                     if (System.currentTimeMillis() - lastAudioAt > 700) ui { speaking = false; outLevel *= 0.5f }
@@ -443,6 +479,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         try { track?.release() } catch (e: Exception) { AppLog.w(e); }
         track = null; playQ.clear()
         micLevel = 0f; outLevel = 0f; speaking = false
+        Diag.micReleases++; Diag.micState = "idle"; Diag.micLevel = 0f
+        Diag.log("mic", "AudioRecord/AudioTrack released")
     }
 
     /** Change the talking language at any time: the call reconnects with a new instruction and keeps going. */
@@ -464,6 +502,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     @Synchronized
     private fun stopSession() {
         winner = -1
+        Diag.wsState = "idle"
         try { timeoutHandler.removeCallbacksAndMessages(null) } catch (e: Exception) { AppLog.w(e); }
         batchTrials.forEach { t -> t.done = true; try { t.socket?.close(1000, "bye") } catch (e: Exception) { AppLog.w(e) } }
         batchTrials = emptyList()

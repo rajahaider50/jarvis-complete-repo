@@ -93,8 +93,10 @@ class ScreenShareService : Service() {
                     try {
                         val jpeg = ImageUtil.toJpeg(bmp, 720, 60)
                         (frameSink ?: { bytes: ByteArray -> CallHost.client?.sendJpeg(bytes) })(jpeg)
-                    } catch (e: Exception) { AppLog.w(e) }
-                }
+                        Diag.framesSent++
+                        if (Diag.framesSent % 10 == 1) Diag.log("share", "frame #${Diag.framesSent} ${jpeg.size}B burst=$burst")
+                    } catch (e: Exception) { Diag.fail("share.frame", e); AppLog.w(e) }
+                } else Diag.framesDropped++
                 bmp.recycle()
 
                 val wait = when {

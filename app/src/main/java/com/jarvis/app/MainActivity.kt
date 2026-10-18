@@ -148,6 +148,7 @@ fun JarvisApp() {
         composable("uistyle") { UiStyleScreen(back) }
         composable("cursorlab") { CursorLabScreen(back) }
         composable("cursormemory") { CursorMemoryScreen(back) }
+        composable("diagnostics") { DiagnosticsScreen(back) }
         composable("access") { AccessScreen(back) }
         composable("console") { ConsoleScreen(back) }
     }

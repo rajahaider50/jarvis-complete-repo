@@ -78,9 +78,10 @@ object CursorController {
     }
 
     fun add(x: Float, y: Float, label: String? = null): Int {
-        if (!ensure()) return -1
-        if (cursors.size >= MAX) return -1
-        val c = ctx ?: return -1
+        Diag.log("cursor", "add($x,$y,'$label') thread=${Thread.currentThread().name} accessibility=${JarvisAccessibilityService.inst != null}")
+        if (!ensure()) { Diag.cursorAddFails++; Diag.log("cursor", "add FAILED: accessibility service not connected"); return -1 }
+        if (cursors.size >= MAX) { Diag.cursorAddFails++; Diag.log("cursor", "add FAILED: max $MAX reached"); return -1 }
+        val c = ctx ?: run { Diag.cursorAddFails++; Diag.log("cursor", "add FAILED: no context"); return -1 }
         val id = nextId++
         val cur = Cur(id, CursorGeometry.clamp(x), CursorGeometry.clamp(y), label ?: "$id", colors[(id - 1) % colors.size])
         val v = CursorView(c, cur.label, cur.color) { dx, dy -> dragTo(cur, dx, dy) }
@@ -96,10 +97,14 @@ object CursorController {
             PixelFormat.TRANSLUCENT
         ).apply { gravity = Gravity.TOP or Gravity.START; this.x = (px.x - sp / 2f).toInt(); this.y = (px.y - sp / 2f).toInt() }
         cur.view = v; cur.lp = lp
-        try { wm!!.addView(v, lp) } catch (e: Exception) { AppLog.w(e); return -1 }
+        try { wm!!.addView(v, lp) } catch (e: Exception) {
+            Diag.cursorAddFails++; Diag.fail("cursor.addView", e); AppLog.w(e); return -1
+        }
         cursors[id] = cur
         if (selectedId == null) selectedId = id
         anyShown = true
+        Diag.cursorAdds++
+        Diag.log("cursor", "added id=$id size=${sp}px at ${CursorGeometry.fmt(cur.x)},${CursorGeometry.fmt(cur.y)} windows=${cursors.size}")
         return id
     }
 
@@ -132,7 +137,7 @@ object CursorController {
         val px = center(cur.x, cur.y)
         val sp = dp(sizeDp)
         lp.x = (px.x - sp / 2f).toInt(); lp.y = (px.y - sp / 2f).toInt()
-        try { wm?.updateViewLayout(v, lp) } catch (e: Exception) { AppLog.w(e) }
+        try { wm?.updateViewLayout(v, lp) } catch (e: Exception) { Diag.fail("cursor.updateViewLayout", e); AppLog.w(e) }
     }
 
     private fun dragTo(cur: Cur, dxPx: Float, dyPx: Float) {
@@ -145,10 +150,11 @@ object CursorController {
     }
 
     fun remove(id: Int) {
-        val cur = cursors.remove(id) ?: return
-        try { wm?.removeView(cur.view) } catch (e: Exception) { AppLog.w(e) }
+        val cur = cursors.remove(id) ?: run { Diag.log("cursor", "remove($id): not found"); return }
+        try { wm?.removeView(cur.view) } catch (e: Exception) { Diag.fail("cursor.removeView", e); AppLog.w(e) }
         if (selectedId == id) selectedId = cursors.keys.firstOrNull()
         if (cursors.isEmpty()) anyShown = false
+        Diag.log("cursor", "removed id=$id windows=${cursors.size}")
     }
 
     fun clear() { cursors.keys.toList().forEach { remove(it) } }
@@ -230,7 +236,7 @@ object CursorController {
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT
             ).apply { gravity = Gravity.TOP or Gravity.START }
-            try { wm!!.addView(v, lp); gridView = v } catch (e: Exception) { AppLog.w(e) }
+            try { wm!!.addView(v, lp); gridView = v; Diag.log("cursor", "grid shown") } catch (e: Exception) { Diag.fail("cursor.gridAddView", e); AppLog.w(e) }
         } else {
             try { gridView?.let { wm?.removeView(it) } } catch (e: Exception) { AppLog.w(e) }
             gridView = null

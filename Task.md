@@ -1,15 +1,19 @@
 # TASK (current task; ONE at a time)
-Status: done.
+Status: in progress.
 
-- **Task:** JARVIS AI CURSOR SYSTEM + LIVE SCREEN STREAM/SHARE/RECORD (interleaved).
-  - (B1-4) one MediaProjection session for recording + share via accessibility takeScreenshot + frame policy — DONE (run 39055393526).
-  - (A1-2) coordinate engine + Cursor Lab + cursor overlay — DONE (runs 39107227663, 39107861727).
-  - (A3-4) cursor gestures (tap/double/long/swipe/click_all) + manual panel/joystick/PANIC — DONE (run 39108238142).
-  - (A5) AI cursor tools + system prompt + node-first strategy — DONE (run 39108619174).
-  - (A6) click-lesson memory (file JSON + ui_clicks.md + journal, recall/save, corrections, privacy) — DONE (run 39109634068).
-  - (B5-6) Live session resumption + context compression + goAway reconnect + UI toggles — DONE (run 39110018456).
-- **Files:** live/{CursorGeometry,CursorController,CursorPanel,ClickMemory,AppControl,PhoneTools,LiveClient,CallHost,JarvisAccessibilityService}.kt, data/Prefs.kt, ui/screens/{CursorLabScreen,CursorMemoryScreen,ProfileScreen}.kt, MainActivity.kt, docs/CHANGES_2026101*_*.md.
-- **Test:** Build APK green after every push. Phone test pending (see Pending.md).
-- **Status:** done.
+- **Task:** JARVIS BUGFIX GUIDE — 3 MASLE (evidence-first: logging → root cause report → fix → proof).
+  - (Phase 1) Diagnostics: `Diag` logger (tag `JARVIS_DIAG`, timestamp + thread), hidden Diagnostics screen
+    (mic state/source/level, foreign recorder, websocket, underruns, interrupts, reconnects, tool calls,
+    frames, cursor windows), **Cursor Test** button (centre + 4 corners), log copy/save. Chain logging at
+    every link: mic open/release/zero, ws connect/live/close/reconnect, interrupted, underruns, toolCalls,
+    frame sent/dropped, cursor add/remove/update + a11y connect/disconnect — IN PROGRESS (first build).
+  - (Masla 3) Call stalling / dropping — measurements, Root Cause Report, then fixes. NOT STARTED.
+  - (Masla 1) Mic + recording (MicCaptureHub, in-app recorder mix, accurate warning + auto-recover). NOT STARTED.
+  - (Masla 2) AI cursor not appearing — chain diagnosis, Cursor Test, fix. NOT STARTED.
+  - (Final) Soak test + checklist + final report. NOT STARTED.
+- **Files:** live/Diag.kt, ui/screens/DiagnosticsScreen.kt, MainActivity.kt, ui/screens/ProfileScreen.kt,
+  live/{LiveClient,CursorController,ScreenShareService,JarvisAccessibilityService}.kt, docs/CHANGES_20261018_*.md.
+- **Test:** `./gradlew assembleDebug` via the Build APK workflow after every phase (no local JDK/SDK here).
+- **Status:** in progress.
 
-Next: reset this file to "none active" and take the next task from Planning.md / the user's guides.
+Next: build Phase 1, then Masla 3 measurements + Root Cause Report.

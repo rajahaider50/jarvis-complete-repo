@@ -18,3 +18,7 @@
 - [ ] Phone test: import a provider .json in Custom providers and confirm all models appear.
 - [ ] Phone test: Appearance shows "VOICE ORB STYLE · 100" and "COLOR STYLE · 50 THEMES"; each new orb animates/reacts to voice and each theme applies.
 - [ ] Phone test: Profile > Appearance > Interface style lists 50 (25 native + 25 iOS) and switching any new style changes the whole app.
+- [ ] Bugfix Diag: open Profile > Diagnostics during a live call and confirm the counters move (mic level, ws=live, toolCalls, frames). Run `adb logcat -v time JARVIS_DIAG:V *:S` while reproducing each masla and share the file.
+- [ ] Bugfix Masla 3 (call stalling) soak test: 30 min + 60 min call, network switch, barge-in, long answer; call must not drop; underruns/interrupted/reconnects visible in Diagnostics.
+- [ ] Bugfix Masla 1 (mic+recording): Jarvis recorder on → user voice reaches AI and BOTH voices land in Movies/Jarvis; mic never goes silent on record on/off; red warning only on real silence; 10-min A/V sync.
+- [ ] Bugfix Masla 2 (cursor): Diagnostics > Cursor Test shows centre + 4 corners; by voice "screen ke center me cursor lagao"; 3 cursors add/move/remove; service off → clean error (no crash).
