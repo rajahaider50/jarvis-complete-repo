@@ -1,19 +1,16 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-17 17:48 · 198 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 07:19 · 201 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Planning.md
-- Task.md
-- app/src/main/AndroidManifest.xml
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
 - app/src/main/java/com/jarvis/app/live/AppControl.kt
+- app/src/main/java/com/jarvis/app/live/CursorGeometry.kt
 - app/src/main/java/com/jarvis/app/live/JarvisAccessibilityService.kt
-- app/src/main/java/com/jarvis/app/live/PhoneTools.kt
-- app/src/main/java/com/jarvis/app/live/ScreenShareRequestActivity.kt
-- app/src/main/java/com/jarvis/app/live/ScreenShareService.kt
-- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
-- app/src/main/res/xml/accessibility_service_config.xml
-- docs/CHANGES_20261017_screenstream-phase1-4-single-projection.md
+- app/src/main/java/com/jarvis/app/ui/screens/CursorLabScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
+- docs/CHANGES_20261017_cursor-phase-A1-coordinates.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -21,7 +18,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 161 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 162 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
@@ -58,7 +55,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ModelRouter.kt` · 172 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `NavState.kt` · 11 · The screen the app is showing right now, so the assistant knows where the user is (get_app · NavState
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 149 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 154 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
@@ -74,7 +71,8 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CallEngine.kt` · 48 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
 - `CallHost.kt` · 94 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
 - `CallService.kt` · 86 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
-- `JarvisAccessibilityService.kt` · 236 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService
+- `CursorGeometry.kt` · 41 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
+- `JarvisAccessibilityService.kt` · 316 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService · uses: Prefs.kt
 - `LiveClient.kt` · 421 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `PhoneTools.kt` · 138 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
@@ -108,11 +106,12 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CodeScreen.kt` · 456 · Code & documents workspace: the agent writes real files in an editor, you can browse, edit · CodeBg, CodeText, CodeDim, Mono, viewable, rememberSaveFile, NameDialog · uses: CodeAgent.kt, TaskStateStore.kt, Workspace.kt, AppLog.kt, CustomProviders.kt, Prefs.kt
 - `ConsoleScreen.kt` · 110 · Every error, crash and event of the app, with time, file, line, function and stack. Copy o · ErrRed, WarnAmber, copy, ConsoleScreen · uses: AppLog.kt
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
+- `CursorLabScreen.kt` · 135 · Cursor Lab: proves the normalized coordinate system (center 0,0; right/up positive; 2 deci · targets, targetNames, CursorLabScreen · uses: CursorGeometry.kt, JarvisAccessibilityService.kt, Components.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
 - `LiveVoiceScreen.kt` · 312 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
-- `ProfileScreen.kt` · 140 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
+- `ProfileScreen.kt` · 141 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
 - `ProvidersScreen.kt` · 357 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `RouterLogScreen.kt` · 59 · Shows the smart router's real local health: what it used today, what is cooling down and h · RouterWarn, RouterLogScreen, maybeProvider · uses: ModelRouter.kt
 - `SkillsScreen.kt` · 172 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, Color2, SkillEditor · uses: Skills.kt, AppLog.kt
@@ -210,6 +209,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261016_smart-router-phase3.md` · 49 lines
 - `docs/CHANGES_20261016_task-state-resume-phase2.md` · 44 lines
 - `docs/CHANGES_20261017_build-fixes.md` · 19 lines
+- `docs/CHANGES_20261017_cursor-phase-A1-coordinates.md` · 26 lines
 - `docs/CHANGES_20261017_interfaces-50.md` · 24 lines
 - `docs/CHANGES_20261017_interfaces-layouts.md` · 34 lines
 - `docs/CHANGES_20261017_live-call-phase1-lag.md` · 40 lines
