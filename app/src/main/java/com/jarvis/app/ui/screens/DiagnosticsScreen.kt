@@ -116,7 +116,7 @@ fun DiagnosticsScreen(onBack: () -> Unit, onNav: (String) -> Unit = {}) {
                     Row(Modifier.fillMaxWidth()) { JText("last gesture outcome", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.lastGesture, 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("move mode (hand drag)", 12, Muted, modifier = Modifier.weight(1f)); JText(if (CursorController.moveMode) "ON" else "OFF (cursors never eat a tap)", 12, if (CursorController.moveMode) Gold else Ivory) }
                     OutlineButton(if (CursorController.moveMode) "Turn move mode OFF" else "Turn move mode ON", null, {
-                        CursorController.setMoveMode(!CursorController.moveMode)
+                        CursorController.setMove(!CursorController.moveMode)
                         note = if (CursorController.moveMode) "Move mode ON: you can drag cursors by hand." else "Move mode OFF: cursors are NOT_TOUCHABLE again."
                     }, Modifier.padding(vertical = 4.dp))
                     JText(JarvisAccessibilityService.gestureCapabilities(), 11, Muted)

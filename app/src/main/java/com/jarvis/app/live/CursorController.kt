@@ -70,8 +70,8 @@ object CursorController {
     var moveMode by mutableStateOf(false)
         private set
 
-    fun setMoveMode(on: Boolean) {
-        if (!isMainThread()) { onMain(Unit) { setMoveMode(on) }; return }
+    fun setMove(on: Boolean) {
+        if (!isMainThread()) { onMain(Unit) { setMove(on) }; return }
         moveMode = on
         Diag.log("cursor", "move mode ${if (on) "ON (cursors are draggable — taps can land on them)" else "OFF (cursors are NOT_TOUCHABLE: a tap always reaches the app)"}")
         setTouchable(on)
@@ -229,12 +229,6 @@ object CursorController {
         val list = cursors.values.toList()
         if (list.isEmpty()) return "no cursor windows on screen"
         return list.joinToString("\n") { c -> "#${c.id} " + windowLocOf(c) }
-    }
-
-    /** True when the cursor window currently accepts touches (i.e. it COULD swallow a tap). */
-    fun touchableNow(): Boolean = onMain(false) {
-        val cur = cursors[selectedId] ?: cursors.values.firstOrNull()
-        (((cur?.lp?.flags ?: WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)) and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) == 0
     }
 
     private fun setTouchable(touchable: Boolean) {

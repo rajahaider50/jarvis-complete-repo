@@ -24,3 +24,13 @@
 - [ ] Bugfix Masla 2 (cursor): Diagnostics > Cursor Test shows centre + 4 corners; by voice "screen ke center me cursor lagao"; 3 cursors add/move/remove; service off → clean error (no crash).
 - [ ] Bugfix Round 2 step 1 — Profiles > Diagnostics > **Tap Test**: 5 targets; each row must show `sent(px)`, `recv(px)` and `diff` in pixels. Report the values (diff ≤ 5 px = good). If a row says "cursor swallowed the tap", that proves Masla 2.2 must be applied.
 - [ ] Bugfix Round 2 step 1 — live call: ask JARVIS to click something and confirm the `cursor_click` result contains `outcome=`, `under_cursor:` and `effect=`, and that `adb logcat -v time JARVIS_DIAG:V *:S` shows `gesture: click ... outcome=... touchableAtClick=... effect=...`. Share that dump before the next round (echo/interrupt, mic source, background mic).
+
+## Round 3 (mic first, then tap) — code done, phone evidence pending
+- [ ] Round 3 Step A (mic): start a call on the speaker, hold it 2+ minutes of long answers. Dump header must show `aecAvail=true aecOn=true aecLost=0`, `source` must stay `VOICE_COMMUNICATION` (never flip to `MIC`), and every `interrupted` line must carry `mic=… assistant_spoke_until=…ms_ago route=… aec=… halfDuplex=… wsQueue=…`. `zeroRuns` recovery must retry the SAME source first.
+- [ ] Round 3 Step A (settings): tap "Call volume" (cycles 40→100%), toggle "Auto earpiece" (earpiece only after 1.5 s at the ear), tap "Echo guard" (auto/on/off), run the A/B test note (headphones vs speaker, interrupt off/on).
+- [ ] Round 3 Step A (model list): confirm `gemini-robotics-er-2-streaming-preview` shows "No audio support (code 1007)" in Profile > Gemini API and is skipped by the call.
+- [ ] Round 3 Step B (tap): Diagnostics > Tap Test — 5 rows, each with `sent`, `recv`, `diff`. Required: `diff ≤ 5 px` on all five and **no** "cursor swallowed the tap" row. Also check the log line `touchableAtClick=false` for every row.
+- [ ] Round 3 Step B (truthful click): panel "Move" switch ON → you can drag a cursor; switch OFF → a tap on a cursor's ring reaches the app. `cursor_click` must report `outcome=completed`, a real `under_cursor:` and `effect=changed`; a failed click must say so.
+- [ ] Round 3 Step B (elements): say "settings kholo, phir wahan se Wi-Fi dikhao" and confirm the model uses `get_clickable_elements` → `click_element` and only claims success when the screen changed.
+- [ ] Round 3 Step B (frames): Diagnostics > "Save one share frame to a file" — open the PNG and report whether the cursor/grid overlay is visible in it (B7).
+- [ ] Round 3 Step C: confirm the call screen opens with no freeze and the first frame is instant (`Timing: call_setup_services …ms` after `call_setup_begin`).
