@@ -145,6 +145,7 @@ fun JarvisApp() {
         composable("code") { CodeScreen(back) }
         composable("skills") { SkillsScreen(back) }
         composable("uistyle") { UiStyleScreen(back) }
+        composable("cursorlab") { CursorLabScreen(back) }
         composable("access") { AccessScreen(back) }
         composable("console") { ConsoleScreen(back) }
     }

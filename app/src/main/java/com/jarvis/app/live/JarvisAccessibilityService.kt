@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.jarvis.app.data.Prefs
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
@@ -158,6 +159,85 @@ class JarvisAccessibilityService : AccessibilityService() {
             val b = GestureDescription.Builder()
             build(b, dm.widthPixels.toFloat(), dm.heightPixels.toFloat())
             return s.dispatchGesture(b.build(), null, null)
+        }
+
+        // ---------- normalized cursor gestures (center 0, right/up positive) with callbacks + rate limit ----------
+        private val clickTimes = ArrayDeque<Long>()
+
+        /** Enforces the max clicks-per-second the user chose. Returns false when over the limit. */
+        fun allowClick(): Boolean {
+            val rate = Prefs.cursorClickRate.coerceIn(1, 20)
+            val now = System.currentTimeMillis()
+            while (clickTimes.isNotEmpty() && now - clickTimes.first() > 1000) clickTimes.removeFirst()
+            if (clickTimes.size >= rate) return false
+            clickTimes.addLast(now)
+            return true
+        }
+
+        private fun dispatchNorm(cb: ((Boolean) -> Unit)?, build: (GestureDescription.Builder, CursorGeometry.ScreenSize) -> Unit): Boolean {
+            val s = inst
+            if (s == null) { cb?.invoke(false); return false }
+            ScreenShareService.burst()
+            val sz = CursorGeometry.screenSize(s)
+            val b = GestureDescription.Builder()
+            build(b, sz)
+            return s.dispatchGesture(b.build(), object : AccessibilityService.GestureResultCallback() {
+                override fun onCompleted(gestureDescription: GestureDescription?) { cb?.invoke(true) }
+                override fun onCancelled(gestureDescription: GestureDescription?) { cb?.invoke(false) }
+            }, null)
+        }
+
+        /** Tap at a normalized point (-100..+100). */
+        fun tapNorm(x: Float, y: Float, cb: ((Boolean) -> Unit)? = null): Boolean {
+            if (!allowClick()) { cb?.invoke(false); return false }
+            return dispatchNorm(cb) { b, sz ->
+                val p = CursorGeometry.toPx(CursorGeometry.clamp(x), CursorGeometry.clamp(y), sz)
+                val path = Path(); path.moveTo(p.x, p.y)
+                b.addStroke(GestureDescription.StrokeDescription(path, 0, 50))
+            }
+        }
+
+        fun doubleTapNorm(x: Float, y: Float, cb: ((Boolean) -> Unit)? = null): Boolean {
+            if (!allowClick()) { cb?.invoke(false); return false }
+            return dispatchNorm(cb) { b, sz ->
+                val p = CursorGeometry.toPx(CursorGeometry.clamp(x), CursorGeometry.clamp(y), sz)
+                val path = Path(); path.moveTo(p.x, p.y)
+                b.addStroke(GestureDescription.StrokeDescription(path, 0, 40))
+                b.addStroke(GestureDescription.StrokeDescription(path, 140, 40))
+            }
+        }
+
+        fun longPressNorm(x: Float, y: Float, ms: Long = 700, cb: ((Boolean) -> Unit)? = null): Boolean {
+            if (!allowClick()) { cb?.invoke(false); return false }
+            return dispatchNorm(cb) { b, sz ->
+                val p = CursorGeometry.toPx(CursorGeometry.clamp(x), CursorGeometry.clamp(y), sz)
+                val path = Path(); path.moveTo(p.x, p.y)
+                b.addStroke(GestureDescription.StrokeDescription(path, 0, ms.coerceIn(300, 3000)))
+            }
+        }
+
+        fun swipeNorm(x1: Float, y1: Float, x2: Float, y2: Float, durationMs: Long = 300, cb: ((Boolean) -> Unit)? = null): Boolean {
+            if (!allowClick()) { cb?.invoke(false); return false }
+            return dispatchNorm(cb) { b, sz ->
+                val a = CursorGeometry.toPx(CursorGeometry.clamp(x1), CursorGeometry.clamp(y1), sz)
+                val c = CursorGeometry.toPx(CursorGeometry.clamp(x2), CursorGeometry.clamp(y2), sz)
+                val path = Path(); path.moveTo(a.x, a.y); path.lineTo(c.x, c.y)
+                b.addStroke(GestureDescription.StrokeDescription(path, 0, durationMs.coerceIn(50, 3000)))
+            }
+        }
+
+        /** Taps every cursor at once; one stroke per point (capped to the system max). */
+        fun clickAll(points: List<Pair<Float, Float>>, cb: ((Boolean) -> Unit)? = null): Boolean {
+            if (points.isEmpty()) { cb?.invoke(false); return false }
+            if (!allowClick()) { cb?.invoke(false); return false }
+            val max = GestureDescription.getMaxStrokeCount()
+            return dispatchNorm(cb) { b, sz ->
+                points.take(max).forEach { (x, y) ->
+                    val p = CursorGeometry.toPx(CursorGeometry.clamp(x), CursorGeometry.clamp(y), sz)
+                    val path = Path(); path.moveTo(p.x, p.y)
+                    b.addStroke(GestureDescription.StrokeDescription(path, 0, 50))
+                }
+            }
         }
 
         /** Swipe the finger: "up" moves to the next video / scrolls the feed down, "down" goes back, left / right switch pages. */

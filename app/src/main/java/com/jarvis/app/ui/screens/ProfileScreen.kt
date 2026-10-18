@@ -96,6 +96,7 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Layers, "Interface style") { onNav("uistyle") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Security, "Access & permissions") { onNav("access") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Terminal, "Console (errors)") { onNav("console") }
+                    Hairline(0.12f); PrefRowV(Icons.Outlined.GpsFixed, "Cursor Lab (AI cursor)") { onNav("cursorlab") }
                     Hairline(0.12f)
                     Row(
                         Modifier.fillMaxWidth().padding(vertical = 12.dp),

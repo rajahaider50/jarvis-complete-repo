@@ -27,6 +27,8 @@ object Prefs {
     var userName by mutableStateOf("")
     var instructions by mutableStateOf("")
     var rememberChats by mutableStateOf(true)
+    var aiCursor by mutableStateOf(false)       // master switch for the AI cursor / screen control
+    var cursorClickRate by mutableStateOf(5)    // max cursor clicks per second
     var assistantName by mutableStateOf("Jarvis")
     var wakePhrase by mutableStateOf("")
     var wakeEnabled by mutableStateOf(false)
@@ -86,6 +88,8 @@ object Prefs {
         catalogUrl = sp.getString("catUrl", "") ?: ""
         assistantTheme = sp.getString("atheme", "classic") ?: "classic"
         aiControl = sp.getBoolean("aicontrol", true)
+        aiCursor = sp.getBoolean("aicursor", false)
+        cursorClickRate = sp.getInt("cursorrate", 5)
         fxEnabled = sp.getBoolean("fxon", true)
         fxVolume = sp.getFloat("fxvol", 0.7f)
         memories.clear()
@@ -141,6 +145,7 @@ object Prefs {
             .putString("catUrl", catalogUrl)
             .putString("atheme", assistantTheme).putBoolean("fxon", fxEnabled).putFloat("fxvol", fxVolume)
             .putBoolean("aicontrol", aiControl)
+            .putBoolean("aicursor", aiCursor).putInt("cursorrate", cursorClickRate)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .putString("livemodels", JSONArray(liveModels.toList()).toString())
             .apply()

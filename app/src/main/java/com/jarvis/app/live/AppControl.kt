@@ -23,7 +23,7 @@ object AppControl {
 
     private val routes = setOf(
         "home", "chat", "control", "profile", "api", "providers", "voices", "themes", "themelab",
-        "memory", "assistant", "code", "skills", "uistyle", "access", "console"
+        "memory", "assistant", "code", "skills", "uistyle", "access", "console", "cursorlab"
     )
 
     fun execute(ctx: Context, name: String, args: JSONObject): String {
