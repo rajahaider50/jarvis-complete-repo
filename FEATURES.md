@@ -48,3 +48,6 @@ Updated 2026-10-18.
 | Screen-share detail (1280 px q70 / 800 q55 hot / Fast) + save-one-frame debug PNG | active — Round 3 Step B | `live/ScreenShareService.kt`, `data/Prefs.shareQuality`, `ui/screens/DiagnosticsScreen.kt` |
 | Only necessary tool parameters marked `required` | active — Round 3 Step B | `live/PhoneTools.kt` |
 | Call setup off the main thread (`withContext(Dispatchers.Main)` only for the overlay) | active — Round 3 Step C | `live/CallHost.kt` |
+| Android Settings allowed (screen sharing + click memory); password fields & bank/payment still blocked | active — Round 3 Step D | `live/ScreenShareService.kt`, `live/ClickMemory.kt`, `live/LiveClient.kt` |
+| Wake listener can never hold the mic during a call (forced pause + self-release, evidence flag) | active — Round 3 Step D | `live/WakeService.kt`, `AssistantActivity.kt` |
+| Mic silence diagnosis (cause) + background self-heal (foreground service + keep the echo canceller) | active — Round 3 Step D | `live/MicCaptureHub.kt`, `live/Diag.kt`, `ui/screens/DiagnosticsScreen.kt` |

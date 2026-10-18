@@ -12,7 +12,6 @@
 - [ ] Phone test: Memory screen shows live AGENT MEMORY entries while a coding task writes memory.
 - [ ] Phone test: Profile > Theme Lab — all 11 visuals animate in every state, level slider reacts, long-press sets active, FX sounds + volume work; API<33 shows fallback orbs.
 - [ ] Open generated PPTX once in PowerPoint/Google Slides to confirm it opens.
-- [ ] Check Vosk / Porcupine / jna dependency versions resolve in Gradle.
 - [ ] Phone test of both call engines (Gemini Live and provider pipeline).
 - [ ] Figma frames for updates 3-8 (design spec says "pending").
 - [ ] Phone test: import a provider .json in Custom providers and confirm all models appear.
@@ -34,3 +33,10 @@
 - [ ] Round 3 Step B (elements): say "settings kholo, phir wahan se Wi-Fi dikhao" and confirm the model uses `get_clickable_elements` → `click_element` and only claims success when the screen changed.
 - [ ] Round 3 Step B (frames): Diagnostics > "Save one share frame to a file" — open the PNG and report whether the cursor/grid overlay is visible in it (B7).
 - [ ] Round 3 Step C: confirm the call screen opens with no freeze and the first frame is instant (`Timing: call_setup_services …ms` after `call_setup_begin`).
+
+## Round 3 Step D — Settings unblock + background mic (§4)
+- [ ] Round 3 Step D (Settings): "settings kholo, phir wahan se Wi-Fi dikhao" — Settings ke frames share hone chahiye (koi pause nahi) aur AI `get_clickable_elements` → `click_element` se Wi-Fi khole. Phir ek Settings ke andar password field par cursor le jaayein → share turant pause ho.
+- [ ] Round 3 Step D (background mic §4): call ke doran Home dabayein (`press_button home` ya khud) aur 30–60 s baat karein — mic **zero na** ho; dump me `zeroRuns` na badhe, `callFgs=running`, `wake micOpen=false`.
+- [ ] Round 3 Step D (wake vs call): wake word ON rakhein aur call ke doran wake phrase bolein — wake engine mic **na** le (`wake micOpen=false`), `interrupted` na badhe.
+- [ ] Round 3 Step D (wake wapas): call khatam hone ke baad wake word phir kaam kare (`wake: the mic is free again -> wake word resumes by itself`).
+- [ ] Round 3 Step D (cause line): agar mic phir bhi zero ho to dump se `mic zeroCause=…` bhejein — uska matlab poora naam se likha hoga (FGS / app-op / wake listener / doosri app).

@@ -24,6 +24,7 @@
 - 2026-10-17 - Voice orb styles expanded 16 -> 50 (34 new professional/premium styles) - ui/components/SiriOrb.kt
 - 2026-10-17 - First clean GitHub Actions build (v8): fixed all compile errors - data/CustomProviders.kt (ProviderModel/eligibleModels), live/LiveClient.kt, ui/screens/HomeScreen.kt, live/WakeService.kt, overlay/Overlay.kt
 - 2026-10-17 - Custom providers: import a provider .json file to add all models at once - ui/screens/ProvidersScreen.kt, data/CustomProviders.kt
+- 2026-10-18 - Bugfix Round 3 A/B/C/D: mic source stays VOICE_COMMUNICATION + AEC held/logged + half-duplex echo guard + no-max volume + make-before-break reconnect + no-audio model list; cursor never eats its own tap + truthful gestures/click + element tools + 1280px frames + only-necessary params; call setup off the main thread; Android Settings unblocked (share + click memory); wake listener can never hold the mic during a call + mic silence cause/self-heal (Vosk/Porcupine/jna deps verified by the green builds)
 - 2026-10-16 - AI workflow system: AI_GUIDE, ARCHITECTURE, skills, tracking files, tools and workflows - docs/, tools/, .github/workflows/
 - v8 - Workspace code agent + documents (PDF/PNG/DOCX/XLSX/PPTX), in-app Skills, real phone facts + weather, chat actions + thinking card
 - v7 - System control tools: end/answer call, lock screen, power menu, screen share by voice, settings intents
