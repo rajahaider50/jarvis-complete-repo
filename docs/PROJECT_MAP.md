@@ -1,13 +1,11 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 14:09 · 225 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 14:16 · 225 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Pending.md
-- app/src/main/java/com/jarvis/app/live/CursorController.kt
-- app/src/main/java/com/jarvis/app/live/CursorPanel.kt
-- app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
+- FEATURES.md
 - docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -168,7 +166,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 - `.gitignore` · 9 lines
 - `Complete.md` · 33 lines
-- `FEATURES.md` · 43 lines
+- `FEATURES.md` · 51 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 37 lines
 - `Planning.md` · 42 lines
@@ -241,8 +239,8 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261018_bugfix-masla3-call-stability.md` · 46 lines
 - `docs/CHANGES_20261018_bugfix-phase1-diagnostics.md` · 50 lines
 - `docs/CHANGES_20261018_bugfix-round2-step1-click-truthtest.md` · 92 lines
-- `docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md` · 92 lines
-- `docs/HANDOFF_STATE.md` · 50 lines
+- `docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md` · 94 lines
+- `docs/HANDOFF_STATE.md` · 52 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REPORT_20261018_bugfix-final-summary.md` · 57 lines
 - `docs/REPORT_20261018_masla1_mic_recording.md` · 63 lines
