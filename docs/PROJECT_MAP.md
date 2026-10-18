@@ -1,12 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 07:25 · 203 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 07:29 · 203 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
 - app/src/main/java/com/jarvis/app/live/CursorController.kt
-- app/src/main/java/com/jarvis/app/live/JarvisAccessibilityService.kt
-- app/src/main/java/com/jarvis/app/ui/screens/CursorLabScreen.kt
-- docs/CHANGES_20261017_cursor-phase-A2-overlay.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
