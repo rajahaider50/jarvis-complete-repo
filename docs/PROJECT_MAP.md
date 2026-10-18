@@ -1,9 +1,12 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 07:58 · 209 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 08:04 · 210 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/live/ClickMemory.kt
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
+- app/src/main/java/com/jarvis/app/live/LiveClient.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
+- docs/CHANGES_20261017_live-phase5-6-resumption.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -48,7 +51,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ModelRouter.kt` · 172 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `NavState.kt` · 11 · The screen the app is showing right now, so the assistant knows where the user is (get_app · NavState
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 154 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 164 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
@@ -69,7 +72,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CursorGeometry.kt` · 41 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
 - `CursorPanel.kt` · 287 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
 - `JarvisAccessibilityService.kt` · 341 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService · uses: Prefs.kt
-- `LiveClient.kt` · 422 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
+- `LiveClient.kt` · 478 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `PhoneTools.kt` · 152 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 - `ScreenRecordRequestActivity.kt` · 39 · Invisible screen that shows Android's own "start recording?" question so the assistant can · ScreenRecordRequestActivity · uses: AppLog.kt
@@ -108,7 +111,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `LiveVoiceScreen.kt` · 312 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
-- `ProfileScreen.kt` · 154 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
+- `ProfileScreen.kt` · 178 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
 - `ProvidersScreen.kt` · 357 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `RouterLogScreen.kt` · 59 · Shows the smart router's real local health: what it used today, what is cooling down and h · RouterWarn, RouterLogScreen, maybeProvider · uses: ModelRouter.kt
 - `SkillsScreen.kt` · 172 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, Color2, SkillEditor · uses: Skills.kt, AppLog.kt
@@ -218,6 +221,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_live-call-phase3-minimize.md` · 36 lines
 - `docs/CHANGES_20261017_live-call-phase4-recorder.md` · 36 lines
 - `docs/CHANGES_20261017_live-call-phase5-ai-control.md` · 23 lines
+- `docs/CHANGES_20261017_live-phase5-6-resumption.md` · 33 lines
 - `docs/CHANGES_20261017_orb-styles-50.md` · 30 lines
 - `docs/CHANGES_20261017_orb100-themes50.md` · 21 lines
 - `docs/CHANGES_20261017_phase1-providers-catalog.md` · 38 lines
