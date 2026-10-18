@@ -67,9 +67,9 @@ object ClickMemory {
     }
 
     private fun rootDir(): File? = root
-    private fun jsonFile() = File(root ?: return null, "ui_clicks.json")
-    private fun mdFile() = File(root ?: return null, "ui_clicks.md")
-    private fun journalFile() = File(root ?: return null, "ui_clicks.journal")
+    private fun jsonFile(): File? { val r = root ?: return null; return File(r, "ui_clicks.json") }
+    private fun mdFile(): File? { val r = root ?: return null; return File(r, "ui_clicks.md") }
+    private fun journalFile(): File? { val r = root ?: return null; return File(r, "ui_clicks.journal") }
 
     /** True when this foreground package / label looks sensitive — we then never learn from it. */
     fun isProtected(pkg: String?, label: String? = null): Boolean {
