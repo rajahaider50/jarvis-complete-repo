@@ -204,8 +204,8 @@ private class GridView(c: Context) : View(c) {
     private val d = c.resources.displayMetrics.density
     private fun dp(v: Int) = (v * d)
     private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x33FFD479; strokeWidth = 1f }
-    private val strong = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x88FFD479; strokeWidth = 2f }
-    private val label = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xAAFFD479; textSize = dp(9) }
+    private val strong = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x88FFD479.toInt(); strokeWidth = 2f }
+    private val label = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xAAFFD479.toInt(); textSize = dp(9) }
 
     override fun onDraw(canvas: Canvas) {
         val w = width.toFloat(); val h = height.toFloat()
