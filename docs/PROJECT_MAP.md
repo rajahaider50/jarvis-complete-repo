@@ -1,18 +1,23 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 14:16 · 225 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 16:35 · 225 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- FEATURES.md
-- docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md
-- docs/HANDOFF_STATE.md
+- app/src/main/java/com/jarvis/app/AssistantActivity.kt
+- app/src/main/java/com/jarvis/app/live/ClickMemory.kt
+- app/src/main/java/com/jarvis/app/live/Diag.kt
+- app/src/main/java/com/jarvis/app/live/LiveClient.kt
+- app/src/main/java/com/jarvis/app/live/MicCaptureHub.kt
+- app/src/main/java/com/jarvis/app/live/ScreenShareService.kt
+- app/src/main/java/com/jarvis/app/live/WakeService.kt
+- app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
 
 
 ### (root)/
-- `AssistantActivity.kt` · 112 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
+- `AssistantActivity.kt` · 118 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
 - `MainActivity.kt` · 166 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
@@ -67,22 +72,22 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CallHost.kt` · 100 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
 - `CallLocks.kt` · 49 · Holds a partial wake lock (CPU) and a Wi-Fi high-performance lock for the whole live call, · CallLocks · uses: AppLog.kt
 - `CallService.kt` · 87 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
-- `ClickMemory.kt` · 269 · Click-lesson memory for the AI cursor. It is FILE based (no Room): a machine file `ui_clic · ClickMemory · uses: AppLog.kt
+- `ClickMemory.kt` · 272 · Click-lesson memory for the AI cursor. It is FILE based (no Room): a machine file `ui_clic · ClickMemory · uses: AppLog.kt
 - `CursorController.kt` · 444 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
 - `CursorGeometry.kt` · 44 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
 - `CursorPanel.kt` · 292 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
-- `Diag.kt` · 108 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
+- `Diag.kt` · 112 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
 - `JarvisAccessibilityService.kt` · 552 · The real result of a dispatched gesture (bugfix Masla A / §2.1). Top-level so CursorContro · GestureOutcome, JarvisAccessibilityService · uses: Prefs.kt
 - `LiveClient.kt` · 636 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
-- `MicCaptureHub.kt` · 252 · The ONE owner of the microphone. Everything that needs mic PCM (the Gemini sender, the in- · MicCaptureHub · uses: AppLog.kt
+- `MicCaptureHub.kt` · 304 · The ONE owner of the microphone. Everything that needs mic PCM (the Gemini sender, the in- · MicCaptureHub · uses: AppLog.kt
 - `PhoneTools.kt` · 203 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 - `ScreenRecordRequestActivity.kt` · 39 · Invisible screen that shows Android's own "start recording?" question so the assistant can · ScreenRecordRequestActivity · uses: AppLog.kt
 - `ScreenRecordService.kt` · 256 · In-app screen recorder: captures the screen (MediaProjection -> H.264) and mixes both side · ScreenRecordService · uses: AppLog.kt
 - `ScreenShareRequestActivity.kt` · 26 · Kept for compatibility. Screen sharing no longer needs Android's MediaProjection question, · ScreenShareRequestActivity · uses: AppLog.kt
-- `ScreenShareService.kt` · 177 · Shares the screen with the live call WITHOUT opening a second MediaProjection session (tha · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
+- `ScreenShareService.kt` · 183 · Shares the screen with the live call WITHOUT opening a second MediaProjection session (tha · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
 - `VoskModels.kt` · 61 · The small offline speech models (about 40 MB each) used by the keyless wake phrase engine. · VoskModels · uses: AppLog.kt
-- `WakeService.kt` · 359 · Listens in the background for your wake phrase (any name / command you chose). When heard, · WakeService · uses: AppLog.kt, AssistantActivity.kt, MainActivity.kt, Prefs.kt
+- `WakeService.kt` · 397 · Listens in the background for your wake phrase (any name / command you chose). When heard, · WakeService · uses: AppLog.kt, AssistantActivity.kt, MainActivity.kt, Prefs.kt
 
 ### overlay/
 - `DragLayout.kt` · 62 · Root view of a floating window. Taps go to the Compose content (buttons); as soon as a fin · DragLayout
@@ -109,7 +114,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
 - `CursorLabScreen.kt` · 165 · Cursor Lab: proves the normalized coordinate system (center 0,0; right/up positive; 2 deci · targets, targetNames, CursorLabScreen · uses: CursorController.kt, CursorGeometry.kt, CursorPanel.kt, JarvisAccessibilityService.kt, Components.kt
 - `CursorMemoryScreen.kt` · 92 · Cursor memory: the click lessons JARVIS learned (ui_clicks.json / ui_clicks.md). The user  · CursorMemoryScreen · uses: ClickMemory.kt, CursorGeometry.kt, Components.kt
-- `DiagnosticsScreen.kt` · 191 · Diagnostics (bugfix guide Phase 1). One screen with the live evidence: microphone state +  · DiagnosticsScreen, Card · uses: CursorController.kt, Prefs.kt, CallHost.kt, Diag.kt, MicCaptureHub.kt, JarvisAccessibilityService.kt
+- `DiagnosticsScreen.kt` · 196 · Diagnostics (bugfix guide Phase 1). One screen with the live evidence: microphone state +  · DiagnosticsScreen, Card · uses: CursorController.kt, Prefs.kt, CallHost.kt, CallService.kt, Diag.kt, WakeService.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
 - `LiveVoiceScreen.kt` · 318 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
