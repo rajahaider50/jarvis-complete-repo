@@ -1,22 +1,13 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 14:03 · 224 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 14:09 · 225 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- README.md
-- app/src/main/java/com/jarvis/app/live/AppControl.kt
-- app/src/main/java/com/jarvis/app/live/CallHost.kt
+- Pending.md
 - app/src/main/java/com/jarvis/app/live/CursorController.kt
-- app/src/main/java/com/jarvis/app/live/CursorGeometry.kt
 - app/src/main/java/com/jarvis/app/live/CursorPanel.kt
-- app/src/main/java/com/jarvis/app/live/Diag.kt
-- app/src/main/java/com/jarvis/app/live/JarvisAccessibilityService.kt
-- app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/live/PhoneTools.kt
-- app/src/main/java/com/jarvis/app/live/ScreenShareService.kt
-- app/src/main/java/com/jarvis/app/ui/screens/AccessScreen.kt
 - app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/TapTestScreen.kt
+- docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -79,7 +70,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CallLocks.kt` · 49 · Holds a partial wake lock (CPU) and a Wi-Fi high-performance lock for the whole live call, · CallLocks · uses: AppLog.kt
 - `CallService.kt` · 87 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
 - `ClickMemory.kt` · 269 · Click-lesson memory for the AI cursor. It is FILE based (no Room): a machine file `ui_clic · ClickMemory · uses: AppLog.kt
-- `CursorController.kt` · 450 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
+- `CursorController.kt` · 444 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
 - `CursorGeometry.kt` · 44 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
 - `CursorPanel.kt` · 292 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
 - `Diag.kt` · 108 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
@@ -179,7 +170,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `Complete.md` · 33 lines
 - `FEATURES.md` · 43 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 27 lines
+- `Pending.md` · 37 lines
 - `Planning.md` · 42 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
@@ -250,6 +241,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261018_bugfix-masla3-call-stability.md` · 46 lines
 - `docs/CHANGES_20261018_bugfix-phase1-diagnostics.md` · 50 lines
 - `docs/CHANGES_20261018_bugfix-round2-step1-click-truthtest.md` · 92 lines
+- `docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md` · 92 lines
 - `docs/HANDOFF_STATE.md` · 50 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REPORT_20261018_bugfix-final-summary.md` · 57 lines
