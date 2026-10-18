@@ -309,7 +309,7 @@ class JarvisAccessibilityService : AccessibilityService() {
     }
 
     override fun onServiceConnected() { inst = this }
-    override fun onUnbind(intent: android.content.Intent?): Boolean { inst = null; return super.onUnbind(intent) }
+    override fun onUnbind(intent: android.content.Intent?): Boolean { try { CursorController.panic() } catch (e: Exception) { }; inst = null; return super.onUnbind(intent) }
     override fun onAccessibilityEvent(event: AccessibilityEvent?) { }
     override fun onInterrupt() { }
 }

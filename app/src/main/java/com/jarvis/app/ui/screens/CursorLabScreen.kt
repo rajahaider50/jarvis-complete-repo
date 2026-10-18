@@ -31,11 +31,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jarvis.app.live.CursorController
 import com.jarvis.app.live.CursorGeometry
 import com.jarvis.app.live.JarvisAccessibilityService
 import com.jarvis.app.ui.components.GoldButton
 import com.jarvis.app.ui.components.JText
 import com.jarvis.app.ui.components.JToggle
+import com.jarvis.app.ui.components.OutlineButton
 import com.jarvis.app.ui.components.ScreenScaffold
 import com.jarvis.app.ui.components.SubHeader
 import com.jarvis.app.ui.theme.Gold
@@ -72,7 +74,7 @@ fun CursorLabScreen(onBack: () -> Unit) {
             JText("Right & up are positive (+). Left & down are negative (-).", 11, Muted)
             Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 JText("Grid", 14, Ivory, modifier = Modifier.weight(1f))
-                JToggle(grid) { grid = it }
+                JToggle(grid) { grid = it; if (JarvisAccessibilityService.enabled) CursorController.showGrid(it) }
             }
             Box(
                 Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(18.dp)).background(Surface2)
@@ -116,19 +118,39 @@ fun CursorLabScreen(onBack: () -> Unit) {
                     }
                 }
             }
-            JText(if (hasTap) "Last tap:  X ${CursorGeometry.fmt(tapX)}   Y ${CursorGeometry.fmt(tapY)}" else "Tap inside the grid to read its position.", 13, Ivory, FontWeight.Medium, modifier = Modifier.padding(top = 10.dp))
+            JText(if (hasTap) "Last tap:  X ${CursorGeometry.fmt(tapX)}   Y ${CursorGeometry.fmt(tapY)}" else "Tap inside the grid to read its position.", 13, Ivory, FontWeight.Medium, modifier = Modifier.padding(top = 8.dp))
             JText(lastResult, 11, Muted, modifier = Modifier.padding(top = 2.dp))
+            JText("Cursors: ${CursorController.list()}", 11, Muted, modifier = Modifier.padding(top = 2.dp))
             val t = targets[nextTarget]
-            GoldButton("Real tap at ${targetNames[nextTarget]} (${CursorGeometry.fmt(t.first)}, ${CursorGeometry.fmt(t.second)})", null, {
-                if (!JarvisAccessibilityService.enabled) { lastResult = "Accessibility service is off. Turn it on in Android Settings > Accessibility." }
-                else if (!JarvisAccessibilityService.canScreenshot && android.os.Build.VERSION.SDK_INT < 30) { lastResult = "Tap needs Android gestures (all versions support this)." }
-                else {
-                    JarvisAccessibilityService.tapNorm(t.first, t.second) { ok ->
-                        lastResult = if (ok) "Tap sent to ${targetNames[nextTarget]} — did the tap land on the target ring?" else "Tap was blocked (rate limit) or the service is busy."
-                    }
+            GoldButton("Tap ${targetNames[nextTarget]} (${CursorGeometry.fmt(t.first)}, ${CursorGeometry.fmt(t.second)})", null, {
+                if (!JarvisAccessibilityService.enabled) lastResult = "Accessibility service is off. Turn it on in Android Settings > Accessibility."
+                else JarvisAccessibilityService.tapNorm(t.first, t.second) { ok ->
+                    lastResult = if (ok) "Real tap sent to ${targetNames[nextTarget]} — did it land on the ring?" else "Blocked (rate limit) or service busy."
                 }
                 nextTarget = (nextTarget + 1) % targets.size
-            }, modifier = Modifier.padding(vertical = 10.dp))
+            }, modifier = Modifier.padding(top = 8.dp))
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                OutlineButton("Cursor at target", null, {
+                    if (!JarvisAccessibilityService.enabled) lastResult = "Accessibility service is off."
+                    else {
+                        val id = CursorController.positions().firstOrNull()?.first ?: CursorController.add(t.first, t.second)
+                        if (id < 0) lastResult = "Could not add a cursor."
+                        else { CursorController.move(id, t.first, t.second); lastResult = "Cursor #$id moved to ${targetNames[nextTarget]}." }
+                    }
+                }, modifier = Modifier.weight(1f))
+                OutlineButton("Click with cursor", null, {
+                    val p = CursorController.positions().firstOrNull()
+                    if (p == null) lastResult = "Add a cursor first."
+                    else if (!JarvisAccessibilityService.enabled) lastResult = "Accessibility service is off."
+                    else CursorController.gesture({ done -> JarvisAccessibilityService.tapNorm(p.second, p.third) { done(it) } }) { ok ->
+                        lastResult = if (ok) "Cursor clicked at ${CursorGeometry.fmt(p.second)}, ${CursorGeometry.fmt(p.third)}." else "Click blocked."
+                    }
+                }, modifier = Modifier.weight(1f))
+            }
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 10.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                OutlineButton("Add cursor", null, { val id = CursorController.add(0f, 0f); lastResult = if (id > 0) "Added cursor #$id at centre." else "Could not add (max 10 or service off)." }, modifier = Modifier.weight(1f))
+                OutlineButton("Clear cursors", null, { CursorController.clear(); lastResult = "Cursors cleared." }, modifier = Modifier.weight(1f))
+            }
         }
     }
 }
