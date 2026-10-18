@@ -22,6 +22,9 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
+/** The real result of a dispatched gesture (bugfix Masla A / §2.1). Top-level so CursorController can map it too. */
+enum class GestureOutcome { COMPLETED, CANCELLED, REJECTED, TIMEOUT, RATE_LIMITED, NO_SERVICE }
+
 /**
  * Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home on any app,
  * only after you switch it on in Android Settings > Accessibility. Used by the live-call tools.
@@ -272,7 +275,7 @@ class JarvisAccessibilityService : AccessibilityService() {
         }
 
         // ---------- truthful gestures: the real outcome, not a guess (bugfix Masla A / §2.1) ----------
-        enum class GestureOutcome { COMPLETED, CANCELLED, REJECTED, TIMEOUT, RATE_LIMITED, NO_SERVICE }
+        // GestureOutcome is declared at the top of this file so other classes (CursorController) can map it too.
 
         /** Every accessibility event seen — used as a "did the screen react" signal after a tap. */
         @Volatile private var eventCount = 0L

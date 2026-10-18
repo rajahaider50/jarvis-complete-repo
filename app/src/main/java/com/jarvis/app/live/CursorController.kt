@@ -281,13 +281,13 @@ object CursorController {
         val cursorScreen: String, val underCursor: String, val effect: String
     )
 
-    private fun mapOutcome(o: JarvisAccessibilityService.GestureOutcome): ClickOutcome = when (o) {
-        JarvisAccessibilityService.GestureOutcome.COMPLETED -> ClickOutcome.COMPLETED
-        JarvisAccessibilityService.GestureOutcome.CANCELLED -> ClickOutcome.CANCELLED
-        JarvisAccessibilityService.GestureOutcome.REJECTED -> ClickOutcome.REJECTED
-        JarvisAccessibilityService.GestureOutcome.TIMEOUT -> ClickOutcome.TIMEOUT
-        JarvisAccessibilityService.GestureOutcome.RATE_LIMITED -> ClickOutcome.RATE_LIMITED
-        JarvisAccessibilityService.GestureOutcome.NO_SERVICE -> ClickOutcome.NO_SERVICE
+    private fun mapOutcome(o: GestureOutcome): ClickOutcome = when (o) {
+        GestureOutcome.COMPLETED -> ClickOutcome.COMPLETED
+        GestureOutcome.CANCELLED -> ClickOutcome.CANCELLED
+        GestureOutcome.REJECTED -> ClickOutcome.REJECTED
+        GestureOutcome.TIMEOUT -> ClickOutcome.TIMEOUT
+        GestureOutcome.RATE_LIMITED -> ClickOutcome.RATE_LIMITED
+        GestureOutcome.NO_SERVICE -> ClickOutcome.NO_SERVICE
     }
 
     /** Where the cursor window really is on screen compared with where the coordinate engine says it should be. */
