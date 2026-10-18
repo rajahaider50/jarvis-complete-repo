@@ -51,6 +51,7 @@ class WakeService : Service() {
         /** Pause = release the microphone right now (used by the live call and the assistant panel). */
         fun setPaused(p: Boolean) {
             pausedState = p
+            Diag.log("wake", if (p) "paused -> releasing the mic for the call" else "resumed -> wake word may listen again")
             if (p) inst?.let { s -> s.main.post { s.destroyRec(); s.pausePm(); s.schedule(1000) } }
         }
 
@@ -151,8 +152,8 @@ class WakeService : Service() {
     private fun voskTick() {
         val shouldRun = Prefs.wakeEnabled && !pausedState && !foreignMic && !inPhoneCall()
         try {
-            if (shouldRun && !voskActive) { vosk?.startListening(voskListener); voskActive = true }
-            if (!shouldRun && voskActive) { vosk?.stop(); voskActive = false }
+            if (shouldRun && !voskActive) { vosk?.startListening(voskListener); voskActive = true; Diag.log("wake", "vosk startListening (mic OPEN)") }
+            if (!shouldRun && voskActive) { vosk?.stop(); voskActive = false; Diag.log("wake", "vosk stop (mic CLOSED)") }
         } catch (e: Exception) { AppLog.w(e); engineError = e.message }
         schedule(1000)
     }
@@ -177,6 +178,7 @@ class WakeService : Service() {
             } else b.setKeyword(Porcupine.BuiltInKeyword.valueOf(Prefs.pvKeyword))
             pm = b.build(applicationContext, PorcupineManagerCallback { _ -> main.post { trigger() } })
             pmActive = false
+            Diag.log("wake", "porcupine built (mic OPEN)")
             engineName = if (Prefs.pvKeyword == "custom") "custom word" else Prefs.pvKeyword.replace('_', ' ').lowercase()
             true
         } catch (e: PorcupineException) {
@@ -268,6 +270,7 @@ class WakeService : Service() {
         muteBeeps(1100)
         val r = SpeechRecognizer.createSpeechRecognizer(this)
         rec = r
+        Diag.log("wake", "basic SpeechRecognizer created (mic OPEN)")
         r.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) { muteBeeps(900) }
             override fun onBeginningOfSpeech() {}
@@ -340,7 +343,7 @@ class WakeService : Service() {
     }
 
     private fun destroyRec() {
-        rec?.let { try { it.cancel(); it.destroy() } catch (e: Exception) { AppLog.w(e); } }
+        rec?.let { Diag.log("wake", "SpeechRecognizer destroyed (mic CLOSED)"); try { it.cancel(); it.destroy() } catch (e: Exception) { AppLog.w(e); } }
         rec = null
     }
 

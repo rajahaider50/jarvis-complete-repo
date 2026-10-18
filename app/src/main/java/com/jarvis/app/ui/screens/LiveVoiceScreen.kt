@@ -53,6 +53,7 @@ import com.jarvis.app.live.CallEngine
 import com.jarvis.app.live.CallHost
 import com.jarvis.app.live.CallService
 import com.jarvis.app.live.LiveClient
+import com.jarvis.app.live.MicCaptureHub
 import com.jarvis.app.live.ScreenRecordService
 import com.jarvis.app.live.ScreenShareService
 import com.jarvis.app.live.WakeService
@@ -190,7 +191,12 @@ private fun LiveCallContent(live: CallEngine, onClose: () -> Unit, onChat: () ->
                 }
                 JText("${live.modelName.ifBlank { "Gemini Live" }} · ${Prefs.voiceLabel}", 11, Muted)
                 if (live.micSilent && live.state == CallEngine.State.LIVE && !live.muted) {
-                    JText("The microphone is silent. If a screen recorder or another app is using it, stop that and let Jarvis use the mic.", 11, Color(0xFFE0665C), align = TextAlign.Center, lh = 16)
+                    val holder = MicCaptureHub.foreignRecorder
+                    val txt = if (holder != "-")
+                        "Microphone is silent · another app is using it: $holder. Stop that recorder (or use Jarvis's own Record button) and Jarvis will take the mic back by itself."
+                    else
+                        "Microphone is silent. If the phone's screen recorder or another app is using the mic, stop it — Jarvis is retrying automatically."
+                    JText(txt, 11, Color(0xFFE0665C), align = TextAlign.Center, lh = 16)
                 }
             }
             if (cam != 0) {

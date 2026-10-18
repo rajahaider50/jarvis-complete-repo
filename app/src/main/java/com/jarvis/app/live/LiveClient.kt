@@ -71,8 +71,6 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private var reconnectTries = 0
 
     @Volatile private var recording = false
-    private var recorder: AudioRecord? = null
-    private var recThread: Thread? = null
 
     @Volatile private var playing = false
     private var track: AudioTrack? = null
@@ -83,7 +81,6 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private var lastMicUi = 0L
     private var lastOutUi = 0L
     private var connStarted = 0L
-    private var silentRun = 0
 
     // --- keep audio off the reader thread: tools run on their own thread, video frames never block the socket ---
     private val toolExec = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "live-tools") }
@@ -453,46 +450,29 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         ws?.send(JSONObject().put("realtimeInput", JSONObject().put("text", text)).toString())
     }
 
-    @SuppressLint("MissingPermission")
+    /** Mic PCM from MicCaptureHub → Gemini (the recorder gets the same buffers through CallAudioTap). */
+    private val micListener: (ByteArray, Int) -> Unit = { buf, n ->
+        val now = System.currentTimeMillis()
+        if (now - lastMicUi >= 50) { lastMicUi = now; ui { micLevel = if (muted) 0f else MicCaptureHub.level } }
+        CallAudioTap.mic?.invoke(buf, n)                       // hand the mic PCM to the in-app recorder
+        if (!muted) {
+            ws?.send(JSONObject().put("realtimeInput", JSONObject().put("audio",
+                JSONObject().put("data", Base64.encodeToString(buf, 0, n, Base64.NO_WRAP)).put("mimeType", "audio/pcm;rate=16000"))).toString())
+        }
+    }
+
     private fun startAudio() {
         if (recording) return
-        val rate = 16000
-        val min = AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
-        val rec = try {
-            AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, maxOf(min, rate))
-        } catch (e: Exception) { AppLog.w(e); fail("Microphone could not start: ${e.message}"); return }
-        if (rec.state != AudioRecord.STATE_INITIALIZED) { fail("Microphone could not start (permission?)"); return }
-        try { if (AcousticEchoCanceler.isAvailable()) AcousticEchoCanceler.create(rec.audioSessionId)?.enabled = true } catch (e: Exception) { AppLog.w(e); }
-        try { if (NoiseSuppressor.isAvailable()) NoiseSuppressor.create(rec.audioSessionId)?.enabled = true } catch (e: Exception) { AppLog.w(e); }
-        recorder = rec; recording = true; rec.startRecording()
-        Diag.micOpens++; Diag.micState = "recording"; Diag.micSource = "VOICE_COMMUNICATION"; Diag.micLevel = 0f
-        Diag.log("mic", "AudioRecord OPEN 16k mono VOICE_COMMUNICATION (thread=${Thread.currentThread().name})")
-        recThread = thread(name = "live-mic") {
-            try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO) } catch (e: Exception) { AppLog.w(e) }
-            val buf = ByteArray(3200)
-            Diag.log("mic", "capture thread started")
-            while (recording) {
-                val n = rec.read(buf, 0, buf.size)
-                if (n <= 0) { Diag.log("mic", "read returned $n"); continue }
-                var sum = 0.0
-                var k = 0
-                while (k + 1 < n) { val s = ((buf[k + 1].toInt() shl 8) or (buf[k].toInt() and 0xFF)).toShort().toInt(); sum += s.toDouble() * s; k += 2 }
-                val rms = sqrt(sum / (n / 2)) / 32768.0
-                val lvl = (rms * 7).toFloat().coerceIn(0f, 1f)
-                Diag.micLevel = lvl
-                val now = System.currentTimeMillis()
-                if (now - lastMicUi >= 50) { lastMicUi = now; ui { micLevel = if (muted) 0f else lvl } }
-                CallAudioTap.mic?.invoke(buf, n)                       // hand the mic PCM to the in-app recorder
-                if (sum == 0.0) silentRun++ else silentRun = 0         // ~100 ms per buffer
-                val silent = silentRun >= 10
-                if (silent != micSilent) { ui { micSilent = silent }; if (silent) Diag.micZero() else Diag.log("mic", "audio returned (level=${String.format(Locale.US, "%.3f", lvl)})") }
-                if (!muted) {
-                    ws?.send(JSONObject().put("realtimeInput", JSONObject().put("audio",
-                        JSONObject().put("data", Base64.encodeToString(buf, 0, n, Base64.NO_WRAP)).put("mimeType", "audio/pcm;rate=16000"))).toString())
-                }
-            }
-            Diag.log("mic", "capture thread ended")
+        MicCaptureHub.setContext(ctx)
+        MicCaptureHub.onSilent = { s -> ui { micSilent = s } }
+        MicCaptureHub.addListener(micListener)
+        if (!MicCaptureHub.start()) {
+            MicCaptureHub.removeListener(micListener)
+            fail("Microphone could not start (permission or another app is using it)")
+            return
         }
+        recording = true
+        Diag.log("mic", "startAudio -> MicCaptureHub (thread=${Thread.currentThread().name})")
     }
 
     private fun startPlayback() {
@@ -539,15 +519,15 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
 
     private fun stopAudio() {
         recording = false; playing = false
-        try { recorder?.stop() } catch (e: Exception) { AppLog.w(e); }
-        try { recorder?.release() } catch (e: Exception) { AppLog.w(e); }
-        recorder = null
+        MicCaptureHub.removeListener(micListener)
+        MicCaptureHub.onSilent = null
+        MicCaptureHub.stop()
         try { track?.stop() } catch (e: Exception) { AppLog.w(e); }
         try { track?.release() } catch (e: Exception) { AppLog.w(e); }
         track = null; playQ.clear(); playQBytes = 0
         micLevel = 0f; outLevel = 0f; speaking = false
-        Diag.micReleases++; Diag.micState = "idle"; Diag.micLevel = 0f
-        Diag.log("mic", "AudioRecord/AudioTrack released")
+        Diag.micState = "idle"; Diag.micLevel = 0f
+        Diag.log("mic", "AudioTrack released")
     }
 
     /** Change the talking language at any time: the call reconnects with a new instruction and keeps going. */

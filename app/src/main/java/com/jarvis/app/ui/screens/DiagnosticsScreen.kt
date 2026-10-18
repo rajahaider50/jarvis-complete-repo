@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jarvis.app.live.CursorController
 import com.jarvis.app.live.Diag
+import com.jarvis.app.live.MicCaptureHub
 import com.jarvis.app.live.JarvisAccessibilityService
 import com.jarvis.app.ui.components.GoldButton
 import com.jarvis.app.ui.components.JText
@@ -65,11 +66,16 @@ fun DiagnosticsScreen(onBack: () -> Unit) {
 
                 item { Card("Microphone") {
                     Row(Modifier.fillMaxWidth()) { JText("state", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.micState, 12, Ivory) }
-                    Row(Modifier.fillMaxWidth()) { JText("source", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.micSource, 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("source", 12, Muted, modifier = Modifier.weight(1f)); JText(if (MicCaptureHub.isRunning) MicCaptureHub.sourceName else Diag.micSource, 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("level (peak)", 12, Muted, modifier = Modifier.weight(1f)); JText(String.format(Locale.US, "%.3f", Diag.micLevel), 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("silent now", 12, Muted, modifier = Modifier.weight(1f)); JText(if (MicCaptureHub.isRunning) (if (MicCaptureHub.silent) "YES" else "no") else "-", 12, if (MicCaptureHub.silent) Gold else Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("zero-runs / recoveries", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.micZeroRuns} / ${Diag.micRecoveries}", 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("opens / releases", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.micOpens} / ${Diag.micReleases}", 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("another app on mic", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.foreignRecorder, 12, Ivory) }
+                    OutlineButton("Check who holds the mic", null, {
+                        Diag.foreignRecorder = MicCaptureHub.foreignRecorder()
+                        note = "Mic check: ${Diag.foreignRecorder}"
+                    }, Modifier.padding(top = 6.dp))
                 } }
 
                 item { Card("Connection") {

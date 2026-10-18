@@ -19,9 +19,14 @@ Task: JARVIS BUGFIX GUIDE — 3 masle (evidence-first, in the user's order).
   CursorController (add/remove/update/grid + thread + failure reason), JarvisAccessibilityService
   (onServiceConnected/onUnbind), ScreenShareService (frames sent/dropped).
 
-## Phase 2 — Masla 3 (in progress)
+## Phase 2 — Masla 3 (DONE, run 39113131430)
 Root Cause Report: docs/REPORT_20261018_masla3_call_stalling.md. Fixes F3-1..F3-7 in
-docs/CHANGES_20261018_bugfix-masla3-call-stability.md. Next: build, then Masla 1.
+docs/CHANGES_20261018_bugfix-masla3-call-stability.md.
+
+## Phase 3 — Masla 1 (in progress)
+Root Cause Report: docs/REPORT_20261018_masla1_mic_recording.md. Fixes F1-1..F1-6 in
+docs/CHANGES_20261018_bugfix-masla1-mic-hub.md (MicCaptureHub single owner + fan-out + self-heal, warning, wake logs).
+Next: build, then Masla 2.
 
 ## Notes
 - No local JDK/Android SDK → verify with the Build APK workflow after each phase.
