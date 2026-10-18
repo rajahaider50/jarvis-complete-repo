@@ -1,16 +1,13 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 16:35 · 225 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 16:43 · 226 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/AssistantActivity.kt
-- app/src/main/java/com/jarvis/app/live/ClickMemory.kt
-- app/src/main/java/com/jarvis/app/live/Diag.kt
-- app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/live/MicCaptureHub.kt
-- app/src/main/java/com/jarvis/app/live/ScreenShareService.kt
-- app/src/main/java/com/jarvis/app/live/WakeService.kt
-- app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
+- Complete.md
+- FEATURES.md
+- Pending.md
+- docs/CHANGES_20261018_bugfix-round3-stepD-settings-and-background-mic.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -170,10 +167,10 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 33 lines
-- `FEATURES.md` · 51 lines
+- `Complete.md` · 34 lines
+- `FEATURES.md` · 54 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 37 lines
+- `Pending.md` · 43 lines
 - `Planning.md` · 42 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
@@ -245,7 +242,8 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261018_bugfix-phase1-diagnostics.md` · 50 lines
 - `docs/CHANGES_20261018_bugfix-round2-step1-click-truthtest.md` · 92 lines
 - `docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md` · 94 lines
-- `docs/HANDOFF_STATE.md` · 52 lines
+- `docs/CHANGES_20261018_bugfix-round3-stepD-settings-and-background-mic.md` · 110 lines
+- `docs/HANDOFF_STATE.md` · 54 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REPORT_20261018_bugfix-final-summary.md` · 57 lines
 - `docs/REPORT_20261018_masla1_mic_recording.md` · 63 lines
