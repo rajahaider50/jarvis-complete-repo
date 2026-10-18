@@ -10,6 +10,8 @@ import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.NoiseSuppressor
+import android.net.ConnectivityManager
+import android.net.Network
 import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,12 +85,47 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private var connStarted = 0L
     private var silentRun = 0
 
+    // --- keep audio off the reader thread: tools run on their own thread, video frames never block the socket ---
+    private val toolExec = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "live-tools") }
+    private val videoBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile private var playQBytes = 0
+    private var videoSent = 0
+
+    // --- network-aware reconnect ---
+    private val cm by lazy { ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager }
+    private var netCb: ConnectivityManager.NetworkCallback? = null
+    @Volatile private var waitingNet = false
+    private val restartRunnable = Runnable { reconnecting = false; if (state != State.IDLE && winner < 0) restart("live_reconnect") }
+
+    /** Exponential backoff with a little jitter, capped at 8 s. */
+    private fun backoffMs(tryNo: Int): Long =
+        (500L shl (tryNo - 1).coerceIn(0, 4)).plus((Math.random() * 300).toLong()).coerceAtMost(8000L)
+
+    private fun registerNet() {
+        if (netCb != null) return
+        val cb = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                Diag.log("net", "network available")
+                if (waitingNet && state != State.IDLE) {
+                    waitingNet = false
+                    timeoutHandler.removeCallbacks(restartRunnable)
+                    Diag.log("net", "network is back -> resume now")
+                    timeoutHandler.post(restartRunnable)
+                }
+            }
+            override fun onLost(network: Network) { Diag.log("net", "network lost") }
+        }
+        try { cm.registerDefaultNetworkCallback(cb); netCb = cb } catch (e: Exception) { Diag.fail("net.register", e); AppLog.w(e) }
+    }
+
+    private fun unregisterNet() { try { netCb?.let { cm.unregisterNetworkCallback(it) } } catch (e: Exception) { AppLog.w(e) }; netCb = null }
+
     private fun ui(block: () -> Unit) { scope.launch(Dispatchers.Main) { block() } }
 
     companion object {
         private const val PARALLEL = 2                 // Live models tried at the same time
         private const val CONNECT_TIMEOUT_MS = 2500L   // per-batch connect deadline, then try the next models
-        private const val MAX_RECONNECT = 5            // automatic reconnects after an unexpected drop
+        private const val MAX_RECONNECT = 20           // automatic reconnects after an unexpected drop (a 20 s outage must not kill the call)
         private const val HANDLE_TTL_MS = 30 * 60 * 1000L   // session handle is only reused within this window
 
         /** Touch the shared HTTP client so the first real call does not pay for DNS/TLS/OkHttp warm-up. */
@@ -99,11 +136,13 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     override fun start() {
         error = null; userText = ""; aiText = ""; connStarted = 0L
         reconnectTries = 0; reconnecting = false
+        registerNet()
         restart("live_connect_start")
     }
 
     private fun restart(logTag: String) {
         winner = -1; gotSetup = false; simple = false; retriedSimple = false; lastReason = ""
+        waitingNet = false
         liveModels = ModelCatalog.liveCandidates()
         AppLog.i("Timing", "$logTag models=${liveModels.size}")
         nextBatch(0)
@@ -122,11 +161,10 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         AppLog.i("LiveClient", "reconnect #$reconnectTries ($why)")
         ui { if (state != State.IDLE) { state = State.CONNECTING; info = "Reconnecting…" } }
         stopSession()
-        timeoutHandler.postDelayed({
-            reconnecting = false
-            if (state == State.IDLE) return@postDelayed
-            restart("live_reconnect")
-        }, 700)
+        waitingNet = true
+        val delay = backoffMs(reconnectTries)
+        Diag.log("ws", "restart in ${delay}ms (or sooner if the network comes back)")
+        timeoutHandler.postDelayed(restartRunnable, delay)
     }
 
     /** Opens up to [PARALLEL] candidate models starting at [from]; the first that sends setupComplete wins. */
@@ -189,7 +227,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         if (winner >= 0) { try { t.socket?.close(1000, "stale") } catch (e: Exception) { AppLog.w(e) }; return }
         winner = t.idx
         gotSetup = true
-        reconnectTries = 0; reconnecting = false
+        reconnectTries = 0; reconnecting = false; waitingNet = false
         ws = t.socket
         batchTrials.filter { it !== t }.forEach { closeTrial(it) }
         AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · ${t.model}")
@@ -292,6 +330,15 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             setup.put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemText()))))
             setup.put("inputAudioTranscription", JSONObject()).put("outputAudioTranscription", JSONObject())
             setup.put("tools", tools(withSearch = Prefs.webSearch))
+            // Voice activity + interruption handling: without this the assistant's own voice on the speaker (echo)
+            // trips the server's VAD and cuts the reply off ("interrupted"), which sounds like stalling.
+            setup.put("realtimeInputConfig", JSONObject()
+                .put("automaticActivityDetection", JSONObject()
+                    .put("startOfSpeechSensitivity", "START_SENSITIVITY_LOW")
+                    .put("endOfSpeechSensitivity", "END_SENSITIVITY_LOW")
+                    .put("prefixPaddingMs", 40)
+                    .put("silenceDurationMs", if (Prefs.liveBargeIn) 500 else 900))
+                .put("activityHandling", if (Prefs.liveBargeIn) "START_OF_ACTIVITY_INTERRUPTS" else "NO_INTERRUPTION"))
             // keep the call alive: session resumption handle + sliding-window context compression
             if (Prefs.liveResume) {
                 val h = Prefs.resumeHandle
@@ -318,7 +365,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private fun handle(raw: String) {
         val j = try { JSONObject(raw) } catch (e: Exception) { AppLog.w(e); return }
         if (j.has("setupComplete")) {
-            gotSetup = true; reconnectTries = 0; reconnecting = false
+            gotSetup = true; reconnectTries = 0; reconnecting = false; waitingNet = false
             Diag.wsState = "live"
             Diag.log("Live", "setupComplete")
             AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · $modelName")
@@ -340,12 +387,12 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             reconnect("server goAway $left")
             return
         }
-        j.optJSONObject("toolCall")?.let { onTool(it) }
+        j.optJSONObject("toolCall")?.let { tc -> toolExec.execute { onTool(tc) } }   // off the reader thread: audio keeps flowing
         val sc = j.optJSONObject("serverContent") ?: return
         if (sc.optBoolean("interrupted", false)) {
             Diag.interrupted++
             Diag.log("Live", "interrupted -> flush playback (thread=${Thread.currentThread().name})")
-            playQ.clear()
+            playQ.clear(); playQBytes = 0
             try { track?.pause(); track?.flush(); track?.play() } catch (e: Exception) { AppLog.w(e); }
             ui { speaking = false }
         }
@@ -353,7 +400,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             for (i in 0 until parts.length()) {
                 val d = parts.getJSONObject(i).optJSONObject("inlineData") ?: continue
                 val bytes = Base64.decode(d.optString("data"), Base64.DEFAULT)
-                if (bytes.isNotEmpty()) { lastAudioAt = System.currentTimeMillis(); playQ.add(bytes) }
+                if (bytes.isNotEmpty()) { lastAudioAt = System.currentTimeMillis(); playQBytes += bytes.size; playQ.add(bytes) }
             }
         }
         sc.optJSONObject("inputTranscription")?.optString("text")?.let { t ->
@@ -378,14 +425,27 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             resp.put(JSONObject().put("id", c.optString("id")).put("name", name).put("response", JSONObject().put("result", result)))
         }
         ws?.send(JSONObject().put("toolResponse", JSONObject().put("functionResponses", resp)).toString())
-        Diag.log("tool", "toolResponse sent (blocked reader thread for ${System.currentTimeMillis() - t0}ms)")
+        Diag.log("tool", "toolResponse sent (tool thread held for ${System.currentTimeMillis() - t0}ms, reader stayed free)")
     }
 
     // ---------- outgoing media ----------
     override fun sendJpeg(bytes: ByteArray) {
         if (state != State.LIVE) return
-        ws?.send(JSONObject().put("realtimeInput", JSONObject().put("video",
-            JSONObject().put("data", Base64.encodeToString(bytes, Base64.NO_WRAP)).put("mimeType", "image/jpeg"))).toString())
+        val w = ws ?: return
+        if (!videoBusy.compareAndSet(false, true)) { Diag.framesDropped++; return }   // latest-wins: a frame is already going out
+        try {
+            val q = try { w.queueSize() } catch (e: Exception) { 0L }
+            if (q > 96 * 1024) {                                                       // the socket is busy: don't push a big frame in front of the audio
+                Diag.framesDropped++
+                if (Diag.framesDropped % 5 == 1) Diag.log("share", "video frame skipped: ws queue=${q}B")
+                return
+            }
+            val b64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+            w.send(JSONObject().put("realtimeInput", JSONObject().put("video",
+                JSONObject().put("data", b64).put("mimeType", "image/jpeg"))).toString())
+            videoSent++
+            if (videoSent % 5 == 1) Diag.log("share", "video frame sent jpeg=${bytes.size}B b64=${b64.length}B queue=${q}B")
+        } finally { videoBusy.set(false) }
     }
 
     override fun sendText(text: String) {
@@ -408,6 +468,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         Diag.micOpens++; Diag.micState = "recording"; Diag.micSource = "VOICE_COMMUNICATION"; Diag.micLevel = 0f
         Diag.log("mic", "AudioRecord OPEN 16k mono VOICE_COMMUNICATION (thread=${Thread.currentThread().name})")
         recThread = thread(name = "live-mic") {
+            try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO) } catch (e: Exception) { AppLog.w(e) }
             val buf = ByteArray(3200)
             Diag.log("mic", "capture thread started")
             while (recording) {
@@ -445,6 +506,11 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         track = t; t.play(); playing = true
         Diag.log("play", "AudioTrack started 24k buffer=${maxOf(min, rate)}B min=${min}B")
         playThread = thread(name = "live-play") {
+            try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO) } catch (e: Exception) { AppLog.w(e) }
+            // jitter pre-buffer: gather ~150 ms (250 ms max) before the first write, so a bursty network stream does not tuk-tuk
+            val pb = System.currentTimeMillis()
+            while (playing && playQBytes < 7200 && System.currentTimeMillis() - pb < 250) Thread.sleep(10)
+            Diag.log("play", "pre-buffered ${playQBytes}B in ${System.currentTimeMillis() - pb}ms")
             var urnCheck = 0L
             var urnLast = 0
             while (playing) {
@@ -466,6 +532,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                 if (now - lastOutUi >= 50) { lastOutUi = now; ui { speaking = true; outLevel = lvl } }
                 CallAudioTap.out?.invoke(b, b.size)                 // hand the assistant's PCM to the in-app recorder
                 try { t.write(b, 0, b.size) } catch (e: Exception) { AppLog.w(e); }
+                playQBytes = (playQBytes - b.size).coerceAtLeast(0)
             }
         }
     }
@@ -477,7 +544,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         recorder = null
         try { track?.stop() } catch (e: Exception) { AppLog.w(e); }
         try { track?.release() } catch (e: Exception) { AppLog.w(e); }
-        track = null; playQ.clear()
+        track = null; playQ.clear(); playQBytes = 0
         micLevel = 0f; outLevel = 0f; speaking = false
         Diag.micReleases++; Diag.micState = "idle"; Diag.micLevel = 0f
         Diag.log("mic", "AudioRecord/AudioTrack released")
@@ -496,12 +563,14 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         state = State.IDLE
         stopSession()
         stopAudio()
+        unregisterNet()
         Prefs.resumeHandle = ""; Prefs.resumeAt = 0L; Prefs.save()   // a fresh call starts a fresh conversation
     }
 
     @Synchronized
     private fun stopSession() {
         winner = -1
+        waitingNet = false
         Diag.wsState = "idle"
         try { timeoutHandler.removeCallbacksAndMessages(null) } catch (e: Exception) { AppLog.w(e); }
         batchTrials.forEach { t -> t.done = true; try { t.socket?.close(1000, "bye") } catch (e: Exception) { AppLog.w(e) } }

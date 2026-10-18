@@ -147,6 +147,18 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                         }
                         JToggle(Prefs.liveCompress) { Prefs.liveCompress = it; Prefs.save() }
                     }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.RecordVoiceOver, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Let me interrupt", 15, Ivory)
+                            JText("Speak over ${Prefs.assistantName} to cut in. Turn off if echo keeps cutting it off on speaker", 11, Muted)
+                        }
+                        JToggle(Prefs.liveBargeIn) { Prefs.liveBargeIn = it; Prefs.save() }
+                    }
                 }
             }
         }

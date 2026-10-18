@@ -31,6 +31,7 @@ object Prefs {
     var cursorClickRate by mutableStateOf(5)    // max cursor clicks per second
     var liveResume by mutableStateOf(true)      // keep the live call alive across drops (session resumption)
     var liveCompress by mutableStateOf(true)    // let the server compress a long call context
+    var liveBargeIn by mutableStateOf(true)     // let the user interrupt the assistant (turn off if echo cuts it off)
     var resumeHandle by mutableStateOf("")      // last Gemini Live session-resumption handle
     var resumeAt by mutableStateOf(0L)          // when the handle was received (valid ~30 min)
     var assistantName by mutableStateOf("Jarvis")
@@ -96,6 +97,7 @@ object Prefs {
         cursorClickRate = sp.getInt("cursorrate", 5)
         liveResume = sp.getBoolean("liveresume", true)
         liveCompress = sp.getBoolean("livecompress", true)
+        liveBargeIn = sp.getBoolean("livebargein", true)
         resumeHandle = sp.getString("resumehandle", "") ?: ""
         resumeAt = sp.getLong("resumeat", 0L)
         fxEnabled = sp.getBoolean("fxon", true)
@@ -155,6 +157,7 @@ object Prefs {
             .putBoolean("aicontrol", aiControl)
             .putBoolean("aicursor", aiCursor).putInt("cursorrate", cursorClickRate)
             .putBoolean("liveresume", liveResume).putBoolean("livecompress", liveCompress)
+            .putBoolean("livebargein", liveBargeIn)
             .putString("resumehandle", resumeHandle).putLong("resumeat", resumeAt)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .putString("livemodels", JSONArray(liveModels.toList()).toString())

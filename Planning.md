@@ -19,6 +19,10 @@ Task: JARVIS BUGFIX GUIDE — 3 masle (evidence-first, in the user's order).
   CursorController (add/remove/update/grid + thread + failure reason), JarvisAccessibilityService
   (onServiceConnected/onUnbind), ScreenShareService (frames sent/dropped).
 
+## Phase 2 — Masla 3 (in progress)
+Root Cause Report: docs/REPORT_20261018_masla3_call_stalling.md. Fixes F3-1..F3-7 in
+docs/CHANGES_20261018_bugfix-masla3-call-stability.md. Next: build, then Masla 1.
+
 ## Notes
 - No local JDK/Android SDK → verify with the Build APK workflow after each phase.
 - Evidence that needs the phone (logcat) will be written as "confirm nahi hua" + the exact command.

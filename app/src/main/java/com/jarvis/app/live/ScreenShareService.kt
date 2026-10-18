@@ -11,6 +11,7 @@ import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -70,10 +71,16 @@ class ScreenShareService : Service() {
         val prev = IntArray(64 * 64)
         var havePrev = false
         var idle = 0
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        var wasHot = false
         try {
             while (running) {
                 val now = System.currentTimeMillis()
                 val burst = now < burstUntil
+
+                // thermal: if the phone is hot (recording + share + shader + call together) slow down and shrink frames
+                val hot = Build.VERSION.SDK_INT >= 29 && pm.currentThermalStatus >= PowerManager.THERMAL_STATUS_MODERATE
+                if (hot != wasHot) { wasHot = hot; Diag.log("share", if (hot) "device hot -> reduced share quality/fps" else "device cool -> normal share") }
 
                 val pkg = JarvisAccessibilityService.foregroundPackage()
                 val sensitive = pkg != null && blocklist.any { pkg.contains(it, true) } || JarvisAccessibilityService.isSensitiveScreen()
@@ -91,20 +98,21 @@ class ScreenShareService : Service() {
 
                 if (send) {
                     try {
-                        val jpeg = ImageUtil.toJpeg(bmp, 720, 60)
+                        val jpeg = ImageUtil.toJpeg(bmp, if (hot) 480 else 720, if (hot) 45 else 60)
                         (frameSink ?: { bytes: ByteArray -> CallHost.client?.sendJpeg(bytes) })(jpeg)
                         Diag.framesSent++
-                        if (Diag.framesSent % 10 == 1) Diag.log("share", "frame #${Diag.framesSent} ${jpeg.size}B burst=$burst")
+                        if (Diag.framesSent % 10 == 1) Diag.log("share", "frame #${Diag.framesSent} ${jpeg.size}B burst=$burst hot=$hot")
                     } catch (e: Exception) { Diag.fail("share.frame", e); AppLog.w(e) }
                 } else Diag.framesDropped++
                 bmp.recycle()
 
-                val wait = when {
+                var wait = when {
                     burst -> 300L
                     changed -> 1000L
                     idle >= 5 -> 3000L
                     else -> 1000L
                 }
+                if (hot) wait = maxOf(wait, 2500L)
                 Thread.sleep(wait)
             }
         } catch (e: Exception) { AppLog.w(e) } finally {

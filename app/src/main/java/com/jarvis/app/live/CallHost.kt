@@ -47,6 +47,7 @@ object CallHost {
             AppLog.i("Timing", "call_setup_begin")
             Overlay.hideAll()
             WakeService.setPaused(true)                                  // free the microphone for the call
+            CallLocks.acquire(app)                                       // keep CPU + Wi-Fi alive for a long call
             AudioRouter.start(app)
             CallService.start(app)
             AppLog.i("Timing", "call_setup_services ${System.currentTimeMillis() - t0}ms")
@@ -85,6 +86,7 @@ object CallHost {
         ScreenShareService.stop(app)
         ScreenRecordService.stop(app)
         AudioRouter.stop(app)
+        CallLocks.release(app)
         CallService.stop(app)
         WakeService.setPaused(false)
         Overlay.hideBubble()

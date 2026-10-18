@@ -7,7 +7,9 @@ Status: in progress.
     frames, cursor windows), **Cursor Test** button (centre + 4 corners), log copy/save. Chain logging at
     every link: mic open/release/zero, ws connect/live/close/reconnect, interrupted, underruns, toolCalls,
     frame sent/dropped, cursor add/remove/update + a11y connect/disconnect — IN PROGRESS (first build).
-  - (Masla 3) Call stalling / dropping — measurements, Root Cause Report, then fixes. NOT STARTED.
+  - (Masla 3) Call stalling / dropping — Root Cause Report + fixes (tools off the reader thread, video guard,
+    VAD/interruption config + "Let me interrupt" toggle, urgent-priority audio threads + pre-buffer, wake/wifi
+    locks, exponential backoff + network callback, thermal-aware sharing) — IN PROGRESS (build).
   - (Masla 1) Mic + recording (MicCaptureHub, in-app recorder mix, accurate warning + auto-recover). NOT STARTED.
   - (Masla 2) AI cursor not appearing — chain diagnosis, Cursor Test, fix. NOT STARTED.
   - (Final) Soak test + checklist + final report. NOT STARTED.
