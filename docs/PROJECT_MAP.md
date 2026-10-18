@@ -1,10 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 10:01 · 224 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 10:10 · 224 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/live/CursorController.kt
-- app/src/main/java/com/jarvis/app/live/JarvisAccessibilityService.kt
+- Pending.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -167,7 +166,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `Complete.md` · 33 lines
 - `FEATURES.md` · 43 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 25 lines
+- `Pending.md` · 27 lines
 - `Planning.md` · 42 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
