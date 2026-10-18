@@ -86,7 +86,7 @@ object CallHost {
         ScreenShareService.stop(app)
         ScreenRecordService.stop(app)
         AudioRouter.stop(app)
-        CallLocks.release(app)
+        CallLocks.release()
         CallService.stop(app)
         WakeService.setPaused(false)
         Overlay.hideBubble()

@@ -26,14 +26,15 @@ object CallLocks {
             } catch (e: Exception) { Diag.fail("locks.wake", e); AppLog.w(e) }
         }
         if (wifi == null) {
-            try {
-                val wm = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                @Suppress("DEPRECATION")
-                val lock = if (Build.VERSION.SDK_INT >= 29) wm.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "jarvis:call")
-                           else wm.createWifiLock(WifiManager.WIFI_MODE_FULL)
-                wifi = lock.apply { setReferenceCounted(false); acquire() }
-                Diag.log("locks", "wifi lock acquired")
-            } catch (e: Exception) { Diag.fail("locks.wifi", e); AppLog.w(e) }
+            if (Build.VERSION.SDK_INT >= 29) {
+                try {
+                    val wm = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+                    wifi = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "jarvis:call").apply {
+                        setReferenceCounted(false); acquire()
+                    }
+                    Diag.log("locks", "wifi lock acquired")
+                } catch (e: Exception) { Diag.fail("locks.wifi", e); AppLog.w(e) }
+            } else Diag.log("locks", "wifi lock skipped on API < 29 (CPU wake lock still held)")
         }
     }
 
