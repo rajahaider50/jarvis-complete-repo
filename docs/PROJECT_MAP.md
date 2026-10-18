@@ -1,9 +1,16 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 09:07 · 219 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 09:14 · 221 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/live/MicCaptureHub.kt
+- Planning.md
+- Task.md
+- app/src/main/java/com/jarvis/app/live/AppControl.kt
+- app/src/main/java/com/jarvis/app/live/CursorController.kt
+- app/src/main/java/com/jarvis/app/live/CursorPanel.kt
+- app/src/main/java/com/jarvis/app/live/JarvisAccessibilityService.kt
+- docs/CHANGES_20261018_bugfix-masla2-cursor-mainthread.md
+- docs/REPORT_20261018_masla2_cursor.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -57,7 +64,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### live/
 - `AiPanel.kt` · 85 · The floating option popups the assistant shows during a call ("5-5"): orb styles, colour t · AiPanel · uses: Prefs.kt, SiriOrb.kt, IfaceCatalog.kt, Color.kt, ThemeRegistry.kt
-- `AppControl.kt` · 199 · App-control tools the Gemini Live model can call during a call: show option popups ("5-5") · AppControl · uses: MainActivity.kt, AppLog.kt, NavState.kt, Prefs.kt, SiriOrb.kt
+- `AppControl.kt` · 200 · App-control tools the Gemini Live model can call during a call: show option popups ("5-5") · AppControl · uses: MainActivity.kt, AppLog.kt, NavState.kt, Prefs.kt, SiriOrb.kt
 - `AudioMixer.kt` · 66 · Joins the two sides of a live call into one 44.1 kHz mono stream for the in-app screen rec · AudioMixer
 - `CallAudioTap.kt` · 15 · A tap into the live call's raw audio, used by the in-app screen recorder to mix both sides · CallAudioTap
 - `CallCamera.kt` · 14 · The live call camera, owned by the app (not the screen) so both the UI and the assistant c · CallCamera
@@ -66,9 +73,9 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CallLocks.kt` · 49 · Holds a partial wake lock (CPU) and a Wi-Fi high-performance lock for the whole live call, · CallLocks · uses: AppLog.kt
 - `CallService.kt` · 86 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
 - `ClickMemory.kt` · 269 · Click-lesson memory for the AI cursor. It is FILE based (no Room): a machine file `ui_clic · ClickMemory · uses: AppLog.kt
-- `CursorController.kt` · 304 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
+- `CursorController.kt` · 350 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
 - `CursorGeometry.kt` · 41 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
-- `CursorPanel.kt` · 287 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
+- `CursorPanel.kt` · 288 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
 - `Diag.kt` · 87 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
 - `JarvisAccessibilityService.kt` · 341 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService · uses: Prefs.kt
 - `LiveClient.kt` · 566 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
@@ -166,10 +173,10 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `FEATURES.md` · 39 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 25 lines
-- `Planning.md` · 34 lines
+- `Planning.md` · 38 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
-- `Task.md` · 22 lines
+- `Task.md` · 23 lines
 - `build.gradle.kts` · 5 lines
 - `gradle.properties` · 5 lines
 - `settings.gradle.kts` · 8 lines
@@ -232,11 +239,13 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_visual-themes-soundfx.md` · 51 lines
 - `docs/CHANGES_20261017_workspace-provider-only.md` · 50 lines
 - `docs/CHANGES_20261018_bugfix-masla1-mic-hub.md` · 35 lines
+- `docs/CHANGES_20261018_bugfix-masla2-cursor-mainthread.md` · 34 lines
 - `docs/CHANGES_20261018_bugfix-masla3-call-stability.md` · 46 lines
 - `docs/CHANGES_20261018_bugfix-phase1-diagnostics.md` · 50 lines
 - `docs/HANDOFF_STATE.md` · 43 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REPORT_20261018_masla1_mic_recording.md` · 63 lines
+- `docs/REPORT_20261018_masla2_cursor.md` · 50 lines
 - `docs/REPORT_20261018_masla3_call_stalling.md` · 65 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
