@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jarvis.app.live.CursorController
 import com.jarvis.app.live.CursorGeometry
+import com.jarvis.app.live.CursorPanel
 import com.jarvis.app.live.JarvisAccessibilityService
 import com.jarvis.app.ui.components.GoldButton
 import com.jarvis.app.ui.components.JText
@@ -147,9 +148,16 @@ fun CursorLabScreen(onBack: () -> Unit) {
                     }
                 }, modifier = Modifier.weight(1f))
             }
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 10.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
                 OutlineButton("Add cursor", null, { val id = CursorController.add(0f, 0f); lastResult = if (id > 0) "Added cursor #$id at centre." else "Could not add (max 10 or service off)." }, modifier = Modifier.weight(1f))
                 OutlineButton("Clear cursors", null, { CursorController.clear(); lastResult = "Cursors cleared." }, modifier = Modifier.weight(1f))
+            }
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 10.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                OutlineButton("Show control panel", null, {
+                    if (!JarvisAccessibilityService.enabled) lastResult = "Accessibility service is off."
+                    else { CursorPanel.toggle(); lastResult = if (CursorPanel.isShown()) "Panel shown." else "Panel hidden." }
+                }, modifier = Modifier.weight(1f))
+                OutlineButton("Panic / stop", null, { CursorPanel.panic(); lastResult = "Stopped: cursors and grid cleared." }, modifier = Modifier.weight(1f))
             }
         }
     }

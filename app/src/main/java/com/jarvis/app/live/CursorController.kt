@@ -43,6 +43,16 @@ object CursorController {
         private set
     var sizeDp by mutableStateOf(56)
 
+    /** The cursor the manual panel / joystick is controlling (first one if none chosen). */
+    var selectedId by mutableStateOf<Int?>(null)
+    fun select(id: Int?) { selectedId = id }
+
+    internal fun wmOrNull(): WindowManager? { ensure(); return wm }
+    internal fun ctxOrNull(): Context? { ensure(); return ctx }
+    internal fun dpInt(v: Int): Int = dp(v)
+
+    fun ensureAttached(): Boolean = ensure()
+
     private fun ensure(): Boolean {
         val svc = JarvisAccessibilityService.inst ?: return false
         if (wm == null) {
@@ -80,6 +90,7 @@ object CursorController {
         cur.view = v; cur.lp = lp
         try { wm!!.addView(v, lp) } catch (e: Exception) { AppLog.w(e); return -1 }
         cursors[id] = cur
+        if (selectedId == null) selectedId = id
         anyShown = true
         return id
     }
@@ -110,6 +121,7 @@ object CursorController {
     fun remove(id: Int) {
         val cur = cursors.remove(id) ?: return
         try { wm?.removeView(cur.view) } catch (e: Exception) { AppLog.w(e) }
+        if (selectedId == id) selectedId = cursors.keys.firstOrNull()
         if (cursors.isEmpty()) anyShown = false
     }
 
@@ -137,6 +149,44 @@ object CursorController {
             setTouchable(true)
             cb?.invoke(ok)
         }
+    }
+
+    // ---------- gestures through cursors ----------
+    enum class ClickType { TAP, DOUBLE, LONG }
+
+    fun click(id: Int, type: ClickType = ClickType.TAP, cb: ((Boolean) -> Unit)? = null) {
+        val cur = cursors[id]
+        if (cur == null) { cb?.invoke(false); return }
+        move(id, cur.x, cur.y)
+        gesture({ done ->
+            when (type) {
+                ClickType.TAP -> JarvisAccessibilityService.tapNorm(cur.x, cur.y) { done(it) }
+                ClickType.DOUBLE -> JarvisAccessibilityService.doubleTapNorm(cur.x, cur.y) { done(it) }
+                ClickType.LONG -> JarvisAccessibilityService.longPressNorm(cur.x, cur.y) { done(it) }
+            }
+        }, cb)
+    }
+
+    fun swipe(id: Int, toX: Float, toY: Float, durationMs: Long = 300, cb: ((Boolean) -> Unit)? = null) {
+        val cur = cursors[id] ?: run { cb?.invoke(false); return }
+        gesture({ done -> JarvisAccessibilityService.swipeNorm(cur.x, cur.y, toX, toY, durationMs) { done(it) } }) { ok ->
+            if (ok) move(id, CursorGeometry.clamp(toX), CursorGeometry.clamp(toY))
+            cb?.invoke(ok)
+        }
+    }
+
+    /** Taps every cursor at once (one stroke each) — the "click all" command. */
+    fun clickAll(cb: ((Boolean) -> Unit)? = null) {
+        val pts = cursors.values.map { it.x to it.y }
+        if (pts.isEmpty()) { cb?.invoke(false); return }
+        gesture({ done -> JarvisAccessibilityService.clickAll(pts) { done(it) } }, cb)
+    }
+
+    fun clickAt(x: Float, y: Float, type: ClickType = ClickType.TAP, cb: ((Boolean) -> Unit)? = null): Int {
+        val id = add(x, y)
+        if (id < 0) { cb?.invoke(false); return -1 }
+        click(id, type, cb)
+        return id
     }
 
     // ---------- grid ----------
