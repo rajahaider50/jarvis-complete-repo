@@ -1,19 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 07:49 · 209 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 07:58 · 209 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/live/AppControl.kt
-- app/src/main/java/com/jarvis/app/live/CallHost.kt
 - app/src/main/java/com/jarvis/app/live/ClickMemory.kt
-- app/src/main/java/com/jarvis/app/live/CursorController.kt
-- app/src/main/java/com/jarvis/app/live/CursorPanel.kt
-- app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/live/PhoneTools.kt
-- app/src/main/java/com/jarvis/app/ui/screens/CursorMemoryScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
-- docs/CHANGES_20261017_cursor-phase-A6-memory.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
