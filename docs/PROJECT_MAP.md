@@ -1,17 +1,10 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 09:56 · 224 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 10:01 · 224 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/live/AppControl.kt
 - app/src/main/java/com/jarvis/app/live/CursorController.kt
-- app/src/main/java/com/jarvis/app/live/Diag.kt
 - app/src/main/java/com/jarvis/app/live/JarvisAccessibilityService.kt
-- app/src/main/java/com/jarvis/app/live/PhoneTools.kt
-- app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/TapTestScreen.kt
-- docs/CHANGES_20261018_bugfix-round2-step1-click-truthtest.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -78,7 +71,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CursorGeometry.kt` · 41 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
 - `CursorPanel.kt` · 288 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
 - `Diag.kt` · 99 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
-- `JarvisAccessibilityService.kt` · 438 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService · uses: Prefs.kt
+- `JarvisAccessibilityService.kt` · 441 · The real result of a dispatched gesture (bugfix Masla A / §2.1). Top-level so CursorContro · GestureOutcome, JarvisAccessibilityService · uses: Prefs.kt
 - `LiveClient.kt` · 566 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `MicCaptureHub.kt` · 213 · The ONE owner of the microphone. Everything that needs mic PCM (the Gemini sender, the in- · MicCaptureHub · uses: AppLog.kt
 - `PhoneTools.kt` · 152 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
