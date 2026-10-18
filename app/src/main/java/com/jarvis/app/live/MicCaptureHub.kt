@@ -1,6 +1,7 @@
 package com.jarvis.app.live
 
 import android.annotation.SuppressLint
+import android.app.AppOpsManager
 import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioManager
@@ -60,6 +61,7 @@ object MicCaptureHub {
     @Volatile var level = 0f; private set
     @Volatile var silent = false; private set
     @Volatile var foreignRecorder = "-"; private set
+    @Volatile var silentCause = "-"; private set           // WHY the buffers are zero (FGS / app-op / wake listener / another app)
     @Volatile var aecAvailable = false; private set
     @Volatile var aecEnabled = false; private set          // echo canceller really attached + enabled on the current record
     @Volatile var aecLost = false; private set             // we had to move off VOICE_COMMUNICATION: echo cancellation is gone
@@ -171,7 +173,13 @@ object MicCaptureHub {
             val nowSilent = zeroRun >= SILENT_BUFFERS
             if (nowSilent != silent) {
                 silent = nowSilent
-                if (nowSilent) { Diag.micZero(); Diag.foreignRecorder = foreignRecorder() } else Diag.log("mic", "audio returned (level=${"%.3f".format(lvl)})")
+                if (nowSilent) {
+                    Diag.micZero()
+                    silentCause = silenceCause()
+                    Diag.micZeroCause = silentCause
+                    Diag.foreignRecorder = foreignRecorder()
+                    Diag.log("mic", "ZERO buffers -> cause: $silentCause")
+                } else { Diag.log("mic", "audio returned (level=${"%.3f".format(lvl)})"); silentCause = "-"; Diag.micZeroCause = "-" }
                 onSilent?.invoke(nowSilent)
             }
 
@@ -187,12 +195,31 @@ object MicCaptureHub {
      * One recovery step per silent cycle. Attempts 1-2 re-create the AudioRecord on the SAME source, so the echo
      * canceller is kept. From attempt 3 we move to the next source — and only then do we admit echo cancellation is
      * gone (onAecLost), which the UI turns into a warning + half-duplex.
+     *
+     * Round 3 (§4 background mic): if the reason is the background (no "microphone" foreground service) or our own
+     * wake listener holding the mic, we fix THAT and keep the same source — a source change can never fix a muted mic.
      */
     private fun recover(zeroRun: Int): Boolean {
         if (zeroRun % SILENT_BUFFERS != 0) return false          // don't retry on every silent buffer
         val attempt = zeroRun / SILENT_BUFFERS
-        if (attempt > MAX_ATTEMPTS) return false
-        val keepSource = attempt <= SAME_SOURCE_TRIES
+        // After MAX_ATTEMPTS keep a slow watch (every ~15 s of silence) so a repaired environment is picked up.
+        if (attempt > MAX_ATTEMPTS && attempt % 10 != 0) return false
+
+        val ctx = appCtx
+        val backgroundIssue = ctx != null && (!CallService.running || WakeService.micOpen)
+        if (attempt == 1 && ctx != null && !CallService.running) {
+            Diag.log("mic", "zeros with NO call foreground service -> starting it and retrying the SAME source")
+            try { CallService.start(ctx) } catch (e: Exception) { Diag.fail("mic.startFgs", e) }
+            try { Thread.sleep(700) } catch (e: Exception) { }
+        }
+        if (attempt == 1 && WakeService.micOpen) {
+            Diag.log("mic", "the wake listener still has the mic -> pausing it (a live call owns the microphone)")
+            WakeService.setPaused(true)
+            try { Thread.sleep(500) } catch (e: Exception) { }
+        }
+        Diag.micZeroCause = silenceCause()
+
+        val keepSource = attempt <= SAME_SOURCE_TRIES || backgroundIssue
         if (!keepSource) {
             sourceIdx = (sourceIdx + 1) % SOURCES.size
             if (!aecLost) {
@@ -227,6 +254,30 @@ object MicCaptureHub {
         return false
     }
 
+    /**
+     * Names the real reason the buffers are exact zeros (Round 3 / §4 background mic). The three causes that matter:
+     *  1. the app is in the background and the "microphone" foreground service is not running → Android mutes the mic;
+     *  2. the RECORD_AUDIO app-op is not MODE_ALLOWED (permission/app-op withdrawn);
+     *  3. a second recorder — usually our OWN wake listener, which must stay paused during a call.
+     */
+    fun silenceCause(): String {
+        val ctx = appCtx ?: return "no context"
+        val out = ArrayList<String>()
+        if (!CallService.running) out.add("the call foreground service is NOT running (Android mutes the mic in the background)")
+        try {
+            val aom = ctx.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            val mode = if (Build.VERSION.SDK_INT >= 29)
+                aom.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_RECORD_AUDIO, Process.myUid(), ctx.packageName)
+            else @Suppress("DEPRECATION") aom.checkOpNoThrow(AppOpsManager.OPSTR_RECORD_AUDIO, Process.myUid(), ctx.packageName)
+            if (mode != AppOpsManager.MODE_ALLOWED) out.add("the microphone app-op is $mode, not MODE_ALLOWED(0)")
+        } catch (e: Exception) { Diag.fail("mic.appop", e) }
+        if (WakeService.micOpen) out.add("Jarvis's own wake listener has the mic open")
+        val foreign = foreignRecorder()
+        if (foreign != "-") out.add(foreign)
+        return if (out.isEmpty()) "no obvious cause (source=${sourceName}, aec=$aecEnabled) — the recorder is open but silent"
+        else out.joinToString("; ")
+    }
+
     /** Best-effort: is another app also recording (i.e. holding/silencing the mic)? Uses public recording APIs only. */
     fun foreignRecorder(): String {
         val ctx = appCtx ?: return "-"
@@ -240,6 +291,7 @@ object MicCaptureHub {
             }
             val silenced = Build.VERSION.SDK_INT >= 29 && configs.any { it.isClientSilenced }
             when {
+                captures > 1 && WakeService.micOpen -> "Jarvis's own wake listener + another recorder ($captures captures)"
                 captures > 1 -> "another app is recording ($captures active captures)"
                 silenced -> "another app is silencing Jarvis's mic"
                 else -> "-"

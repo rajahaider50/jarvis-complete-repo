@@ -57,6 +57,7 @@ object Diag {
     var gesturesFailed by mutableStateOf(0)
     var lastGesture by mutableStateOf("-")            // outcome of the most recent gesture
     var foreignRecorder by mutableStateOf("-")        // package name of another app holding the mic, if any
+    var micZeroCause by mutableStateOf("-")           // WHY the mic buffers were zero (FGS off / app-op / wake listener / another app)
     var tick by mutableStateOf(0)
 
     /** Log one line: logcat (authoritative, timestamped) + the in-memory ring. */
@@ -91,6 +92,9 @@ object Diag {
         sb.append("mic state=").append(micState).append(" source=").append(micSource).append(" level=").append(String.format(Locale.US, "%.3f", micLevel))
         sb.append(" opens=").append(micOpens).append(" releases=").append(micReleases).append(" zeroRuns=").append(micZeroRuns).append(" recoveries=").append(micRecoveries)
         sb.append(" aecAvail=").append(MicCaptureHub.aecAvailable).append(" aecOn=").append(MicCaptureHub.aecEnabled).append(" aecLost=").append(micAecLost).append("\n")
+        sb.append("mic zeroCause=").append(micZeroCause).append("\n")
+        sb.append("wake micOpen=").append(WakeService.micOpen).append(" paused=").append(WakeService.pausedState)
+            .append(" callFgs=").append(CallService.running).append(" callActive=").append(CallHost.active).append("\n")
         sb.append("route=").append(lastRoute).append(" last_interrupt=").append(lastInterrupt).append("\n")
         sb.append("ws=").append(wsState).append(" underruns=").append(underruns).append(" interrupted=").append(interrupted).append(" reconnects=").append(reconnects).append(" lastClose=").append(lastClose).append("\n")
         sb.append("toolCalls=").append(toolCalls).append(" lastTool=").append(lastTool).append(" framesSent=").append(framesSent).append(" framesDropped=").append(framesDropped).append("\n")

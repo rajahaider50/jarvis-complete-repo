@@ -49,9 +49,12 @@ object ClickMemory {
         var note: String
     )
 
-    /** Screens where we must never learn or remember a tap. */
+    /**
+     * Screens where we must never learn or remember a tap. Round 3: **Android Settings is allowed** so the assistant
+     * can actually help inside it (it is the app users ask for most). Secrets stay protected by the password-field
+     * check in the share service and by the words below ("password", "pin", "otp", "wallet", "bank", ...).
+     */
     private val blockedPackages = listOf(
-        "com.android.settings", "com.google.android.settings",
         "com.android.vending", "com.google.android.apps.walletnfcrel",
         "com.paypal.android.p2pmobile", "com.android.chrome.incognito"
     )

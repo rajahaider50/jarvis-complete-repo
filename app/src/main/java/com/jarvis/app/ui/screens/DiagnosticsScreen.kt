@@ -29,7 +29,9 @@ import androidx.compose.ui.unit.dp
 import com.jarvis.app.live.CursorController
 import com.jarvis.app.data.Prefs
 import com.jarvis.app.live.CallHost
+import com.jarvis.app.live.CallService
 import com.jarvis.app.live.Diag
+import com.jarvis.app.live.WakeService
 import com.jarvis.app.live.MicCaptureHub
 import com.jarvis.app.live.JarvisAccessibilityService
 import com.jarvis.app.ui.components.GoldButton
@@ -72,6 +74,9 @@ fun DiagnosticsScreen(onBack: () -> Unit, onNav: (String) -> Unit = {}) {
                     Row(Modifier.fillMaxWidth()) { JText("level (peak)", 12, Muted, modifier = Modifier.weight(1f)); JText(String.format(Locale.US, "%.3f", Diag.micLevel), 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("silent now", 12, Muted, modifier = Modifier.weight(1f)); JText(if (MicCaptureHub.isRunning) (if (MicCaptureHub.silent) "YES" else "no") else "-", 12, if (MicCaptureHub.silent) Gold else Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("zero-runs / recoveries", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.micZeroRuns} / ${Diag.micRecoveries}", 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("why silent (cause)", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.micZeroCause, 12, if (Diag.micZeroCause == "-") Ivory else Gold) }
+                    Row(Modifier.fillMaxWidth()) { JText("call foreground service", 12, Muted, modifier = Modifier.weight(1f)); JText(if (CallService.running) "running (type=microphone)" else "NOT running", 12, if (CallService.running) Ivory else Gold) }
+                    Row(Modifier.fillMaxWidth()) { JText("wake listener", 12, Muted, modifier = Modifier.weight(1f)); JText("micOpen=${WakeService.micOpen} paused=${WakeService.pausedState}", 12, if (WakeService.micOpen) Gold else Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("opens / releases", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.micOpens} / ${Diag.micReleases}", 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("another app on mic", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.foreignRecorder, 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("echo cancel (AEC)", 12, Muted, modifier = Modifier.weight(1f)); JText("avail=${MicCaptureHub.aecAvailable} on=${MicCaptureHub.aecEnabled} lost=${Diag.micAecLost}", 12, if (MicCaptureHub.aecEnabled) Ivory else Gold) }

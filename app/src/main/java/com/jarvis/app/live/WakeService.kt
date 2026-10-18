@@ -44,15 +44,41 @@ class WakeService : Service() {
     companion object {
         @Volatile var pausedState = false
         @Volatile var running = false
+        @Volatile var micOpen = false                     // true while the wake engine really has the mic open (evidence)
+        @Volatile var forcedPause = false                 // paused only because a call / the app's own recorder has the mic
         @Volatile var engineError: String? = null      // shown in Assistant settings
         @Volatile var engineName: String = ""
         private var inst: WakeService? = null
 
-        /** Pause = release the microphone right now (used by the live call and the assistant panel). */
+        /**
+         * Pause = release the microphone right now (used by the live call and the assistant panel).
+         *
+         * Round 3 (§4 background mic): the wake engine must NEVER hold the mic while a live call — or the app's own
+         * mic hub — owns it. Two AudioRecords in the same app make one of them read exact zeros, which is what killed
+         * the call mic a few seconds after `press_button home`. So a "resume" while the mic is busy stays paused
+         * (`forcedPause`), and the tick releases it by itself as soon as the mic is free again.
+         */
         fun setPaused(p: Boolean) {
-            pausedState = p
-            Diag.log("wake", if (p) "paused -> releasing the mic for the call" else "resumed -> wake word may listen again")
-            if (p) inst?.let { s -> s.main.post { s.destroyRec(); s.pausePm(); s.schedule(1000) } }
+            val busy = CallHost.active || MicCaptureHub.isRunning
+            val forced = !p && busy
+            pausedState = p || busy
+            forcedPause = forced
+            val why = when {
+                !pausedState -> "resumed -> wake word may listen again"
+                forced -> "resume ignored -> ${if (CallHost.active) "a live call" else "Jarvis's own recorder"} owns the mic"
+                else -> "paused -> releasing the mic for the call"
+            }
+            Diag.log("wake", why)
+            if (pausedState) inst?.let { s -> s.main.post { s.destroyRec(); s.pausePm(); s.schedule(1000) } }
+        }
+
+        /** Called once per wake tick: frees a pause that only existed because the mic was busy. */
+        fun releaseForcedPause() {
+            if (forcedPause && !CallHost.active && !MicCaptureHub.isRunning) {
+                forcedPause = false
+                pausedState = false
+                Diag.log("wake", "the mic is free again -> wake word resumes by itself")
+            }
         }
 
         fun start(ctx: Context) {
@@ -150,10 +176,12 @@ class WakeService : Service() {
     }
 
     private fun voskTick() {
-        val shouldRun = Prefs.wakeEnabled && !pausedState && !foreignMic && !inPhoneCall()
+        releaseForcedPause()
+        // Round 3 (§4): !CallHost.active so the wake engine can never steal the mic from a running call.
+        val shouldRun = Prefs.wakeEnabled && !pausedState && !foreignMic && !inPhoneCall() && !CallHost.active
         try {
-            if (shouldRun && !voskActive) { vosk?.startListening(voskListener); voskActive = true; Diag.log("wake", "vosk startListening (mic OPEN)") }
-            if (!shouldRun && voskActive) { vosk?.stop(); voskActive = false; Diag.log("wake", "vosk stop (mic CLOSED)") }
+            if (shouldRun && !voskActive) { vosk?.startListening(voskListener); voskActive = true; micOpen = true; Diag.log("wake", "vosk startListening (mic OPEN)") }
+            if (!shouldRun && voskActive) { vosk?.stop(); voskActive = false; micOpen = false; Diag.log("wake", "vosk stop (mic CLOSED)") }
         } catch (e: Exception) { AppLog.w(e); engineError = e.message }
         schedule(1000)
     }
@@ -189,10 +217,12 @@ class WakeService : Service() {
     }
 
     private fun porcupineTick() {
-        val shouldRun = Prefs.wakeEnabled && !pausedState && !foreignMic && !inPhoneCall()
+        releaseForcedPause()
+        // Round 3 (§4): !CallHost.active so the wake engine can never steal the mic from a running call.
+        val shouldRun = Prefs.wakeEnabled && !pausedState && !foreignMic && !inPhoneCall() && !CallHost.active
         try {
-            if (shouldRun && !pmActive) { pm?.start(); pmActive = true }
-            if (!shouldRun && pmActive) { pm?.stop(); pmActive = false }
+            if (shouldRun && !pmActive) { pm?.start(); pmActive = true; micOpen = true; Diag.log("wake", "porcupine start (mic OPEN)") }
+            if (!shouldRun && pmActive) { pm?.stop(); pmActive = false; micOpen = false; Diag.log("wake", "porcupine stop (mic CLOSED)") }
         } catch (e: Exception) { AppLog.w(e); engineError = e.message }
         schedule(1000)
     }
@@ -263,13 +293,15 @@ class WakeService : Service() {
 
     private fun listen() {
         if (!running) return
+        releaseForcedPause()
         if (usingVosk) { voskTick(); return }
         if (usingPorcupine) { porcupineTick(); return }
-        if (pausedState || foreignMic || inPhoneCall() || !Prefs.wakeEnabled || Prefs.wakePhrase.isBlank()) { destroyRec(); schedule(1500); return }
+        if (pausedState || foreignMic || inPhoneCall() || CallHost.active || !Prefs.wakeEnabled || Prefs.wakePhrase.isBlank()) { destroyRec(); schedule(1500); return }
         destroyRec()
         muteBeeps(1100)
         val r = SpeechRecognizer.createSpeechRecognizer(this)
         rec = r
+        micOpen = true
         Diag.log("wake", "basic SpeechRecognizer created (mic OPEN)")
         r.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) { muteBeeps(900) }
@@ -305,7 +337,7 @@ class WakeService : Service() {
     private fun restart(delay: Long) { destroyRec(); schedule(delay) }
 
     private fun trigger() {
-        if (pausedState) return
+        if (pausedState || CallHost.active) return
         pausedState = true
         destroyRec()
         pausePm()
@@ -325,15 +357,20 @@ class WakeService : Service() {
                 .setSmallIcon(android.R.drawable.ic_btn_speak_now).setCategory(Notification.CATEGORY_CALL)
                 .setFullScreenIntent(pi, true).setContentIntent(pi).setAutoCancel(true).build())
         } catch (e: Exception) { AppLog.w(e); }
-        // if Android blocked the background start, do not stay deaf: resume listening
+        // if Android blocked the background start, do not stay deaf: resume listening — but never while a call owns
+        // the mic (Round 3 / §4: that is exactly how the call mic went silent).
         main.postDelayed({
-            if (!AssistantActivity.alive) { pausedState = false; restart(300) }
+            if (!AssistantActivity.alive) {
+                if (CallHost.active) Diag.log("wake", "assistant did not open but a live call owns the mic -> staying paused")
+                else { pausedState = false; restart(300) }
+            }
         }, 3500)
     }
 
     private fun pausePm() {
         try { pm?.stop() } catch (e: Exception) { AppLog.w(e) }; pmActive = false
         try { vosk?.stop() } catch (e: Exception) { AppLog.w(e) }; voskActive = false
+        micOpen = false
     }
 
     private fun stopPorcupine() {
@@ -345,10 +382,11 @@ class WakeService : Service() {
     private fun destroyRec() {
         rec?.let { Diag.log("wake", "SpeechRecognizer destroyed (mic CLOSED)"); try { it.cancel(); it.destroy() } catch (e: Exception) { AppLog.w(e); } }
         rec = null
+        micOpen = false
     }
 
     override fun onDestroy() {
-        running = false; inst = null
+        running = false; inst = null; micOpen = false
         main.removeCallbacksAndMessages(null)
         if (recCbRegistered) { try { am.unregisterAudioRecordingCallback(recCb) } catch (e: Exception) { AppLog.w(e); } }
         stopPorcupine(); stopVosk()

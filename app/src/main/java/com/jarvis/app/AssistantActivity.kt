@@ -52,7 +52,13 @@ class AssistantActivity : ComponentActivity() {
         }) } }
     }
 
-    override fun onDestroy() { alive = false; WakeService.setPaused(false); super.onDestroy() }
+    override fun onDestroy() {
+        alive = false
+        // Round 3 (§4): WakeService.setPaused(false) itself refuses to resume while a live call (or the app's own
+        // recorder) owns the mic — otherwise the wake engine would open a second AudioRecord and silence the call.
+        WakeService.setPaused(false)
+        super.onDestroy()
+    }
 }
 
 @Composable

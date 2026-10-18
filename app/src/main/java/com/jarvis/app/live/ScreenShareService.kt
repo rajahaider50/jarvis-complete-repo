@@ -62,8 +62,14 @@ class ScreenShareService : Service() {
             } catch (e: Exception) { Diag.fail("share.saveDebugFrame", e); null } finally { b.recycle() }
         }
 
+        /**
+         * Screens whose pixels must never be sent. Round 3: **Android Settings is deliberately NOT here any more** —
+         * "settings kholo, phir wahan se Wi-Fi dikhao" is a core use case, the accessibility service already sees the
+         * full Settings tree, and `accessibility_service_config.xml` has no package filter. Only real secrets stay
+         * blocked, and a focused password field still pauses sharing (see `isSensitiveScreen()` below).
+         */
         private val blocklist = listOf(
-            "bank", "com.android.settings", "paytm", "phonepe", "gpay", "com.google.android.apps.nbu.paisa",
+            "bank", "paytm", "phonepe", "gpay", "com.google.android.apps.nbu.paisa",
             "com.google.android.gms.auth", "keepass", "1password", "bitwarden", "lastpass"
         )
     }
