@@ -188,19 +188,22 @@ object MicCaptureHub {
         return false
     }
 
-    /** Best-effort: which other app is recording right now (may be limited on Android 10+). */
+    /** Best-effort: is another app also recording (i.e. holding/silencing the mic)? Uses public recording APIs only. */
     fun foreignRecorder(): String {
         val ctx = appCtx ?: return "-"
         return try {
             val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val mine = ctx.packageName
-            val others = am.activeRecordingConfigurations.orEmpty().filter { c ->
-                val pkg = if (Build.VERSION.SDK_INT >= 29) c.clientPackageName else null
-                pkg != null && pkg != mine && pkg != "android"
+            val configs = am.activeRecordingConfigurations.orEmpty()
+            val captures = configs.count {
+                it.clientAudioSource == MediaRecorder.AudioSource.MIC ||
+                    it.clientAudioSource == MediaRecorder.AudioSource.VOICE_COMMUNICATION ||
+                    it.clientAudioSource == MediaRecorder.AudioSource.DEFAULT
             }
-            if (others.isEmpty()) "-" else others.joinToString(", ") { c ->
-                val pkg = if (Build.VERSION.SDK_INT >= 29) c.clientPackageName else "?"
-                "$pkg (src=${c.clientAudioSource})"
+            val silenced = Build.VERSION.SDK_INT >= 29 && configs.any { it.isClientSilenced }
+            when {
+                captures > 1 -> "another app is recording ($captures active captures)"
+                silenced -> "another app is silencing Jarvis's mic"
+                else -> "-"
             }
         } catch (e: Exception) { Diag.fail("mic.foreignRecorder", e); "-" }
     }
