@@ -1,7 +1,9 @@
 # Round 3 bugfix — Step A (mic / stalling) and Step B+C (tap / elements / small)
 
 Date: 2026-10-18
-Commits: Step A `cfbec539f527` (build 39133424319 GREEN), Step B+C `1ebbf9d537ad`.
+Commits: Step A `cfbec539f527` (build 39133424319 GREEN), Step B+C `1ebbf9d537ad` → fixed in `c038436257ef`
+(build 39134710224 GREEN; the first attempt failed on a Kotlin JVM signature clash — `fun setMoveMode` vs the
+`moveMode` property setter — so it is now `setMove`).
 
 Round-2 Step 1 (truthful `cursor_click` + Tap Test) was already delivered. Round 3 works through the
 user's list in the requested order: **A** mic first, then **B** tap, then **C** small items.

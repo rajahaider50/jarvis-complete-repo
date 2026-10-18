@@ -1,6 +1,6 @@
 # FEATURES — Jarvis capability registry
 
-Updated 2026-10-17.
+Updated 2026-10-18.
 
 | Feature | Status | Source of truth |
 |---|---|---|
@@ -40,3 +40,11 @@ Updated 2026-10-17.
 | Call stability: tools off reader thread, video guard, VAD/activityHandling + barge-in toggle, audio priority + pre-buffer, wake/Wi-Fi locks, backoff + network callback, thermal-aware share | active — Bugfix M3 | `live/LiveClient.kt`, `live/CallLocks.kt`, `live/ScreenShareService.kt`, `data/Prefs.liveBargeIn` |
 | Single-owner microphone with fan-out + self-heal (source fallback, release/recreate) | active — Bugfix M1 | `live/MicCaptureHub.kt`, `live/LiveClient.kt`, `live/WakeService.kt` |
 | AI cursor overlay marshalled to the main thread (+ service restore) | active — Bugfix M2 | `live/CursorController.kt`, `live/CursorPanel.kt`, `live/AppControl.kt` |
+| Mic recovery keeps the source (AEC held + logged) + half-duplex echo guard + no-max volume + auto-earpiece hysteresis + make-before-break reconnect + per-answer pre-buffer + no-audio model list | active — Round 3 Step A | `live/MicCaptureHub.kt`, `live/LiveClient.kt`, `audio/AudioRouter.kt`, `data/Prefs.kt`, `data/ModelCatalog.kt`, `live/CallService.kt` |
+| Cursor never eats its own tap (always NOT_TOUCHABLE in AI mode + "Move" switch + truthful `touchableAtClick`) | active — Round 3 Step B | `live/CursorController.kt`, `live/CursorPanel.kt`, `ui/screens/TapTestScreen.kt` |
+| Truthful percent gestures (real display size + real `GestureOutcome`) | active — Round 3 Step B | `live/JarvisAccessibilityService.kt`, `live/PhoneTools.kt` |
+| Element tools: `get_clickable_elements` / `click_element` / `cursor_move_to_element` + multi-match `find_element` | active — Round 3 Step B | `live/JarvisAccessibilityService.kt`, `live/PhoneTools.kt`, `live/AppControl.kt` |
+| `click_on_screen` verifies the screen actually changed (800 ms) | active — Round 3 Step B | `live/JarvisAccessibilityService.kt`, `live/PhoneTools.kt` |
+| Screen-share detail (1280 px q70 / 800 q55 hot / Fast) + save-one-frame debug PNG | active — Round 3 Step B | `live/ScreenShareService.kt`, `data/Prefs.shareQuality`, `ui/screens/DiagnosticsScreen.kt` |
+| Only necessary tool parameters marked `required` | active — Round 3 Step B | `live/PhoneTools.kt` |
+| Call setup off the main thread (`withContext(Dispatchers.Main)` only for the overlay) | active — Round 3 Step C | `live/CallHost.kt` |
