@@ -149,6 +149,7 @@ object CursorPanel {
     fun panic() { CursorController.panic(); hide() }
 
     fun refresh() {
+        if (!CursorController.isMainThread()) { CursorController.postMain { refresh() }; return }
         val r = readout ?: return
         val p = CursorController.positions()
         if (p.isEmpty()) { r.text = "no cursor — tap + cursor"; return }

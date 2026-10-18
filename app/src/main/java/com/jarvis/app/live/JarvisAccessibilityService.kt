@@ -333,8 +333,8 @@ class JarvisAccessibilityService : AccessibilityService() {
         }
     }
 
-    override fun onServiceConnected() { inst = this; Diag.log("a11y", "onServiceConnected (service is READY)") }
-    override fun onUnbind(intent: android.content.Intent?): Boolean { Diag.log("a11y", "onUnbind -> clearing cursors"); try { CursorController.panic() } catch (e: Exception) { }; inst = null; return super.onUnbind(intent) }
+    override fun onServiceConnected() { inst = this; Diag.log("a11y", "onServiceConnected (service is READY)"); CursorController.restoreIfAny() }
+    override fun onUnbind(intent: android.content.Intent?): Boolean { Diag.log("a11y", "onUnbind -> clearing cursors"); try { CursorController.snapshotForRestore(); CursorController.panic() } catch (e: Exception) { }; inst = null; return super.onUnbind(intent) }
     override fun onAccessibilityEvent(event: AccessibilityEvent?) { }
     override fun onInterrupt() { }
 }

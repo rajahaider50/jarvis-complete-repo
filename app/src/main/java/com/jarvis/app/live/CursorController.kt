@@ -37,6 +37,25 @@ object CursorController {
     private var ctx: Context? = null
     private var gridView: View? = null
 
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    fun isMainThread(): Boolean = android.os.Looper.myLooper() == android.os.Looper.getMainLooper()
+
+    /** WindowManager.addView/updateViewLayout and View work MUST run on the main thread (the AI tools call us from a worker). */
+    fun <T> onMain(fallback: T, block: () -> T): T {
+        if (isMainThread()) return block()
+        var out = fallback
+        val latch = java.util.concurrent.CountDownLatch(1)
+        mainHandler.post {
+            try { out = block() } catch (e: Exception) { Diag.fail("cursor.onMain", e) } finally { latch.countDown() }
+        }
+        try { if (!latch.await(900, java.util.concurrent.TimeUnit.MILLISECONDS)) Diag.log("cursor", "onMain timed out") } catch (e: Exception) { Diag.fail("cursor.onMain.await", e) }
+        return out
+    }
+
+    fun postMain(block: () -> Unit) {
+        if (isMainThread()) block() else mainHandler.post { try { block() } catch (e: Exception) { Diag.fail("cursor.postMain", e) } }
+    }
+
     var anyShown by mutableStateOf(false)
         private set
     var gridOn by mutableStateOf(false)
@@ -50,6 +69,23 @@ object CursorController {
     /** The target label + point of the AI's last click, so a user nudge can become a correction. */
     var lastAiTarget: String? = null
     var lastAiPoint: Pair<Float, Float>? = null
+
+    private var restoreSnapshot: List<Triple<Float, Float, String>> = emptyList()
+
+    /** Remember the cursors before the accessibility service dies, so they can come back when it reconnects (MIUI kills it). */
+    fun snapshotForRestore() {
+        if (!isMainThread()) { onMain(Unit) { snapshotForRestore() }; return }
+        restoreSnapshot = cursors.values.map { Triple(it.x, it.y, it.label) }
+        if (restoreSnapshot.isNotEmpty()) Diag.log("cursor", "saved ${restoreSnapshot.size} cursor(s) to restore after reconnect")
+    }
+
+    fun restoreIfAny() {
+        if (!isMainThread()) { onMain(Unit) { restoreIfAny() }; return }
+        val s = restoreSnapshot; restoreSnapshot = emptyList()
+        if (s.isEmpty()) return
+        Diag.log("cursor", "restoring ${s.size} cursor(s) after the service reconnected")
+        s.forEach { add(it.first, it.second, it.third) }
+    }
 
     fun labelOf(id: Int): String? = cursors[id]?.label
 
@@ -78,6 +114,7 @@ object CursorController {
     }
 
     fun add(x: Float, y: Float, label: String? = null): Int {
+        if (!isMainThread()) return onMain(-1) { add(x, y, label) }
         Diag.log("cursor", "add($x,$y,'$label') thread=${Thread.currentThread().name} accessibility=${JarvisAccessibilityService.inst != null}")
         if (!ensure()) { Diag.cursorAddFails++; Diag.log("cursor", "add FAILED: accessibility service not connected"); return -1 }
         if (cursors.size >= MAX) { Diag.cursorAddFails++; Diag.log("cursor", "add FAILED: max $MAX reached"); return -1 }
@@ -109,6 +146,7 @@ object CursorController {
     }
 
     fun move(id: Int, x: Float, y: Float) {
+        if (!isMainThread()) { onMain(Unit) { move(id, x, y) }; return }
         val cur = cursors[id] ?: return
         cur.x = CursorGeometry.clamp(x); cur.y = CursorGeometry.clamp(y)
         place(cur)
@@ -116,6 +154,7 @@ object CursorController {
 
     /** Smoothly slides a cursor to a new point (used by the AI so the user can follow it). */
     fun moveAnimated(id: Int, x: Float, y: Float, durationMs: Long = 450) {
+        if (!isMainThread()) { onMain(Unit) { moveAnimated(id, x, y, durationMs) }; return }
         val cur = cursors[id] ?: return
         val sx = cur.x; val sy = cur.y
         val tx = CursorGeometry.clamp(x); val ty = CursorGeometry.clamp(y)
@@ -150,6 +189,7 @@ object CursorController {
     }
 
     fun remove(id: Int) {
+        if (!isMainThread()) { onMain(Unit) { remove(id) }; return }
         val cur = cursors.remove(id) ?: run { Diag.log("cursor", "remove($id): not found"); return }
         try { wm?.removeView(cur.view) } catch (e: Exception) { Diag.fail("cursor.removeView", e); AppLog.w(e) }
         if (selectedId == id) selectedId = cursors.keys.firstOrNull()
@@ -157,7 +197,10 @@ object CursorController {
         Diag.log("cursor", "removed id=$id windows=${cursors.size}")
     }
 
-    fun clear() { cursors.keys.toList().forEach { remove(it) } }
+    fun clear() {
+        if (!isMainThread()) { onMain(Unit) { clear() }; return }
+        cursors.keys.toList().forEach { remove(it) }
+    }
 
     fun list(): String = if (cursors.isEmpty()) "no cursors" else cursors.values.joinToString("; ") {
         "id=${it.id} ${it.label} x=${CursorGeometry.fmt(it.x)} y=${CursorGeometry.fmt(it.y)}"
@@ -166,11 +209,12 @@ object CursorController {
     fun positions(): List<Triple<Int, Float, Float>> = cursors.values.map { Triple(it.id, it.x, it.y) }
 
     private fun setTouchable(touchable: Boolean) {
+        if (!isMainThread()) { onMain(Unit) { setTouchable(touchable) }; return }
         cursors.values.forEach { cur ->
             val lp = cur.lp ?: return@forEach
             lp.flags = if (touchable) lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
             else lp.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-            try { wm?.updateViewLayout(cur.view, lp) } catch (e: Exception) { AppLog.w(e) }
+            try { wm?.updateViewLayout(cur.view, lp) } catch (e: Exception) { Diag.fail("cursor.setTouchable", e); AppLog.w(e) }
         }
     }
 
@@ -223,6 +267,7 @@ object CursorController {
 
     // ---------- grid ----------
     fun showGrid(on: Boolean) {
+        if (!isMainThread()) { onMain(Unit) { showGrid(on) }; return }
         gridOn = on
         if (on) {
             if (!ensure()) return
@@ -244,6 +289,7 @@ object CursorController {
     }
 
     fun panic() {
+        if (!isMainThread()) { onMain(Unit) { panic() }; return }
         try { showGrid(false) } catch (e: Exception) { }
         try { clear() } catch (e: Exception) { }
     }

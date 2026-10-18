@@ -10,8 +10,9 @@ Status: in progress.
     VAD/interruption config + "Let me interrupt" toggle, urgent-priority audio threads + pre-buffer, wake/wifi
     locks, exponential backoff + network callback, thermal-aware sharing) — DONE (run 39113131430).
   - (Masla 1) Mic + recording — Root Cause Report + fixes (single-owner MicCaptureHub with fan-out + self-heal
-    release/recreate + source fallback, accurate actionable warning, wake-mic logging, foreign-recorder detect) — IN PROGRESS (build).
-  - (Masla 2) AI cursor not appearing — chain diagnosis, Cursor Test, fix. NOT STARTED.
+    release/recreate + source fallback, accurate actionable warning, wake-mic logging, foreign-recorder detect) — DONE (run 39114125443).
+  - (Masla 2) AI cursor not appearing — Root Cause Report + fix (main-thread marshalling of all overlay work; the
+    AI tools ran on a worker thread so addView/Choreographer threw and the error was swallowed) — IN PROGRESS (build).
   - (Final) Soak test + checklist + final report. NOT STARTED.
 - **Files:** live/Diag.kt, ui/screens/DiagnosticsScreen.kt, MainActivity.kt, ui/screens/ProfileScreen.kt,
   live/{LiveClient,CursorController,ScreenShareService,JarvisAccessibilityService}.kt, docs/CHANGES_20261018_*.md.

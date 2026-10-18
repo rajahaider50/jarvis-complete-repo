@@ -34,6 +34,7 @@ object AppControl {
     )
 
     fun execute(ctx: Context, name: String, args: JSONObject): String {
+        if (name !in names) { Diag.log("tool", "UNKNOWN tool '$name' (not declared in PhoneTools)"); return "Unknown command '$name'." }
         if (name in cursorNames) return cursor(ctx, name, args)
         if (!Prefs.aiControl) return "AI control is turned off in Settings, so I cannot do that."
         AppLog.i("AIControl", "$name $args")
@@ -77,9 +78,9 @@ object AppControl {
     }
 
     private fun cursor(ctx: Context, name: String, args: JSONObject): String {
-        if (!Prefs.aiCursor) return "AI cursor control is off. Turn it on in Settings."
-        if (!JarvisAccessibilityService.enabled) return "The accessibility service is off, so I cannot control the screen."
-        AppLog.i("AICursor", "$name $args")
+        if (!Prefs.aiCursor) return "AI cursor control is off. Turn it on in Settings (Profile > AI cursor control)."
+        if (!JarvisAccessibilityService.enabled) return "The accessibility service is off, so I cannot show or move a cursor. Ask the user to enable Jarvis in Android Settings > Accessibility, then try again."
+        Diag.log("cursor", "dispatch $name ${args.toString().take(120)} (thread=${Thread.currentThread().name})")
         val x = args.optDouble("x", 0.0).toFloat()
         val y = args.optDouble("y", 0.0).toFloat()
         return when (name) {
@@ -92,7 +93,7 @@ object AppControl {
             "cursor_create" -> {
                 val id = CursorController.add(x, y, args.optString("label").ifBlank { null })
                 if (id > 0) { CursorController.select(id); CursorPanel.refresh(); "cursor id=$id at ${CursorGeometry.fmt(x)}, ${CursorGeometry.fmt(y)}" }
-                else "could not add a cursor (max 10 or service off)"
+                else "Could not add a cursor. Accessibility is ${if (JarvisAccessibilityService.enabled) "on" else "OFF"}, cursors now ${CursorController.positions().size}/10."
             }
             "cursor_move" -> {
                 val id = args.optInt("id", CursorController.selectedId ?: 1)

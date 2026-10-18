@@ -23,10 +23,14 @@ Task: JARVIS BUGFIX GUIDE — 3 masle (evidence-first, in the user's order).
 Root Cause Report: docs/REPORT_20261018_masla3_call_stalling.md. Fixes F3-1..F3-7 in
 docs/CHANGES_20261018_bugfix-masla3-call-stability.md.
 
-## Phase 3 — Masla 1 (in progress)
+## Phase 3 — Masla 1 (DONE, run 39114125443)
 Root Cause Report: docs/REPORT_20261018_masla1_mic_recording.md. Fixes F1-1..F1-6 in
 docs/CHANGES_20261018_bugfix-masla1-mic-hub.md (MicCaptureHub single owner + fan-out + self-heal, warning, wake logs).
-Next: build, then Masla 2.
+
+## Phase 4 — Masla 2 (in progress)
+Root Cause Report: docs/REPORT_20261018_masla2_cursor.md. Fix: docs/CHANGES_20261018_bugfix-masla2-cursor-mainthread.md
+(main-thread marshalling + chain logs + service restore). Next: build, then final report + docs.
+
 
 ## Notes
 - No local JDK/Android SDK → verify with the Build APK workflow after each phase.
