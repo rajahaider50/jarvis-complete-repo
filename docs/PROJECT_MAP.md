@@ -1,10 +1,17 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 08:52 · 216 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-18 09:04 · 219 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/live/CallHost.kt
-- app/src/main/java/com/jarvis/app/live/CallLocks.kt
+- Planning.md
+- Task.md
+- app/src/main/java/com/jarvis/app/live/LiveClient.kt
+- app/src/main/java/com/jarvis/app/live/MicCaptureHub.kt
+- app/src/main/java/com/jarvis/app/live/WakeService.kt
+- app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/LiveVoiceScreen.kt
+- docs/CHANGES_20261018_bugfix-masla1-mic-hub.md
+- docs/REPORT_20261018_masla1_mic_recording.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -72,7 +79,8 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CursorPanel.kt` · 287 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
 - `Diag.kt` · 87 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
 - `JarvisAccessibilityService.kt` · 341 · Lets the assistant see what is on the screen and tap, type, scroll and press Back / Home o · JarvisAccessibilityService · uses: Prefs.kt
-- `LiveClient.kt` · 586 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
+- `LiveClient.kt` · 566 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
+- `MicCaptureHub.kt` · 210 · The ONE owner of the microphone. Everything that needs mic PCM (the Gemini sender, the in- · MicCaptureHub · uses: AppLog.kt
 - `PhoneTools.kt` · 152 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 - `ScreenRecordRequestActivity.kt` · 39 · Invisible screen that shows Android's own "start recording?" question so the assistant can · ScreenRecordRequestActivity · uses: AppLog.kt
@@ -80,7 +88,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ScreenShareRequestActivity.kt` · 26 · Kept for compatibility. Screen sharing no longer needs Android's MediaProjection question, · ScreenShareRequestActivity · uses: AppLog.kt
 - `ScreenShareService.kt` · 151 · Shares the screen with the live call WITHOUT opening a second MediaProjection session (tha · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
 - `VoskModels.kt` · 61 · The small offline speech models (about 40 MB each) used by the keyless wake phrase engine. · VoskModels · uses: AppLog.kt
-- `WakeService.kt` · 356 · Listens in the background for your wake phrase (any name / command you chose). When heard, · WakeService · uses: AppLog.kt, AssistantActivity.kt, MainActivity.kt, Prefs.kt
+- `WakeService.kt` · 359 · Listens in the background for your wake phrase (any name / command you chose). When heard, · WakeService · uses: AppLog.kt, AssistantActivity.kt, MainActivity.kt, Prefs.kt
 
 ### overlay/
 - `DragLayout.kt` · 62 · Root view of a floating window. Taps go to the Compose content (buttons); as soon as a fin · DragLayout
@@ -107,9 +115,9 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
 - `CursorLabScreen.kt` · 165 · Cursor Lab: proves the normalized coordinate system (center 0,0; right/up positive; 2 deci · targets, targetNames, CursorLabScreen · uses: CursorController.kt, CursorGeometry.kt, CursorPanel.kt, JarvisAccessibilityService.kt, Components.kt
 - `CursorMemoryScreen.kt` · 92 · Cursor memory: the click lessons JARVIS learned (ui_clicks.json / ui_clicks.md). The user  · CursorMemoryScreen · uses: ClickMemory.kt, CursorGeometry.kt, Components.kt
-- `DiagnosticsScreen.kt` · 160 · Diagnostics (bugfix guide Phase 1). One screen with the live evidence: microphone state +  · DiagnosticsScreen, Card · uses: CursorController.kt, Diag.kt, JarvisAccessibilityService.kt, Components.kt
+- `DiagnosticsScreen.kt` · 166 · Diagnostics (bugfix guide Phase 1). One screen with the live evidence: microphone state +  · DiagnosticsScreen, Card · uses: CursorController.kt, Diag.kt, MicCaptureHub.kt, JarvisAccessibilityService.kt, Components.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
-- `LiveVoiceScreen.kt` · 312 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
+- `LiveVoiceScreen.kt` · 318 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
 - `ProfileScreen.kt` · 191 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
@@ -166,7 +174,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `FEATURES.md` · 39 lines
 - `Goal.md` · 8 lines
 - `Pending.md` · 25 lines
-- `Planning.md` · 29 lines
+- `Planning.md` · 34 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
 - `Task.md` · 22 lines
@@ -231,10 +239,12 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261017_screenstream-phase1-4-single-projection.md` · 35 lines
 - `docs/CHANGES_20261017_visual-themes-soundfx.md` · 51 lines
 - `docs/CHANGES_20261017_workspace-provider-only.md` · 50 lines
+- `docs/CHANGES_20261018_bugfix-masla1-mic-hub.md` · 35 lines
 - `docs/CHANGES_20261018_bugfix-masla3-call-stability.md` · 46 lines
 - `docs/CHANGES_20261018_bugfix-phase1-diagnostics.md` · 50 lines
 - `docs/HANDOFF_STATE.md` · 43 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
+- `docs/REPORT_20261018_masla1_mic_recording.md` · 63 lines
 - `docs/REPORT_20261018_masla3_call_stalling.md` · 65 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/START_PROMPT.md` · 16 lines
