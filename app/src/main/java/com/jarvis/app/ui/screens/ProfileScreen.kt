@@ -122,6 +122,30 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                         }
                         JToggle(Prefs.aiCursor) { Prefs.aiCursor = it; Prefs.save() }
                     }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.CloudSync, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Keep the call alive", 15, Ivory)
+                            JText("Resume automatically if the connection drops (session resumption)", 11, Muted)
+                        }
+                        JToggle(Prefs.liveResume) { Prefs.liveResume = it; Prefs.save() }
+                    }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.Compress, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Compress long calls", 15, Ivory)
+                            JText("Let the server shrink the context so long calls keep going", 11, Muted)
+                        }
+                        JToggle(Prefs.liveCompress) { Prefs.liveCompress = it; Prefs.save() }
+                    }
                 }
             }
         }

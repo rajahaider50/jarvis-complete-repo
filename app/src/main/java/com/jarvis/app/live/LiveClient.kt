@@ -63,6 +63,10 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     @Volatile private var lastReason = ""
     private val timeoutHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
+    // --- keeping the call alive across drops (session resumption) ---
+    @Volatile private var reconnecting = false
+    private var reconnectTries = 0
+
     @Volatile private var recording = false
     private var recorder: AudioRecord? = null
     private var recThread: Thread? = null
@@ -83,6 +87,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     companion object {
         private const val PARALLEL = 2                 // Live models tried at the same time
         private const val CONNECT_TIMEOUT_MS = 2500L   // per-batch connect deadline, then try the next models
+        private const val MAX_RECONNECT = 5            // automatic reconnects after an unexpected drop
+        private const val HANDLE_TTL_MS = 30 * 60 * 1000L   // session handle is only reused within this window
 
         /** Touch the shared HTTP client so the first real call does not pay for DNS/TLS/OkHttp warm-up. */
         fun prewarm() { Http.client }
@@ -91,10 +97,33 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     // ---------- connection ----------
     override fun start() {
         error = null; userText = ""; aiText = ""; connStarted = 0L
+        reconnectTries = 0; reconnecting = false
+        restart("live_connect_start")
+    }
+
+    private fun restart(logTag: String) {
         winner = -1; gotSetup = false; simple = false; retriedSimple = false; lastReason = ""
         liveModels = ModelCatalog.liveCandidates()
-        AppLog.i("Timing", "live_connect_start models=${liveModels.size}")
+        AppLog.i("Timing", "$logTag models=${liveModels.size}")
         nextBatch(0)
+    }
+
+    /** The server is going away or the socket dropped: resume the same conversation on a fresh connection. */
+    @Synchronized
+    private fun reconnect(why: String) {
+        if (reconnecting) return
+        if (!Prefs.liveResume) { ui { if (state != State.IDLE) { state = State.ERROR; error = "Call ended: $why" } }; return }
+        if (reconnectTries >= MAX_RECONNECT) { ui { if (state != State.IDLE) { state = State.ERROR; error = "Call lost: $why" } }; return }
+        reconnectTries++
+        reconnecting = true
+        AppLog.i("LiveClient", "reconnect #$reconnectTries ($why)")
+        ui { if (state != State.IDLE) { state = State.CONNECTING; info = "Reconnecting…" } }
+        stopSession()
+        timeoutHandler.postDelayed({
+            reconnecting = false
+            if (state == State.IDLE) return@postDelayed
+            restart("live_reconnect")
+        }, 700)
     }
 
     /** Opens up to [PARALLEL] candidate models starting at [from]; the first that sends setupComplete wins. */
@@ -155,6 +184,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         if (winner >= 0) { try { t.socket?.close(1000, "stale") } catch (e: Exception) { AppLog.w(e) }; return }
         winner = t.idx
         gotSetup = true
+        reconnectTries = 0; reconnecting = false
         ws = t.socket
         batchTrials.filter { it !== t }.forEach { closeTrial(it) }
         AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · ${t.model}")
@@ -213,7 +243,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             } else if (!gotSetup) {
                 fail("Live connection closed: $why")
             } else {
-                state = State.ERROR; error = "Call ended: $why"
+                reconnect(why)                                  // the call was live: keep it alive by resuming
             }
         }
     }
@@ -254,6 +284,17 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             setup.put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemText()))))
             setup.put("inputAudioTranscription", JSONObject()).put("outputAudioTranscription", JSONObject())
             setup.put("tools", tools(withSearch = Prefs.webSearch))
+            // keep the call alive: session resumption handle + sliding-window context compression
+            if (Prefs.liveResume) {
+                val h = Prefs.resumeHandle
+                val fresh = h.isNotBlank() && (System.currentTimeMillis() - Prefs.resumeAt) < HANDLE_TTL_MS
+                setup.put("sessionResumption", JSONObject().apply { if (fresh) put("handle", h) })
+            }
+            if (Prefs.liveCompress) {
+                setup.put("contextWindowCompression", JSONObject()
+                    .put("slidingWindow", JSONObject().put("targetTokens", 12000))
+                    .put("triggerTokens", 24000))
+            }
         } else {
             // minimal setup for keys/models that reject tools or nested generationConfig
             setup.put("responseModalities", JSONArray().put("AUDIO")).put("speechConfig", speech)
@@ -266,9 +307,23 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private fun handle(raw: String) {
         val j = try { JSONObject(raw) } catch (e: Exception) { AppLog.w(e); return }
         if (j.has("setupComplete")) {
-            gotSetup = true
+            gotSetup = true; reconnectTries = 0; reconnecting = false
             AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · $modelName")
             ui { state = State.LIVE; info = "Live"; startPlayback(); startAudio() }
+            return
+        }
+        // session resumption: keep the newest handle so a later connection can continue this conversation
+        j.optJSONObject("sessionResumptionUpdate")?.let { u ->
+            if (u.optBoolean("resumable", false)) {
+                val h = u.optString("newHandle")
+                if (h.isNotBlank()) { Prefs.resumeHandle = h; Prefs.resumeAt = System.currentTimeMillis(); Prefs.save() }
+            }
+        }
+        // the server will soon disconnect: resume on a fresh socket before it closes
+        j.optJSONObject("goAway")?.let { gw ->
+            val left = gw.optString("timeLeft")
+            AppLog.i("LiveClient", "goAway timeLeft=$left")
+            reconnect("server goAway $left")
             return
         }
         j.optJSONObject("toolCall")?.let { onTool(it) }
@@ -403,6 +458,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         state = State.IDLE
         stopSession()
         stopAudio()
+        Prefs.resumeHandle = ""; Prefs.resumeAt = 0L; Prefs.save()   // a fresh call starts a fresh conversation
     }
 
     @Synchronized
