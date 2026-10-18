@@ -1,5 +1,5 @@
 # TASK (current task; ONE at a time)
-Status: in progress.
+Status: done.
 
 - **Task:** JARVIS BUGFIX GUIDE — 3 MASLE (evidence-first: logging → root cause report → fix → proof).
   - (Phase 1) Diagnostics: `Diag` logger (tag `JARVIS_DIAG`, timestamp + thread), Diagnostics screen
@@ -12,11 +12,12 @@ Status: in progress.
   - (Masla 1) Mic + recording — Root Cause Report + fixes (single-owner MicCaptureHub with fan-out + self-heal
     release/recreate + source fallback, accurate actionable warning, wake-mic logging, foreign-recorder detect) — DONE (run 39114125443).
   - (Masla 2) AI cursor not appearing — Root Cause Report + fix (main-thread marshalling of all overlay work; the
-    AI tools ran on a worker thread so addView/Choreographer threw and the error was swallowed) — IN PROGRESS (build).
-  - (Final) Soak test + checklist + final report. NOT STARTED.
+    AI tools ran on a worker thread so addView/Choreographer threw and the error was swallowed) — DONE (run 39114550181).
+  - (Final) Soak test checklist + final report written (docs/REPORT_20261018_bugfix-final-summary.md). Phone soak test
+    is user-side (Pending.md).
 - **Files:** live/Diag.kt, ui/screens/DiagnosticsScreen.kt, MainActivity.kt, ui/screens/ProfileScreen.kt,
   live/{LiveClient,CursorController,ScreenShareService,JarvisAccessibilityService}.kt, docs/CHANGES_20261018_*.md.
 - **Test:** `./gradlew assembleDebug` via the Build APK workflow after every phase (no local JDK/SDK here).
-- **Status:** in progress.
+- **Status:** done.
 
-Next: build Phase 1, then Masla 3 measurements + Root Cause Report.
+Next: user phone soak test (Pending.md), then next task.

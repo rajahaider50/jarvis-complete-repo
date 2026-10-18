@@ -36,3 +36,7 @@ Updated 2026-10-17.
 | AI cursor tools (create/move/click/swipe/click_all/grid/find_element/look_at_screen) | active — Cursor A5 | `live/AppControl.kt`, `live/PhoneTools.kt`, `data/Prefs.aiCursor` |
 | Click-lesson memory (ui_clicks.json + ui_clicks.md + journal, recall/save, corrections, privacy) | active — Cursor A6 | `live/ClickMemory.kt`, `live/CallHost.kt`, `ui/screens/CursorMemoryScreen.kt` |
 | Live call keep-alive: session resumption + context compression + goAway reconnect | active — Stream P5-6 | `live/LiveClient.kt`, `data/Prefs.liveResume/liveCompress`, `ui/screens/ProfileScreen.kt` |
+| Diagnostics screen + `JARVIS_DIAG` logger + Cursor Test | active — Bugfix P1 | `live/Diag.kt`, `ui/screens/DiagnosticsScreen.kt`, `MainActivity.kt`, `ui/screens/ProfileScreen.kt` |
+| Call stability: tools off reader thread, video guard, VAD/activityHandling + barge-in toggle, audio priority + pre-buffer, wake/Wi-Fi locks, backoff + network callback, thermal-aware share | active — Bugfix M3 | `live/LiveClient.kt`, `live/CallLocks.kt`, `live/ScreenShareService.kt`, `data/Prefs.liveBargeIn` |
+| Single-owner microphone with fan-out + self-heal (source fallback, release/recreate) | active — Bugfix M1 | `live/MicCaptureHub.kt`, `live/LiveClient.kt`, `live/WakeService.kt` |
+| AI cursor overlay marshalled to the main thread (+ service restore) | active — Bugfix M2 | `live/CursorController.kt`, `live/CursorPanel.kt`, `live/AppControl.kt` |

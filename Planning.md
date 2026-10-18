@@ -27,9 +27,13 @@ docs/CHANGES_20261018_bugfix-masla3-call-stability.md.
 Root Cause Report: docs/REPORT_20261018_masla1_mic_recording.md. Fixes F1-1..F1-6 in
 docs/CHANGES_20261018_bugfix-masla1-mic-hub.md (MicCaptureHub single owner + fan-out + self-heal, warning, wake logs).
 
-## Phase 4 — Masla 2 (in progress)
+## Phase 4 — Masla 2 (DONE, run 39114550181)
 Root Cause Report: docs/REPORT_20261018_masla2_cursor.md. Fix: docs/CHANGES_20261018_bugfix-masla2-cursor-mainthread.md
-(main-thread marshalling + chain logs + service restore). Next: build, then final report + docs.
+(main-thread marshalling + chain logs + service restore).
+
+## Phase 5 — Final (DONE)
+Final report docs/REPORT_20261018_bugfix-final-summary.md; Tracking updated (Complete/FEATURES/HANDOFF/Pending).
+Remaining: user-side phone soak test.
 
 
 ## Notes
