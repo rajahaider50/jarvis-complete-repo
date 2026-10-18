@@ -84,6 +84,19 @@ fun AccessScreen(onBack: () -> Unit) {
                 }
             }
             JText("Google's own \"OK Google\" hotword is private to Google. The default assistant app + the offline wake word in Assistant settings are the official ways for another app.", 11, Muted, lh = 16)
+
+            // Round 3 / B9: keep the accessibility service (and the call) alive on aggressive OEM skins (MIUI/HyperOS,
+            // EMUI, ColorOS…). Without this the service is killed in the background and every cursor/tap tool then
+            // answers "service OFF".
+            Column(Modifier.fillMaxWidth().clip(shape).background(Surface1).border(1.dp, Gold.copy(alpha = 0.14f), shape).padding(16.dp)) {
+                JText("Keep JARVIS alive (MIUI / HyperOS, EMUI, ColorOS, One UI)", 13, Gold, FontWeight.Medium)
+                JText("These phones kill background apps and turn the accessibility service off. Do all four:", 11, Muted, lh = 16)
+                JText("1. Battery > no restrictions (red row above).\n2. App info > Battery > Unrestricted / \"No restrictions\".\n3. Autostart / \"Auto-launch\": allow JARVIS (Xiaomi: Security app > Permissions > Autostart; Huawei: App launch; Oppo/Realme: Startup manager).\n4. Lock JARVIS in the recents screen (padlock) so \"clear all\" does not kill it.", 11, Ivory, lh = 17)
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlineButton("App info", null, { open(Settings.ACTION_APPLICATION_DETAILS_SETTINGS) }, Modifier.weight(1f))
+                    OutlineButton("Battery", null, { open(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) }, Modifier.weight(1f))
+                }
+            }
             Spacer(Modifier.height(12.dp))
         }
     }

@@ -42,6 +42,26 @@ class ScreenShareService : Service() {
         @Volatile private var burstUntil = 0L
         fun burst(ms: Long = 1200) { burstUntil = System.currentTimeMillis() + ms }
 
+        /**
+         * Round 3 / B7: save one real frame to a file on disk so we can check with our own eyes whether the AI
+         * overlay (cursor / grid) appears in what the model is sent. Blocking (max ~2 s) — call from a worker thread.
+         */
+        fun saveDebugFrame(ctx: Context): String? {
+            val latch = CountDownLatch(1)
+            var bmp: Bitmap? = null
+            JarvisAccessibilityService.screenshot { b -> bmp = b; latch.countDown() }
+            try { if (!latch.await(2, TimeUnit.SECONDS)) return null } catch (e: Exception) { return null }
+            val b = bmp ?: return null
+            return try {
+                val dir = ctx.getExternalFilesDir(null) ?: ctx.filesDir
+                val f = java.io.File(dir, "jarvis_frame_${System.currentTimeMillis()}.png")
+                java.io.FileOutputStream(f).use { b.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                val cursors = CursorController.positions()
+                Diag.log("share", "debug frame saved: ${f.absolutePath} ${b.width}x${b.height} cursors=$cursors grid=${CursorController.gridOn} (open the file to see if the overlay is in the frame)")
+                f.absolutePath
+            } catch (e: Exception) { Diag.fail("share.saveDebugFrame", e); null } finally { b.recycle() }
+        }
+
         private val blocklist = listOf(
             "bank", "com.android.settings", "paytm", "phonepe", "gpay", "com.google.android.apps.nbu.paisa",
             "com.google.android.gms.auth", "keepass", "1password", "bitwarden", "lastpass"
@@ -98,10 +118,16 @@ class ScreenShareService : Service() {
 
                 if (send) {
                     try {
-                        val jpeg = ImageUtil.toJpeg(bmp, if (hot) 480 else 720, if (hot) 45 else 60)
+                        // Round 3 (T3/B4): bigger frames so the model can actually read small buttons. "Detailed"
+                        // (default) = 1280 px long side / q70, dropping to 800 px / q55 when the phone is hot.
+                        // "Fast" keeps the old data-light 720 px / q60.
+                        val detailed = com.jarvis.app.data.Prefs.shareQuality != "fast"
+                        val maxDim = when { hot -> if (detailed) 800 else 480; detailed -> 1280; else -> 720 }
+                        val q = when { hot -> if (detailed) 55 else 45; detailed -> 70; else -> 60 }
+                        val jpeg = ImageUtil.toJpeg(bmp, maxDim, q)
                         (frameSink ?: { bytes: ByteArray -> CallHost.client?.sendJpeg(bytes) })(jpeg)
                         Diag.framesSent++
-                        if (Diag.framesSent % 10 == 1) Diag.log("share", "frame #${Diag.framesSent} ${jpeg.size}B burst=$burst hot=$hot")
+                        if (Diag.framesSent % 10 == 1) Diag.log("share", "frame #${Diag.framesSent} ${jpeg.size}B ${bmp.width}x${bmp.height}->max$maxDim q$q burst=$burst hot=$hot detailed=$detailed")
                     } catch (e: Exception) { Diag.fail("share.frame", e); AppLog.w(e) }
                 } else Diag.framesDropped++
                 bmp.recycle()

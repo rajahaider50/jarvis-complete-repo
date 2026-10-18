@@ -164,34 +164,98 @@ class JarvisAccessibilityService : AccessibilityService() {
 
         /** Finds an element by its visible text or description and returns its centre in normalized coordinates. */
         fun findElementNorm(query: String): String {
-            val s = inst ?: return "Accessibility is off."
-            val root = s.rootInActiveWindow ?: return "No window is open."
+            val hits = findElements(query, 5)
+            if (hits.isEmpty()) return "not found: '$query'"
+            val sz = CursorGeometry.screenSizeOrNull() ?: return "service OFF"
+            return hits.joinToString(" ; ") { e ->
+                "'${e.label.take(50)}' at x=${CursorGeometry.fmt(e.norm.x)} y=${CursorGeometry.fmt(e.norm.y)} " +
+                    "(id=${e.viewId.substringAfterLast('/')} bounds ${e.bounds.left},${e.bounds.top},${e.bounds.right},${e.bounds.bottom} clickable=${e.clickable})"
+            }
+        }
+
+        /** One tappable/visible element, captured as evidence (Round 3 / B5). */
+        class ElementRef(
+            val label: String, val viewId: String, val cls: String, val bounds: Rect,
+            val norm: android.graphics.PointF, val clickable: Boolean, val enabled: Boolean,
+            val node: AccessibilityNodeInfo
+        )
+
+        /** Every visible element that has text, a description, an id or is clickable (capped). */
+        fun clickableElements(limit: Int = 40): List<ElementRef> {
+            val s = inst ?: return emptyList()
+            val root = try { activeApp()?.root ?: s.rootInActiveWindow } catch (e: Exception) { null } ?: return emptyList()
             val sz = CursorGeometry.screenSize(s)
-            val q = query.trim().lowercase()
-            var best: Rect? = null
-            var label = ""
+            val out = ArrayList<ElementRef>()
             fun walk(n: AccessibilityNodeInfo?) {
-                if (n == null || best != null) return
+                if (n == null || out.size >= limit) return
                 val t = (n.text ?: n.contentDescription)?.toString()?.trim().orEmpty()
                 val id = n.viewIdResourceName.orEmpty()
-                if (n.isVisibleToUser && t.isNotEmpty() && (t.lowercase().contains(q) || id.lowercase().contains(q))) {
+                if (n.isVisibleToUser && (t.isNotEmpty() || id.isNotEmpty() || n.isClickable)) {
                     val r = Rect(); n.getBoundsInScreen(r)
-                    if (r.width() > 0 && r.height() > 0) { best = r; label = t.take(60) }
+                    if (r.width() > 0 && r.height() > 0) {
+                        out.add(ElementRef(t, id, n.className?.toString()?.substringAfterLast('.').orEmpty(), Rect(r),
+                            CursorGeometry.toNorm(r.centerX().toFloat(), r.centerY().toFloat(), sz), n.isClickable, n.isEnabled, n))
+                    }
                 }
                 for (i in 0 until n.childCount) walk(n.getChild(i))
             }
             walk(root)
-            val r = best ?: return "not found: '$query'"
-            val c = CursorGeometry.toNorm(r.centerX().toFloat(), r.centerY().toFloat(), sz)
-            return "'${label}' at x=${CursorGeometry.fmt(c.x)} y=${CursorGeometry.fmt(c.y)} (bounds ${r.left},${r.top},${r.right},${r.bottom})"
+            return out
+        }
+
+        /** A readable list of what can be tapped right now. */
+        fun getClickableElementsText(limit: Int = 40): String {
+            if (inst == null) return "Accessibility is off."
+            val els = clickableElements(limit)
+            if (els.isEmpty()) return "No tappable elements were found on this screen."
+            val sb = StringBuilder("${els.size} element(s) (label | id | class | centre x,y | bounds | clickable/enabled):\n")
+            els.forEach { e ->
+                val focusable = if (e.clickable) "clickable" else "not-clickable"
+                sb.append("${e.label.take(60).ifBlank { "(no label)" }} | ${e.viewId.substringAfterLast('/').ifBlank { "-" }} | ${e.cls.ifBlank { "-" }} | " +
+                    "x=${CursorGeometry.fmt(e.norm.x)},y=${CursorGeometry.fmt(e.norm.y)} | [${e.bounds.left},${e.bounds.top},${e.bounds.right},${e.bounds.bottom}] | $focusable/${if (e.enabled) "enabled" else "disabled"}\n")
+            }
+            return sb.toString()
+        }
+
+        /** Best-effort match by exact id/label first, then "contains". */
+        fun findElements(query: String, limit: Int = 6): List<ElementRef> {
+            val q = query.trim().lowercase()
+            if (q.isBlank()) return emptyList()
+            val els = clickableElements(200)
+            val exact = els.filter { it.label.lowercase() == q || it.viewId.substringAfterLast('/').lowercase() == q }
+            if (exact.isNotEmpty()) return exact.take(limit)
+            return els.filter { it.label.lowercase().contains(q) || it.viewId.lowercase().contains(q) }.take(limit)
+        }
+
+        /**
+         * Clicks an element by id or label: ACTION_CLICK on the node (or its first clickable parent) and, if that
+         * changes nothing, a real gesture at its centre. Reports the truth either way (Round 3 / B5 + B6).
+         */
+        fun clickElement(query: String): String {
+            val hits = findElements(query, 3)
+            if (hits.isEmpty()) return "not found: '$query'. Call get_clickable_elements to see what is on the screen."
+            val e = hits.first()
+            val target = if (e.node.isClickable && e.node.isEnabled) e.node else clickableAncestor(e.node)
+            if (target != null) {
+                val res = clickNodeAndVerify(target)
+                if (res == "clicked (screen changed)") return "clicked '${e.label.take(50)}' via accessibility: $res"
+                // accepted but nothing happened, or not accepted: fall through to a real tap at the centre
+            }
+            val p = CursorGeometry.toPx(e.norm.x, e.norm.y, CursorGeometry.screenSizeOrNull() ?: return "service OFF")
+            val o = tapPxAwait(p.x, p.y)
+            val under = nodeAt(p.x.toInt(), p.y.toInt())
+            return "tapped '${e.label.take(50)}' at pixel (${p.x.toInt()},${p.y.toInt()}) outcome=${o.name.lowercase()} " +
+                "(accessibility click was ${if (target != null) "accepted but did not change the screen" else "not possible"}) under[$under]"
         }
 
         private fun gesture(build: (GestureDescription.Builder, Float, Float) -> Unit): Boolean {
             ScreenShareService.burst()
             val s = inst ?: return false
-            val dm = s.resources.displayMetrics
+            // Round 3 (T2): use the SAME real display size the cursor engine uses — not resources.displayMetrics,
+            // which can differ (navigation bar / cutout) and would move percent taps off target.
+            val sz = CursorGeometry.screenSize(s)
             val b = GestureDescription.Builder()
-            build(b, dm.widthPixels.toFloat(), dm.heightPixels.toFloat())
+            build(b, sz.w.toFloat(), sz.h.toFloat())
             return s.dispatchGesture(b.build(), null, null)
         }
 
@@ -319,6 +383,50 @@ class JarvisAccessibilityService : AccessibilityService() {
                 b.addStroke(GestureDescription.StrokeDescription(path, 0, durationMs.coerceIn(20, 3000)))
             }
 
+        // ---------- truthful percent gestures (Round 3 / T2, B3): real size + real outcome ----------
+
+        /** Swipe by direction, reporting the real gesture outcome (not just "did it get accepted"). */
+        fun swipeAwait(direction: String, timeoutMs: Long = 2500): GestureOutcome = dispatchAwait(timeoutMs) { b, sz ->
+            val w = sz.w.toFloat(); val h = sz.h.toFloat()
+            val p = Path()
+            when (direction.lowercase()) {
+                "up" -> { p.moveTo(w / 2, h * 0.75f); p.lineTo(w / 2, h * 0.25f) }
+                "down" -> { p.moveTo(w / 2, h * 0.30f); p.lineTo(w / 2, h * 0.75f) }
+                "left" -> { p.moveTo(w * 0.80f, h / 2); p.lineTo(w * 0.20f, h / 2) }
+                else -> { p.moveTo(w * 0.20f, h / 2); p.lineTo(w * 0.80f, h / 2) }
+            }
+            b.addStroke(GestureDescription.StrokeDescription(p, 0, 300))
+        }
+
+        /** Tap anywhere by percentage of the REAL screen (0-100), reporting the real outcome. */
+        fun tapAtAwait(xPercent: Float, yPercent: Float, timeoutMs: Long = 2000): GestureOutcome = dispatchAwait(timeoutMs) { b, sz ->
+            val path = Path(); path.moveTo(sz.w * xPercent / 100f, sz.h * yPercent / 100f)
+            b.addStroke(GestureDescription.StrokeDescription(path, 0, 60))
+        }
+
+        fun doubleTapAtAwait(xPercent: Float, yPercent: Float, timeoutMs: Long = 2500): GestureOutcome = dispatchAwait(timeoutMs) { b, sz ->
+            val path = Path(); path.moveTo(sz.w * xPercent / 100f, sz.h * yPercent / 100f)
+            b.addStroke(GestureDescription.StrokeDescription(path, 0, 50))
+            b.addStroke(GestureDescription.StrokeDescription(path, 130, 50))
+        }
+
+        /**
+         * ACTION_CLICK on a node, then check the screen actually reacted (~800 ms of accessibility events).
+         * Round 3 / B6: a click that the framework accepted but that changed nothing is reported as such.
+         */
+        fun clickNodeAndVerify(node: AccessibilityNodeInfo): String {
+            val before = eventsNow()
+            val ok = try { node.performAction(AccessibilityNodeInfo.ACTION_CLICK) } catch (e: Exception) { Diag.fail("a11y.clickNode", e); false }
+            if (!ok) return "action_not_accepted"
+            ScreenShareService.burst()
+            val t0 = System.currentTimeMillis()
+            while (System.currentTimeMillis() - t0 < 800) {
+                if (eventsNow() > before) return "clicked (screen changed)"
+                try { Thread.sleep(50) } catch (e: InterruptedException) { break }
+            }
+            return "click_accepted_but_screen_did_not_change"
+        }
+
         fun doubleTapPxAwait(px: Float, py: Float, timeoutMs: Long = 2500): GestureOutcome =
             dispatchAwait(timeoutMs) { b, _ ->
                 val path = Path(); path.moveTo(px, py)
@@ -398,6 +506,9 @@ class JarvisAccessibilityService : AccessibilityService() {
             while (x != null) { if (x.isClickable && x.isEnabled) return x; x = x.parent }
             return null
         }
+
+        /** Public wrapper (Round 3 / B5) so the tool layer can reuse the same "climb to the tappable parent" rule. */
+        fun clickableAncestorOf(n: AccessibilityNodeInfo?): AccessibilityNodeInfo? = clickableAncestor(n)
 
         /** Finds the red "End call / Hang up / Decline" button of whatever call screen is open and taps it. */
         fun endCall(): Boolean {

@@ -14,14 +14,17 @@ import org.json.JSONObject
  * (Gemini Live function calling and OpenAI-style tool calling for custom providers).
  */
 object PhoneTools {
-    class Tool(val name: String, val desc: String, val props: List<Pair<String, String>> = emptyList())
+    class Tool(val name: String, val desc: String, val props: List<Pair<String, String>> = emptyList(), val optional: List<String> = emptyList()) {
+        /** Only the parameters that really are necessary are sent as "required". */
+        val required: List<String> get() = props.map { it.first }.filterNot { it in optional }
+    }
 
     val all = listOf(
         Tool("set_flashlight", "Turn the phone flashlight on or off", listOf("on" to "BOOLEAN")),
         Tool("set_volume", "Set the phone media volume, 0 to 100 percent", listOf("percent" to "INTEGER")),
         Tool("device_status", "Read the REAL current status of this phone: time, battery, temperature, storage, memory, Wi-Fi, Bluetooth, volume, brightness and weather"),
         Tool("get_time", "Read the real current date and time"),
-        Tool("get_weather", "Current weather for a city, or for the phone's location if the city is empty", listOf("city" to "STRING")),
+        Tool("get_weather", "Current weather for a city, or for the phone's location if the city is empty", listOf("city" to "STRING"), optional = listOf("city")),
         Tool("read_screen", "Read all text currently visible on the phone screen"),
         Tool("click_on_screen", "Tap a button or item on the screen by its visible text", listOf("text" to "STRING")),
         Tool("type_text", "Type text into the focused input field on the screen", listOf("text" to "STRING")),
@@ -40,37 +43,40 @@ object PhoneTools {
         Tool("set_alarm", "Set an alarm clock. hour 0-23, minute 0-59", listOf("hour" to "INTEGER", "minute" to "INTEGER")),
         Tool("dial_number", "Open the phone dialer with a number typed in (the user presses call)", listOf("number" to "STRING")),
         Tool("swipe_screen", "Swipe the screen. direction: up (next video / scroll down), down, left or right", listOf("direction" to "STRING")),
-        Tool("tap_at", "Tap a spot on the screen by percentage: x and y from 0 to 100", listOf("x" to "NUMBER", "y" to "NUMBER")),
+        Tool("tap_at", "Tap a spot on the screen by percentage of the real screen: x and y from 0 to 100. Tells you if the gesture completed (cancelled means Android refused it)", listOf("x" to "NUMBER", "y" to "NUMBER")),
         Tool("double_tap", "Double tap a spot on the screen (for example to like a video): x and y from 0 to 100", listOf("x" to "NUMBER", "y" to "NUMBER")),
         Tool("long_press_text", "Long press an item on the screen by its visible text (for example an image, to save it)", listOf("text" to "STRING")),
         Tool("submit_text", "Press the Enter / Search / Send key after typing"),
         Tool("paste_text", "Paste the clipboard into the focused field"),
         Tool("media_control", "Control playing video or music. action: play_pause, next, previous, mute, unmute, volume_up, volume_down", listOf("action" to "STRING")),
-        Tool("wait_seconds", "Wait for an app or page to finish loading (1 to 6 seconds)", listOf("seconds" to "NUMBER")),
+        Tool("wait_seconds", "Wait for an app or page to finish loading (1 to 6 seconds)", listOf("seconds" to "NUMBER"), optional = listOf("seconds")),
         Tool("open_app", "Open an installed app by its name", listOf("name" to "STRING")),
         Tool("open_url", "Open a web address in the browser", listOf("url" to "STRING")),
         Tool("get_app_state", "Read the current state of the JARVIS app: which screen is open, the selected orb style, assistant theme, interface style, colour theme, mute, camera and whether screen recording or screen sharing is on"),
-        Tool("show_options", "Show a page of five options as popups on the screen and read them out. category is orb, theme, interface or color. page starts at 0 (5 options per page). Use this whenever the user wants to change how the assistant looks", listOf("category" to "STRING", "page" to "INTEGER")),
+        Tool("show_options", "Show a page of five options as popups on the screen and read them out. category is orb, theme, interface or color. page starts at 0 (5 options per page). Use this whenever the user wants to change how the assistant looks", listOf("category" to "STRING", "page" to "INTEGER"), optional = listOf("page")),
         Tool("select_option", "Apply an option that was shown with show_options. category and id must match the shown options", listOf("category" to "STRING", "id" to "STRING")),
         Tool("close_options", "Close the option popups on the screen"),
         Tool("set_screen_recording", "Start or stop recording this call (screen video plus your voice and the user's voice). Android shows a question the user must confirm", listOf("enabled" to "BOOLEAN")),
         Tool("set_screen_share", "Start or stop sharing the phone screen with this call so you can see it. Android shows a question the user must confirm", listOf("enabled" to "BOOLEAN")),
-        Tool("set_camera", "Turn the call camera on or off. mode is off, front or back", listOf("mode" to "STRING")),
+        Tool("set_camera", "Turn the call camera on or off. mode is off, front or back", listOf("mode" to "STRING"), optional = listOf("mode")),
         Tool("navigate", "Open a screen of the JARVIS app: home, chat, control, profile, api, providers, voices, themes, themelab, memory, assistant, code, skills, uistyle, access, console, cursorlab", listOf("screen" to "STRING")),
         Tool("look_at_screen", "Take a fresh look at the screen right now and send the image to you"),
         Tool("get_screen_info", "Read the cursor coordinate system, the screen size, the foreground app and the current cursors"),
-        Tool("cursor_create", "Place a new AI cursor on the screen. Coordinates are -100..+100 (centre 0). X right is +, Y up is +. Up to 10 cursors with their own number and colour", listOf("x" to "NUMBER", "y" to "NUMBER", "label" to "STRING")),
-        Tool("cursor_move", "Move a cursor to a coordinate. mode is absolute (x,y are the target) or relative (x,y are added to the current spot). It slides smoothly so the user can follow", listOf("id" to "INTEGER", "x" to "NUMBER", "y" to "NUMBER", "mode" to "STRING")),
-        Tool("cursor_click", "Click where a cursor is. type is tap, double or long. The result is the TRUTH: outcome (completed/cancelled/rejected/timeout/rate_limited/no_service), the screen pixel, what is under_cursor and effect (changed/no_change). If outcome is not completed, or under_cursor is not the thing you wanted, move the cursor and try again — never tell the user you clicked when you did not. Optional target = a name so this spot is remembered", listOf("id" to "INTEGER", "type" to "STRING", "target" to "STRING")),
-        Tool("cursor_swipe", "Swipe from a cursor to another coordinate (scroll / next)", listOf("id" to "INTEGER", "to_x" to "NUMBER", "to_y" to "NUMBER", "duration_ms" to "INTEGER")),
+        Tool("cursor_create", "Place a new AI cursor on the screen. Coordinates are -100..+100 (centre 0). X right is +, Y up is +. Up to 10 cursors with their own number and colour", listOf("x" to "NUMBER", "y" to "NUMBER", "label" to "STRING"), optional = listOf("label")),
+        Tool("cursor_move", "Move a cursor to a coordinate. mode is absolute (x,y are the target) or relative (x,y are added to the current spot). It slides smoothly so the user can follow", listOf("id" to "INTEGER", "x" to "NUMBER", "y" to "NUMBER", "mode" to "STRING"), optional = listOf("id", "mode")),
+        Tool("cursor_click", "Click where a cursor is. type is tap, double or long. The result is the TRUTH: outcome (completed/cancelled/rejected/timeout/rate_limited/no_service), the screen pixel, what is under_cursor and effect (changed/no_change). If outcome is not completed, or under_cursor is not the thing you wanted, move the cursor and try again — never tell the user you clicked when you did not. Optional target = a name so this spot is remembered", listOf("id" to "INTEGER", "type" to "STRING", "target" to "STRING"), optional = listOf("id", "type", "target")),
+        Tool("cursor_swipe", "Swipe from a cursor to another coordinate (scroll / next)", listOf("id" to "INTEGER", "to_x" to "NUMBER", "to_y" to "NUMBER", "duration_ms" to "INTEGER"), optional = listOf("id", "duration_ms")),
         Tool("click_all", "Click every cursor on the screen at the same time"),
         Tool("cursor_remove", "Remove one cursor", listOf("id" to "INTEGER")),
         Tool("cursor_clear", "Remove all cursors"),
         Tool("cursor_list", "List the current cursors and their positions"),
-        Tool("grid", "Show or hide the coordinate grid overlay (-100..+100 with labels)", listOf("show" to "BOOLEAN")),
-        Tool("find_element", "Find a button or text on the screen by its visible text or description and get its centre in cursor coordinates", listOf("query" to "STRING")),
+        Tool("grid", "Show or hide the coordinate grid overlay (-100..+100 with labels)", listOf("show" to "BOOLEAN"), optional = listOf("show")),
+        Tool("find_element", "Find one or more buttons or texts on the screen by visible text, description or view id and get their centre in cursor coordinates", listOf("query" to "STRING")),
+        Tool("get_clickable_elements", "List the tappable elements visible right now: label, view id, class, centre in cursor coordinates, bounds, clickable/enabled. Use this instead of guessing where a button is", listOf("limit" to "INTEGER"), optional = listOf("limit")),
+        Tool("click_element", "Click an element by its text, description or view id. It uses the accessibility click and, if the screen does not change, a real tap at its centre — and tells you the truth either way", listOf("id_or_label" to "STRING")),
+        Tool("cursor_move_to_element", "Place/move an AI cursor exactly onto an element by its text, description or view id", listOf("id_or_label" to "STRING")),
         Tool("recall_clicks", "Look up spots you remembered earlier for a target in the app the user is now using, and get their cursor coordinates", listOf("query" to "STRING")),
-        Tool("save_click", "Remember where the selected cursor is for a target name (so next time you go straight there). Set correct=true when the user moved the cursor to fix your mistake", listOf("target" to "STRING", "correct" to "BOOLEAN"))
+        Tool("save_click", "Remember where the selected cursor is for a target name (so next time you go straight there). Set correct=true when the user moved the cursor to fix your mistake", listOf("target" to "STRING", "correct" to "BOOLEAN"), optional = listOf("correct"))
     )
 
     /** Gemini Live format. */
@@ -81,7 +87,9 @@ object PhoneTools {
             if (t.props.isNotEmpty()) {
                 val p = JSONObject()
                 t.props.forEach { (k, ty) -> p.put(k, JSONObject().put("type", ty)) }
-                o.put("parameters", JSONObject().put("type", "OBJECT").put("properties", p).put("required", JSONArray(t.props.map { it.first })))
+                val params = JSONObject().put("type", "OBJECT").put("properties", p)
+                if (t.required.isNotEmpty()) params.put("required", JSONArray(t.required))   // only the necessary ones
+                o.put("parameters", params)
             }
             arr.put(o)
         }
@@ -95,7 +103,7 @@ object PhoneTools {
             val p = JSONObject()
             t.props.forEach { (k, ty) -> p.put(k, JSONObject().put("type", ty.lowercase())) }
             val params = JSONObject().put("type", "object").put("properties", p)
-            if (t.props.isNotEmpty()) params.put("required", JSONArray(t.props.map { it.first }))
+            if (t.required.isNotEmpty()) params.put("required", JSONArray(t.required))       // only the necessary ones
             arr.put(JSONObject().put("type", "function").put("function", JSONObject().put("name", t.name).put("description", t.desc).put("parameters", params)))
         }
         return arr
@@ -116,13 +124,56 @@ object PhoneTools {
                 (if (city.isBlank()) Weather.fetch(ctx) else Weather.fetchCity(city)) ?: "The weather could not be read right now (no internet answer). Do not guess it."
             }
             "read_screen" -> a11y ?: JarvisAccessibilityService.readScreen()
-            "click_on_screen" -> a11y ?: if (JarvisAccessibilityService.clickByText(args.optString("text"))) "tapped" else "could not find that on the screen"
+            "click_on_screen" -> a11y ?: run {
+                val text = args.optString("text")
+                val hit = JarvisAccessibilityService.findElements(text, 1).firstOrNull()
+                if (hit == null) "could not find '$text' on the screen"
+                else {
+                    val node = hit.node
+                    val target = when {
+                        node.isClickable && node.isEnabled -> node
+                        else -> JarvisAccessibilityService.clickableAncestorOf(node)
+                    }
+                    if (target != null) {
+                        val r = JarvisAccessibilityService.clickNodeAndVerify(target)
+                        when (r) {
+                            "clicked (screen changed)" -> "tapped '$text' ($r)"
+                            "click_accepted_but_screen_did_not_change" -> "tapped '$text' but the screen did not change — nothing happened. Check with read_screen and try another spot"
+                            else -> "could not tap '$text' ($r)"
+                        }
+                    } else {
+                        // nothing clickable in the tree: fall back to a REAL gesture at the element's centre
+                        val p = CursorGeometry.toPx(hit.norm.x, hit.norm.y, CursorGeometry.screenSizeOrNull() ?: return@run "the accessibility service is off")
+                        when (JarvisAccessibilityService.tapPxAwait(p.x, p.y)) {
+                            GestureOutcome.COMPLETED -> "tapped '$text' at pixel (${p.x.toInt()},${p.y.toInt()}) — nothing in the tree was clickable, so I tapped its centre. Check with read_screen"
+                            GestureOutcome.CANCELLED -> "Android cancelled the tap on '$text' (nothing was tapped)"
+                            else -> "the tap on '$text' did not complete"
+                        }
+                    }
+                }
+            }
             "type_text" -> a11y ?: if (JarvisAccessibilityService.typeText(args.optString("text"))) "typed" else "no text field is focused"
             "scroll_screen" -> a11y ?: if (JarvisAccessibilityService.scroll(args.optString("direction") != "up")) "scrolled" else "nothing to scroll"
             "press_button" -> a11y ?: if (JarvisAccessibilityService.press(args.optString("button"))) "done" else "unknown button"
-            "swipe_screen" -> a11y ?: if (JarvisAccessibilityService.swipe(args.optString("direction"))) "swiped" else "swipe failed"
-            "tap_at" -> a11y ?: if (JarvisAccessibilityService.tapAt(x, y)) "tapped" else "tap failed"
-            "double_tap" -> a11y ?: if (JarvisAccessibilityService.doubleTapAt(x, y)) "double tapped" else "double tap failed"
+            "swipe_screen" -> a11y ?: when (JarvisAccessibilityService.swipeAwait(args.optString("direction"))) {
+                GestureOutcome.COMPLETED -> "swiped"
+                GestureOutcome.CANCELLED -> "the swipe was cancelled by Android (another gesture was in the way) — try again"
+                GestureOutcome.RATE_LIMITED -> "too many gestures in a second; wait a moment"
+                GestureOutcome.NO_SERVICE -> "the accessibility service is off"
+                else -> "swipe did not complete"
+            }
+            "tap_at" -> a11y ?: when (JarvisAccessibilityService.tapAtAwait(x, y)) {
+                GestureOutcome.COMPLETED -> "tapped at ${x.toInt()}%,${y.toInt()}%"
+                GestureOutcome.CANCELLED -> "Android cancelled the tap at ${x.toInt()}%,${y.toInt()}% (nothing was tapped)"
+                GestureOutcome.RATE_LIMITED -> "too many taps in a second; wait a moment"
+                else -> "tap did not complete"
+            }
+            "double_tap" -> a11y ?: when (JarvisAccessibilityService.doubleTapAtAwait(x, y)) {
+                GestureOutcome.COMPLETED -> "double tapped at ${x.toInt()}%,${y.toInt()}%"
+                GestureOutcome.CANCELLED -> "Android cancelled the double tap (nothing was tapped)"
+                GestureOutcome.RATE_LIMITED -> "too many taps in a second; wait a moment"
+                else -> "double tap did not complete"
+            }
             "long_press_text" -> a11y ?: if (JarvisAccessibilityService.longClickByText(args.optString("text"))) "long pressed" else "could not find that on the screen"
             "submit_text" -> a11y ?: if (JarvisAccessibilityService.submit()) "submitted" else "no field to submit"
             "paste_text" -> a11y ?: if (JarvisAccessibilityService.paste()) "pasted" else "no field to paste into"

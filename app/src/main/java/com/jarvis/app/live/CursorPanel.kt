@@ -38,7 +38,6 @@ object CursorPanel {
     private var appCtx: Context? = null
 
     var speed by mutableStateOf(5)          // 1..15
-    var lockDrag by mutableStateOf(false)
     private val steps = floatArrayOf(0.1f, 0.5f, 1f)
     private var stepIdx = 1
 
@@ -98,7 +97,12 @@ object CursorPanel {
 
         val toggles = LinearLayout(c).apply { orientation = LinearLayout.HORIZONTAL }
         gridBtn = btn("Grid", null) { CursorController.showGrid(!CursorController.gridOn); gridBtn?.alpha = if (CursorController.gridOn) 1f else 0.6f }
-        lockBtn = btn("Lock", null) { lockDrag = !lockDrag; lockBtn?.alpha = if (lockDrag) 1f else 0.6f }
+        lockBtn = btn("Move", null) {
+            CursorController.setMoveMode(!CursorController.moveMode)
+            lockBtn?.alpha = if (CursorController.moveMode) 1f else 0.6f
+            flash(if (CursorController.moveMode) "Move mode ON: drag a cursor by hand" else "Move mode OFF: cursors never eat your tap")
+        }
+        lockBtn?.alpha = if (CursorController.moveMode) 1f else 0.6f
         toggles.addView(gridBtn, lpWeight())
         toggles.addView(lockBtn, lpWeight())
         toggles.addView(btn("Joystick", null) { toggleJoystick() }, lpWeight())

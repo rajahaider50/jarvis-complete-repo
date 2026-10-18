@@ -101,11 +101,11 @@ fun TapTestScreen(onBack: () -> Unit) {
                     rec = received.value
                 }
                 val diff = rec?.let { hypot((it.first - exp.x).toDouble(), (it.second - exp.y).toDouble()).toFloat() }
-                out += TapRow(i + 1, nx, ny, exp.x to exp.y, r.cursorScreen, r.outcome.name.lowercase(), r.touchableBefore, r.underCursor, r.effect, rec, diff, retried)
+                out += TapRow(i + 1, nx, ny, exp.x to exp.y, r.cursorScreen, r.outcome.name.lowercase(), r.touchableAtClick, r.underCursor, r.effect, rec, diff, retried)
                 rows = out.toList()
                 Diag.log("TapTest", "T${i + 1} norm=${CursorGeometry.fmt(nx)},${CursorGeometry.fmt(ny)} expected=(${exp.x.toInt()},${exp.y.toInt()}) " +
                     "received=${rec?.let { "(${it.first.toInt()},${it.second.toInt()})" } ?: "NO_TOUCH"} diff=${diff?.let { String.format(Locale.US, "%.1f", it) }} " +
-                    "outcome=${r.outcome} effect=${r.effect} touchableAtClick=${r.touchableBefore} cursorSwallowedTap=$retried")
+                    "outcome=${r.outcome} effect=${r.effect} touchableAtClick=${r.touchableAtClick} cursorSwallowedTap=$retried")
                 delay(250)
             }
             CursorController.clear()

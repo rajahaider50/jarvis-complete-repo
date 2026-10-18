@@ -95,6 +95,10 @@ object Diag {
         sb.append("ws=").append(wsState).append(" underruns=").append(underruns).append(" interrupted=").append(interrupted).append(" reconnects=").append(reconnects).append(" lastClose=").append(lastClose).append("\n")
         sb.append("toolCalls=").append(toolCalls).append(" lastTool=").append(lastTool).append(" framesSent=").append(framesSent).append(" framesDropped=").append(framesDropped).append("\n")
         sb.append("cursorAdds=").append(cursorAdds).append(" cursorAddFails=").append(cursorAddFails).append(" foreignRecorder=").append(foreignRecorder).append("\n")
+        val dm = CursorController.ctxOrNull()?.resources?.displayMetrics
+        sb.append("display densityService=").append(dm?.density).append(" densityDpiService=").append(dm?.densityDpi)
+            .append(" screen=").append(CursorGeometry.screenSizeOrNull()?.let { "${it.w}x${it.h}" } ?: "-")
+            .append(" cursorSizeDp=").append(CursorController.sizeDp).append(" moveMode=").append(CursorController.moveMode).append("\n")
         sb.append("gestures=").append(gestures).append(" completed=").append(gesturesCompleted).append(" failed=").append(gesturesFailed).append(" lastGesture=").append(lastGesture).append("\n")
         sb.append("----- events (newest last) -----\n")
         events.forEach { sb.append(stamp.format(it.t)).append(" [").append(it.thread).append("] ").append(it.msg).append("\n") }

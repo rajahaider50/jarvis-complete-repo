@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Owns the one live call of the whole process.
@@ -41,13 +42,15 @@ object CallHost {
         c.onTurn = { user, ai -> ChatStore.addVoiceTurn(user, ai) }     // every spoken turn is saved, so you can continue in chat
         client = c
         AppLog.i("Call", "Call started with " + (provider?.name ?: "Gemini Live"))
-        // Heavy setup runs AFTER this call returns, so the call screen draws its first frame instantly (no 1-3s freeze).
+        // Heavy setup runs AFTER this call returns AND off the main thread, so the call screen draws its first frame
+        // instantly (no 1-3 s freeze). Round 3 / C1: Dispatchers.Main.immediate used to run this block inline on the
+        // main thread because nothing in it suspends — now only the overlay work hops back to the main thread.
         val t0 = System.currentTimeMillis()
-        scope.launch {
+        scope.launch(Dispatchers.Default) {
             AppLog.i("Timing", "call_setup_begin")
-            Overlay.hideAll()
-            WakeService.setPaused(true)                                  // free the microphone for the call
-            CallLocks.acquire(app)                                       // keep CPU + Wi-Fi alive for a long call
+            withContext(Dispatchers.Main) { Overlay.hideAll() }           // overlay views must be touched on the main thread
+            WakeService.setPaused(true)                                   // free the microphone for the call
+            CallLocks.acquire(app)                                        // keep CPU + Wi-Fi alive for a long call
             AudioRouter.start(app)
             CallService.start(app)
             AppLog.i("Timing", "call_setup_services ${System.currentTimeMillis() - t0}ms")

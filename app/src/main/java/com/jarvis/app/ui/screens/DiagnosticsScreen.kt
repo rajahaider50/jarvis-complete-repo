@@ -27,6 +27,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jarvis.app.live.CursorController
+import com.jarvis.app.data.Prefs
+import com.jarvis.app.live.CallHost
 import com.jarvis.app.live.Diag
 import com.jarvis.app.live.MicCaptureHub
 import com.jarvis.app.live.JarvisAccessibilityService
@@ -72,6 +74,9 @@ fun DiagnosticsScreen(onBack: () -> Unit, onNav: (String) -> Unit = {}) {
                     Row(Modifier.fillMaxWidth()) { JText("zero-runs / recoveries", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.micZeroRuns} / ${Diag.micRecoveries}", 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("opens / releases", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.micOpens} / ${Diag.micReleases}", 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("another app on mic", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.foreignRecorder, 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("echo cancel (AEC)", 12, Muted, modifier = Modifier.weight(1f)); JText("avail=${MicCaptureHub.aecAvailable} on=${MicCaptureHub.aecEnabled} lost=${Diag.micAecLost}", 12, if (MicCaptureHub.aecEnabled) Ivory else Gold) }
+                    Row(Modifier.fillMaxWidth()) { JText("audio route", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.lastRoute, 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("echo guard (half-duplex)", 12, Muted, modifier = Modifier.weight(1f)); JText("${Prefs.halfDuplex}${CallHost.client?.let { if (it.echoGuard) " · holding mic back now" else "" } ?: ""}", 12, Ivory) }
                     OutlineButton("Check who holds the mic", null, {
                         Diag.foreignRecorder = MicCaptureHub.foreignRecorder()
                         note = "Mic check: ${Diag.foreignRecorder}"
@@ -90,6 +95,13 @@ fun DiagnosticsScreen(onBack: () -> Unit, onNav: (String) -> Unit = {}) {
                     Row(Modifier.fillMaxWidth()) { JText("tool calls", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.toolCalls}", 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("last tool", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.lastTool, 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("frames sent / dropped", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.framesSent} / ${Diag.framesDropped}", 12, Ivory) }
+                    OutlineButton("Save one share frame to a file", null, {
+                        scope.launch {
+                            note = "Saving a frame…"
+                            val p = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.jarvis.app.live.ScreenShareService.saveDebugFrame(ctx) }
+                            note = if (p != null) "Frame saved: $p — open it and check whether the cursor/grid is visible in it." else "Could not grab a frame (Android 11+ and the accessibility service are needed)."
+                        }
+                    }, Modifier.padding(top = 6.dp))
                 } }
 
                 item { Card("Cursor & accessibility") {
@@ -102,6 +114,11 @@ fun DiagnosticsScreen(onBack: () -> Unit, onNav: (String) -> Unit = {}) {
                 item { Card("Pointer & gestures (Masla A)") {
                     Row(Modifier.fillMaxWidth()) { JText("gestures ok / bad", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.gesturesCompleted} / ${Diag.gesturesFailed}", 12, if (Diag.gesturesFailed > 0) Gold else Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("last gesture outcome", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.lastGesture, 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("move mode (hand drag)", 12, Muted, modifier = Modifier.weight(1f)); JText(if (CursorController.moveMode) "ON" else "OFF (cursors never eat a tap)", 12, if (CursorController.moveMode) Gold else Ivory) }
+                    OutlineButton(if (CursorController.moveMode) "Turn move mode OFF" else "Turn move mode ON", null, {
+                        CursorController.setMoveMode(!CursorController.moveMode)
+                        note = if (CursorController.moveMode) "Move mode ON: you can drag cursors by hand." else "Move mode OFF: cursors are NOT_TOUCHABLE again."
+                    }, Modifier.padding(vertical = 4.dp))
                     JText(JarvisAccessibilityService.gestureCapabilities(), 11, Muted)
                     JText(CursorController.windowReport(), 11, Muted)
                     GoldButton("Tap Test (real taps, ±65 targets)", null, { onNav("taptest") }, Modifier.padding(top = 6.dp))

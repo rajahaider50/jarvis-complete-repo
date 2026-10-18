@@ -20,12 +20,14 @@ object AppControl {
         "get_app_state", "show_options", "select_option", "close_options",
         "set_screen_recording", "set_screen_share", "set_camera", "navigate", "look_at_screen",
         "get_screen_info", "cursor_create", "cursor_move", "cursor_click", "cursor_swipe", "click_all",
-        "cursor_remove", "cursor_clear", "cursor_list", "grid", "find_element", "recall_clicks", "save_click"
+        "cursor_remove", "cursor_clear", "cursor_list", "grid", "find_element", "recall_clicks", "save_click",
+        "get_clickable_elements", "click_element", "cursor_move_to_element"
     )
 
     private val cursorNames = setOf(
         "get_screen_info", "cursor_create", "cursor_move", "cursor_click", "cursor_swipe", "click_all",
-        "cursor_remove", "cursor_clear", "cursor_list", "grid", "find_element", "recall_clicks", "save_click"
+        "cursor_remove", "cursor_clear", "cursor_list", "grid", "find_element", "recall_clicks", "save_click",
+        "get_clickable_elements", "click_element", "cursor_move_to_element"
     )
 
     private val routes = setOf(
@@ -126,8 +128,10 @@ object AppControl {
                     ClickMemory.fail(pkg, r.normX, r.normY)
                 }
                 "outcome=${r.outcome.name.lowercase()} | cursor #${r.id} norm=${CursorGeometry.fmt(r.normX)},${CursorGeometry.fmt(r.normY)} " +
-                    "px=(${r.px.toInt()},${r.py.toInt()}) | cursorTouchableAtClick=${r.touchableBefore} | window[${r.cursorScreen}] | " +
-                    "under_cursor: ${r.underCursor} | effect=${r.effect}"
+                    "px=(${r.px.toInt()},${r.py.toInt()}) | cursorTouchableAtClick=${r.touchableAtClick} | window[${r.cursorScreen}] | " +
+                    "under_cursor: ${r.underCursor} | effect=${r.effect}" +
+                    if (r.outcome != CursorController.ClickOutcome.COMPLETED)
+                        " | the click did NOT complete: the screen did not take it. Do not tell the user it worked — move the cursor and try again." else ""
             }
             "cursor_swipe" -> {
                 val id = args.optInt("id", CursorController.selectedId ?: 1)
@@ -142,6 +146,29 @@ object AppControl {
             "cursor_list" -> CursorController.list()
             "grid" -> { CursorController.showGrid(args.optBoolean("show", true)); if (CursorController.gridOn) "grid on" else "grid off" }
             "find_element" -> JarvisAccessibilityService.findElementNorm(args.optString("query").ifBlank { args.optString("text_or_desc") })
+            "get_clickable_elements" -> JarvisAccessibilityService.getClickableElementsText(args.optInt("limit", 40))
+            "click_element" -> {
+                val target = args.optString("id_or_label").ifBlank { args.optString("label") }.ifBlank { args.optString("query") }
+                if (target.isBlank()) "Give me the element's text, description or view id."
+                else JarvisAccessibilityService.clickElement(target)
+            }
+            "cursor_move_to_element" -> {
+                val target = args.optString("id_or_label").ifBlank { args.optString("label") }.ifBlank { args.optString("query") }
+                if (target.isBlank()) "Give me the element's text, description or view id."
+                else {
+                    val hits = JarvisAccessibilityService.findElements(target, 3)
+                    if (hits.isEmpty()) "not found: '$target'. Call get_clickable_elements first."
+                    else {
+                        val e = hits.first()
+                        val id = CursorController.add(e.norm.x, e.norm.y, target.take(30))
+                        if (id < 0) "Could not place a cursor (service off, or 10 cursors are already on screen)."
+                        else {
+                            CursorController.select(id); CursorPanel.refresh()
+                            "cursor #$id moved to '${e.label.take(40)}' at ${CursorGeometry.fmt(e.norm.x)},${CursorGeometry.fmt(e.norm.y)} (bounds [${e.bounds.left},${e.bounds.top},${e.bounds.right},${e.bounds.bottom}])"
+                        }
+                    }
+                }
+            }
             "recall_clicks" -> ClickMemory.recall(args.optString("query"), JarvisAccessibilityService.foregroundPackage())
             "save_click" -> {
                 val t = args.optString("target").ifBlank { args.optString("label") }.trim()

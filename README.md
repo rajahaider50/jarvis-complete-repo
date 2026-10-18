@@ -47,7 +47,7 @@ Figma: https://www.figma.com/design/0voJxKEm57v1bjJLRXXCV4
 - Live API and Gemini voices need a key/plan that allows them; the app shows exactly what your key supports.
 - If the Live connection fails the app retries with alternative setup layouts and shows Google's error message.
 - This code could not be compiled/tested in the authoring environment. If the first build fails, send the Actions log.
-- Not included: Accessibility Service (not needed for the features above; can be added later).
+- Accessibility Service IS included: `live/JarvisAccessibilityService.kt` reads the screen, taps by text or by element, types, scrolls and presses Back/Home/Recents. Switch it on in Android Settings > Accessibility (shortcut in Access & permissions). It is what powers the AI cursor, `tap_at`, `click_element` and screen sharing via `takeScreenshot`.
 
 ## Update 5
 - Removed the phone/Google text-to-speech completely. All speech now comes from Gemini voices (`audio/Speaker.kt`).

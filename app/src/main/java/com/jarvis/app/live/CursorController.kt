@@ -16,8 +16,12 @@ import com.jarvis.app.data.AppLog
 
 /**
  * Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission needed). Each cursor is
- * its own small window so the rest of the screen stays touchable. Cursors can be dragged by the user; before an
- * AI gesture they are made NOT_TOUCHABLE so the tap goes to the app underneath, then touchable again.
+ * its own small window so the rest of the screen stays touchable.
+ *
+ * Round 3 (Masla A / T1): the cursor windows are ALWAYS [WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE] while the AI
+ * is driving — the window can therefore never swallow the tap it is aiming at, and there is no race between
+ * updateViewLayout and dispatchGesture any more. If the user wants to drag a cursor by hand they turn on "Move" in
+ * the panel (moveMode); turning it off puts every window straight back to NOT_TOUCHABLE.
  */
 object CursorController {
     private const val MAX = 10
@@ -61,6 +65,17 @@ object CursorController {
     var gridOn by mutableStateOf(false)
         private set
     var sizeDp by mutableStateOf(56)
+
+    /** Hand-drag mode: only then may a tap land on a cursor window itself. OFF (AI mode) = the cursor never eats a tap. */
+    var moveMode by mutableStateOf(false)
+        private set
+
+    fun setMoveMode(on: Boolean) {
+        if (!isMainThread()) { onMain(Unit) { setMoveMode(on) }; return }
+        moveMode = on
+        Diag.log("cursor", "move mode ${if (on) "ON (cursors are draggable — taps can land on them)" else "OFF (cursors are NOT_TOUCHABLE: a tap always reaches the app)"}")
+        setTouchable(on)
+    }
 
     /** The cursor the manual panel / joystick is controlling (first one if none chosen). */
     var selectedId by mutableStateOf<Int?>(null)
@@ -130,7 +145,8 @@ object CursorController {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                (if (moveMode) 0 else WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE),
             PixelFormat.TRANSLUCENT
         ).apply { gravity = Gravity.TOP or Gravity.START; this.x = (px.x - sp / 2f).toInt(); this.y = (px.y - sp / 2f).toInt() }
         cur.view = v; cur.lp = lp
@@ -215,6 +231,12 @@ object CursorController {
         return list.joinToString("\n") { c -> "#${c.id} " + windowLocOf(c) }
     }
 
+    /** True when the cursor window currently accepts touches (i.e. it COULD swallow a tap). */
+    fun touchableNow(): Boolean = onMain(false) {
+        val cur = cursors[selectedId] ?: cursors.values.firstOrNull()
+        (((cur?.lp?.flags ?: WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)) and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) == 0
+    }
+
     private fun setTouchable(touchable: Boolean) {
         if (!isMainThread()) { onMain(Unit) { setTouchable(touchable) }; return }
         cursors.values.forEach { cur ->
@@ -225,11 +247,11 @@ object CursorController {
         }
     }
 
-    /** Runs an AI gesture with all cursors made untouchable, then restores them. */
+    /** Runs an AI gesture with all cursors made untouchable, then restores them to the user's move mode. */
     fun gesture(block: (done: (Boolean) -> Unit) -> Unit, cb: ((Boolean) -> Unit)?) {
         setTouchable(false)
         block { ok ->
-            setTouchable(true)
+            setTouchable(moveMode)
             cb?.invoke(ok)
         }
     }
@@ -277,7 +299,7 @@ object CursorController {
 
     data class ClickResult(
         val id: Int, val normX: Float, val normY: Float, val px: Float, val py: Float,
-        val outcome: ClickOutcome, val touchableBefore: Boolean,
+        val outcome: ClickOutcome, val touchableAtClick: Boolean,
         val cursorScreen: String, val underCursor: String, val effect: String
     )
 
@@ -302,24 +324,28 @@ object CursorController {
     }
 
     /**
-     * Clicks a cursor and reports EXACTLY what happened: gesture outcome, the real screen pixel, whether the cursor
-     * window was touchable at that moment, the element under the point and whether the screen reacted.
+     * Clicks a cursor and reports EXACTLY what happened: the real gesture outcome, the real screen pixel, whether the
+     * cursor window was touchable AT THE MOMENT of the gesture (it must be false in AI mode), the element under the
+     * point and whether the screen reacted at all.
      * Blocks ~0.8 s, so call it from a worker thread (the AI tool thread), never the main thread.
      */
     fun clickResult(id: Int, type: ClickType = ClickType.TAP, waitForEffectMs: Long = 800): ClickResult {
-        val cur = cursors[id] ?: return ClickResult(id, 0f, 0f, 0f, 0f, ClickOutcome.NO_CURSOR, true, "-", "no cursor", "-")
+        val cur = cursors[id] ?: return ClickResult(id, 0f, 0f, 0f, 0f, ClickOutcome.NO_CURSOR, false, "-", "no cursor", "-")
         move(id, cur.x, cur.y)
         val p = if (ctx != null) center(cur.x, cur.y) else PointF()
-        val touchableBefore = ((cur.lp?.flags ?: 0) and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) == 0
+        val wasTouchable = ((cur.lp?.flags ?: 0) and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) == 0
+        setTouchable(false)                                                              // never let the cursor eat this tap
+        // the TRUE flag, read after we forced it and immediately before the gesture is dispatched
+        val touchableAtClick = ((cur.lp?.flags ?: 0) and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) == 0
         val cursorScreen = windowLocOf(cur)
-        setTouchable(false)
         val ev0 = JarvisAccessibilityService.eventsNow()
         val o = when (type) {
             ClickType.TAP -> JarvisAccessibilityService.tapPxAwait(p.x, p.y)
             ClickType.DOUBLE -> JarvisAccessibilityService.doubleTapPxAwait(p.x, p.y)
             ClickType.LONG -> JarvisAccessibilityService.longPressPxAwait(p.x, p.y)
         }
-        setTouchable(true)
+        setTouchable(moveMode)
+        if (touchableAtClick) Diag.log("gesture", "WARNING: cursor window was touchable when the gesture was dispatched — it may have eaten the tap")
         val under = JarvisAccessibilityService.nodeAt(p.x.toInt(), p.y.toInt())
         var effect = "no_change"
         val t0 = System.currentTimeMillis()
@@ -327,12 +353,17 @@ object CursorController {
             if (JarvisAccessibilityService.eventsNow() > ev0) { effect = "changed"; break }
             try { Thread.sleep(60) } catch (e: InterruptedException) { break }
         }
-        val res = ClickResult(id, cur.x, cur.y, p.x, p.y, mapOutcome(o), touchableBefore, cursorScreen, under, effect)
+        if (effect == "no_change" && type == ClickType.TAP) CursorController.shareBurst()
+        val res = ClickResult(id, cur.x, cur.y, p.x, p.y, mapOutcome(o), touchableAtClick, cursorScreen, under, effect)
         Diag.log("gesture", "click id=$id type=$type outcome=${res.outcome} px=(${p.x.toInt()},${p.y.toInt()}) " +
-            "norm=${CursorGeometry.fmt(cur.x)},${CursorGeometry.fmt(cur.y)} touchableAtClick=$touchableBefore effect=$effect window[$cursorScreen] under[$under]")
+            "norm=${CursorGeometry.fmt(cur.x)},${CursorGeometry.fmt(cur.y)} touchableAtClick=$touchableAtClick (wasTouchable=$wasTouchable moveMode=$moveMode) " +
+            "effect=$effect window[$cursorScreen] under[$under]")
         Diag.gestureOutcome(res.outcome.name)
         return res
     }
+
+    /** Ask the screen sharer for a fresh frame right after an action, so the model can see the result. */
+    fun shareBurst() { try { ScreenShareService.burst() } catch (e: Exception) { AppLog.w(e) } }
 
     // ---------- grid ----------
     fun showGrid(on: Boolean) {

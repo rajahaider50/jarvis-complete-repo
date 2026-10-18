@@ -21,6 +21,9 @@ object CursorGeometry {
         return ScreenSize(p.x.coerceAtLeast(1), p.y.coerceAtLeast(1))
     }
 
+    /** Same, but from an accessibility service (or null when it is not connected). */
+    fun screenSizeOrNull(): ScreenSize? = JarvisAccessibilityService.inst?.let { screenSize(it) }
+
     /** normalized (-100..+100, up +) -> screen pixels. */
     fun toPx(x: Float, y: Float, s: ScreenSize): PointF {
         val cx = s.w / 2f; val cy = s.h / 2f
