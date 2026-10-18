@@ -1,4 +1,9 @@
 # PENDING (not done yet). Delete a line when finished and add it to Complete.md.
+- [ ] Phone test: AI cursor — Profile > Cursor Lab (grid + 5 targets, real tap lands on the ring); add/drag cursors (up to 10, colours/numbers); panel nudge + Tap/Dbl/Long/All + PANIC; joystick speed 1-15; grid overlay.
+- [ ] Phone test: AI cursor by voice — "screen par cursor dikhao", "yahan click karo", "do cursor banao aur dono click karo"; cursor moves smoothly and does not swallow its own tap.
+- [ ] Phone test: cursor memory — lessons appear in Profile > Cursor memory with ok counts; a wrong tap fixed with panel "Save spot" replaces the lesson; banking/password screen saves nothing.
+- [ ] Phone test: screen share + record together on one MediaProjection — start recording, then "share screen" with no second dialog; both keep running when the call is minimised.
+- [ ] Phone test: call resumption — toggle airplane mode for a few seconds mid-call; the call returns with "Reconnecting…" and remembers the conversation; a fresh call starts clean.
 - [ ] Phone test: live call opens instantly and connects in about a second using the saved Live Call Models (ApiScreen).
 - [ ] Phone test: down-arrow minimises the call; mini bar shows on other screens; call keeps running; camera keeps working.
 - [ ] Phone test: record a call (video + both voices) and confirm the file in Movies/Jarvis; mic-silent warning shows.

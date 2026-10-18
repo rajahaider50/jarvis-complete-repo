@@ -28,3 +28,11 @@ Updated 2026-10-17.
 | Live call: keeps running in-app (down-arrow + mini bar) | active — LC Phase 3 | `live/CallService.kt`, `ui/components/MiniCallBar.kt`, `MainActivity.kt`, `ui/screens/LiveVoiceScreen.kt` |
 | Live call: in-app recorder (screen + both voices) + mic-silent fix | active — LC Phase 4 | `live/ScreenRecordService.kt`, `live/CallAudioTap.kt`, `live/AudioMixer.kt`, `live/CallEngine.kt`, `ui/screens/LiveVoiceScreen.kt` |
 | Live call: AI control — 5-5 option popups + app tools | active — LC Phase 5 | `live/AiPanel.kt`, `live/AppControl.kt`, `live/PhoneTools.kt`, `live/LiveClient.kt`, `ui/components/AiOptionsOverlay.kt`, `data/NavState.kt`, `data/Prefs.aiControl` |
+| Screen stream: single MediaProjection + share via accessibility takeScreenshot | active — Stream P1-4 | `live/ScreenRecordService.kt`, `live/ScreenShareService.kt`, `live/JarvisAccessibilityService.kt`, `res/xml/accessibility_service_config.xml` |
+| Screen-stream frame policy (change detection, idle slow-down, action burst, privacy pause) | active — Stream P4 | `live/ScreenShareService.kt` |
+| AI cursor coordinate engine (centre 0, right/up +, 2 decimals, real display size) | active — Cursor A1 | `live/CursorGeometry.kt`, `ui/screens/CursorLabScreen.kt` |
+| On-screen AI cursors (up to 10, drag, colours/numbers, grid, NOT_TOUCHABLE during tap) | active — Cursor A2 | `live/CursorController.kt`, `ui/screens/CursorLabScreen.kt` |
+| Cursor gestures + floating control panel + joystick + PANIC | active — Cursor A3-A4 | `live/CursorController.kt`, `live/CursorPanel.kt`, `live/JarvisAccessibilityService.kt` |
+| AI cursor tools (create/move/click/swipe/click_all/grid/find_element/look_at_screen) | active — Cursor A5 | `live/AppControl.kt`, `live/PhoneTools.kt`, `data/Prefs.aiCursor` |
+| Click-lesson memory (ui_clicks.json + ui_clicks.md + journal, recall/save, corrections, privacy) | active — Cursor A6 | `live/ClickMemory.kt`, `live/CallHost.kt`, `ui/screens/CursorMemoryScreen.kt` |
+| Live call keep-alive: session resumption + context compression + goAway reconnect | active — Stream P5-6 | `live/LiveClient.kt`, `data/Prefs.liveResume/liveCompress`, `ui/screens/ProfileScreen.kt` |
