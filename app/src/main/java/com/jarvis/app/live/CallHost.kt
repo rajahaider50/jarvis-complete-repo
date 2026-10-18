@@ -88,6 +88,7 @@ object CallHost {
         CallService.stop(app)
         WakeService.setPaused(false)
         Overlay.hideBubble()
+        ClickMemory.consolidate()
         if (showPopup && Overlay.canDraw(app)) Overlay.showPopup(app)
     }
 }

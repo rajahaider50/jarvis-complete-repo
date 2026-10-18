@@ -47,6 +47,14 @@ object CursorController {
     var selectedId by mutableStateOf<Int?>(null)
     fun select(id: Int?) { selectedId = id }
 
+    /** The target label + point of the AI's last click, so a user nudge can become a correction. */
+    var lastAiTarget: String? = null
+    var lastAiPoint: Pair<Float, Float>? = null
+
+    fun labelOf(id: Int): String? = cursors[id]?.label
+
+    fun pointOf(id: Int): Pair<Float, Float>? = cursors[id]?.let { it.x to it.y }
+
     internal fun wmOrNull(): WindowManager? { ensure(); return wm }
     internal fun ctxOrNull(): Context? { ensure(); return ctx }
     internal fun dpInt(v: Int): Int = dp(v)

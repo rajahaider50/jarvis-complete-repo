@@ -68,7 +68,9 @@ object PhoneTools {
         Tool("cursor_clear", "Remove all cursors"),
         Tool("cursor_list", "List the current cursors and their positions"),
         Tool("grid", "Show or hide the coordinate grid overlay (-100..+100 with labels)", listOf("show" to "BOOLEAN")),
-        Tool("find_element", "Find a button or text on the screen by its visible text or description and get its centre in cursor coordinates", listOf("query" to "STRING"))
+        Tool("find_element", "Find a button or text on the screen by its visible text or description and get its centre in cursor coordinates", listOf("query" to "STRING")),
+        Tool("recall_clicks", "Look up spots you remembered earlier for a target in the app the user is now using, and get their cursor coordinates", listOf("query" to "STRING")),
+        Tool("save_click", "Remember where the selected cursor is for a target name (so next time you go straight there). Set correct=true when the user moved the cursor to fix your mistake", listOf("target" to "STRING", "correct" to "BOOLEAN"))
     )
 
     /** Gemini Live format. */

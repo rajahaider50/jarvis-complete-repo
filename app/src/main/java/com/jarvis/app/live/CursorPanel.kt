@@ -102,6 +102,7 @@ object CursorPanel {
         toggles.addView(gridBtn, lpWeight())
         toggles.addView(lockBtn, lpWeight())
         toggles.addView(btn("Joystick", null) { toggleJoystick() }, lpWeight())
+        toggles.addView(btn("Save spot", null) { saveSpot() }, lpWeight())
         root.addView(toggles, lpMatch())
 
         val speedRow = LinearLayout(c).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
@@ -177,6 +178,17 @@ object CursorPanel {
     private fun clickAction(type: CursorController.ClickType) { val p = selectedPoint() ?: return; CursorController.click(p.first, type) { ok -> flash(if (ok) "click sent" else "click blocked (rate limit)") } }
     private fun all() { CursorController.clickAll { ok -> flash(if (ok) "clicked all" else "blocked") } }
     private fun flash(s: String) { note?.text = s }
+
+    /** Saves the selected cursor's spot. If the AI had placed a target there, this becomes a correction. */
+    private fun saveSpot() {
+        val p = selectedPoint() ?: return
+        val pkg = JarvisAccessibilityService.foregroundPackage()
+        val old = CursorController.lastAiPoint
+        val label = CursorController.lastAiTarget
+        val res = if (!label.isNullOrBlank() && old != null) ClickMemory.correct(pkg, label, old.first, old.second, p.second, p.third)
+        else ClickMemory.remember(pkg, "spot ${p.first}", p.second, p.third, source = "user_marked")
+        flash(res)
+    }
 
     private fun toggleJoystick() {
         if (joy != null) { val wm = CursorController.wmOrNull(); try { joy?.let { wm?.removeView(it) } } catch (e: Exception) { }; joy = null; return }

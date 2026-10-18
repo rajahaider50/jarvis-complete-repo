@@ -20,17 +20,17 @@ object AppControl {
         "get_app_state", "show_options", "select_option", "close_options",
         "set_screen_recording", "set_screen_share", "set_camera", "navigate", "look_at_screen",
         "get_screen_info", "cursor_create", "cursor_move", "cursor_click", "cursor_swipe", "click_all",
-        "cursor_remove", "cursor_clear", "cursor_list", "grid", "find_element"
+        "cursor_remove", "cursor_clear", "cursor_list", "grid", "find_element", "recall_clicks", "save_click"
     )
 
     private val cursorNames = setOf(
         "get_screen_info", "cursor_create", "cursor_move", "cursor_click", "cursor_swipe", "click_all",
-        "cursor_remove", "cursor_clear", "cursor_list", "grid", "find_element"
+        "cursor_remove", "cursor_clear", "cursor_list", "grid", "find_element", "recall_clicks", "save_click"
     )
 
     private val routes = setOf(
         "home", "chat", "control", "profile", "api", "providers", "voices", "themes", "themelab",
-        "memory", "assistant", "code", "skills", "uistyle", "access", "console", "cursorlab"
+        "memory", "assistant", "code", "skills", "uistyle", "access", "console", "cursorlab", "cursormemory"
     )
 
     fun execute(ctx: Context, name: String, args: JSONObject): String {
@@ -106,15 +106,28 @@ object AppControl {
             }
             "cursor_click" -> {
                 val id = args.optInt("id", CursorController.selectedId ?: 1)
+                val explicit = args.optString("target").ifBlank { null }
                 val type = when (args.optString("type", "tap").lowercase()) {
                     "double", "two" -> CursorController.ClickType.DOUBLE
                     "long", "hold", "press" -> CursorController.ClickType.LONG
                     else -> CursorController.ClickType.TAP
                 }
                 var result = "clicking"
+                var okFlag = false
                 CursorController.select(id)
-                CursorController.click(id, type) { ok -> result = if (ok) "clicked cursor #$id" else "click was blocked (rate limit or busy)" }
-                Thread.sleep(120)
+                CursorController.click(id, type) { ok -> okFlag = ok; result = if (ok) "clicked cursor #$id" else "click was blocked (rate limit or busy)" }
+                Thread.sleep(150)
+                val pkg = JarvisAccessibilityService.foregroundPackage()
+                val p = CursorController.pointOf(id)
+                if (okFlag && p != null) {
+                    val label = explicit ?: CursorController.labelOf(id)
+                    if (!label.isNullOrBlank() && label != id.toString()) {
+                        ClickMemory.remember(pkg, label, p.first, p.second, source = "ai_success")
+                        CursorController.lastAiTarget = label; CursorController.lastAiPoint = p
+                    }
+                } else if (!okFlag && p != null) {
+                    ClickMemory.fail(pkg, p.first, p.second)
+                }
                 result
             }
             "cursor_swipe" -> {
@@ -130,6 +143,20 @@ object AppControl {
             "cursor_list" -> CursorController.list()
             "grid" -> { CursorController.showGrid(args.optBoolean("show", true)); if (CursorController.gridOn) "grid on" else "grid off" }
             "find_element" -> JarvisAccessibilityService.findElementNorm(args.optString("query").ifBlank { args.optString("text_or_desc") })
+            "recall_clicks" -> ClickMemory.recall(args.optString("query"), JarvisAccessibilityService.foregroundPackage())
+            "save_click" -> {
+                val t = args.optString("target").ifBlank { args.optString("label") }.trim()
+                val pkg = JarvisAccessibilityService.foregroundPackage()
+                val p = CursorController.pointOf(CursorController.selectedId ?: -1)
+                if (p == null) "no cursor to save - move a cursor first"
+                else {
+                    val old = CursorController.lastAiPoint
+                    val res = if (args.optBoolean("correct", false) && old != null) ClickMemory.correct(pkg, t, old.first, old.second, p.first, p.second)
+                    else ClickMemory.remember(pkg, t, p.first, p.second, source = "user_marked")
+                    CursorController.lastAiTarget = t; CursorController.lastAiPoint = p
+                    res
+                }
+            }
             else -> "Unknown cursor command."
         }
     }

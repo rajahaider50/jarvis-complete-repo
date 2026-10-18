@@ -48,6 +48,7 @@ class MainActivity : ComponentActivity() {
         Launch.route.value = intent?.getStringExtra("route")
         Prefs.init(this)
         AppLog.init(this)
+        com.jarvis.app.live.ClickMemory.init(this)
         CustomProviders.init(this)
         com.jarvis.app.data.RealFacts.init(this)
         com.jarvis.app.data.ModelCatalogFile.init(this)
@@ -146,6 +147,7 @@ fun JarvisApp() {
         composable("skills") { SkillsScreen(back) }
         composable("uistyle") { UiStyleScreen(back) }
         composable("cursorlab") { CursorLabScreen(back) }
+        composable("cursormemory") { CursorMemoryScreen(back) }
         composable("access") { AccessScreen(back) }
         composable("console") { ConsoleScreen(back) }
     }
