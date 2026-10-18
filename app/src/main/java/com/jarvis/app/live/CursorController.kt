@@ -101,6 +101,24 @@ object CursorController {
         place(cur)
     }
 
+    /** Smoothly slides a cursor to a new point (used by the AI so the user can follow it). */
+    fun moveAnimated(id: Int, x: Float, y: Float, durationMs: Long = 450) {
+        val cur = cursors[id] ?: return
+        val sx = cur.x; val sy = cur.y
+        val tx = CursorGeometry.clamp(x); val ty = CursorGeometry.clamp(y)
+        val t0 = android.os.SystemClock.uptimeMillis()
+        val cb = object : android.view.Choreographer.FrameCallback {
+            override fun doFrame(now: Long) {
+                val k = ((now - t0).toFloat() / durationMs.coerceAtLeast(1L)).coerceIn(0f, 1f)
+                val e = k * k * (3 - 2 * k)                     // smoothstep
+                cur.x = sx + (tx - sx) * e; cur.y = sy + (ty - sy) * e
+                place(cur)
+                if (k < 1f) android.view.Choreographer.getInstance().postFrameCallback(this)
+            }
+        }
+        android.view.Choreographer.getInstance().postFrameCallback(cb)
+    }
+
     private fun place(cur: Cur) {
         val v = cur.view ?: return; val lp = cur.lp ?: return
         val px = center(cur.x, cur.y)

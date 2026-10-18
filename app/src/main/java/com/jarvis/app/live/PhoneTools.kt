@@ -56,7 +56,19 @@ object PhoneTools {
         Tool("set_screen_recording", "Start or stop recording this call (screen video plus your voice and the user's voice). Android shows a question the user must confirm", listOf("enabled" to "BOOLEAN")),
         Tool("set_screen_share", "Start or stop sharing the phone screen with this call so you can see it. Android shows a question the user must confirm", listOf("enabled" to "BOOLEAN")),
         Tool("set_camera", "Turn the call camera on or off. mode is off, front or back", listOf("mode" to "STRING")),
-        Tool("navigate", "Open a screen of the JARVIS app: home, chat, control, profile, api, providers, voices, themes, themelab, memory, assistant, code, skills, uistyle, access, console", listOf("screen" to "STRING"))
+        Tool("navigate", "Open a screen of the JARVIS app: home, chat, control, profile, api, providers, voices, themes, themelab, memory, assistant, code, skills, uistyle, access, console, cursorlab", listOf("screen" to "STRING")),
+        Tool("look_at_screen", "Take a fresh look at the screen right now and send the image to you"),
+        Tool("get_screen_info", "Read the cursor coordinate system, the screen size, the foreground app and the current cursors"),
+        Tool("cursor_create", "Place a new AI cursor on the screen. Coordinates are -100..+100 (centre 0). X right is +, Y up is +. Up to 10 cursors with their own number and colour", listOf("x" to "NUMBER", "y" to "NUMBER", "label" to "STRING")),
+        Tool("cursor_move", "Move a cursor to a coordinate. mode is absolute (x,y are the target) or relative (x,y are added to the current spot). It slides smoothly so the user can follow", listOf("id" to "INTEGER", "x" to "NUMBER", "y" to "NUMBER", "mode" to "STRING")),
+        Tool("cursor_click", "Click where a cursor is. type is tap, double or long", listOf("id" to "INTEGER", "type" to "STRING")),
+        Tool("cursor_swipe", "Swipe from a cursor to another coordinate (scroll / next)", listOf("id" to "INTEGER", "to_x" to "NUMBER", "to_y" to "NUMBER", "duration_ms" to "INTEGER")),
+        Tool("click_all", "Click every cursor on the screen at the same time"),
+        Tool("cursor_remove", "Remove one cursor", listOf("id" to "INTEGER")),
+        Tool("cursor_clear", "Remove all cursors"),
+        Tool("cursor_list", "List the current cursors and their positions"),
+        Tool("grid", "Show or hide the coordinate grid overlay (-100..+100 with labels)", listOf("show" to "BOOLEAN")),
+        Tool("find_element", "Find a button or text on the screen by its visible text or description and get its centre in cursor coordinates", listOf("query" to "STRING"))
     )
 
     /** Gemini Live format. */

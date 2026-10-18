@@ -109,6 +109,18 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                         }
                         JToggle(Prefs.aiControl) { Prefs.aiControl = it; Prefs.save() }
                     }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.GpsFixed, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("AI cursor control", 15, Ivory)
+                            JText("Let ${Prefs.assistantName} move a cursor and tap the screen for you", 11, Muted)
+                        }
+                        JToggle(Prefs.aiCursor) { Prefs.aiCursor = it; Prefs.save() }
+                    }
                 }
             }
         }

@@ -6,6 +6,7 @@ import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback
 import android.accessibilityservice.GestureDescription
 import android.graphics.Bitmap
 import android.graphics.Path
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.view.Display
@@ -150,6 +151,30 @@ class JarvisAccessibilityService : AccessibilityService() {
                 return false
             }
             return walk(root)
+        }
+
+        /** Finds an element by its visible text or description and returns its centre in normalized coordinates. */
+        fun findElementNorm(query: String): String {
+            val s = inst ?: return "Accessibility is off."
+            val root = s.rootInActiveWindow ?: return "No window is open."
+            val sz = CursorGeometry.screenSize(s)
+            val q = query.trim().lowercase()
+            var best: Rect? = null
+            var label = ""
+            fun walk(n: AccessibilityNodeInfo?) {
+                if (n == null || best != null) return
+                val t = (n.text ?: n.contentDescription)?.toString()?.trim().orEmpty()
+                val id = n.viewIdResourceName.orEmpty()
+                if (n.isVisibleToUser && t.isNotEmpty() && (t.lowercase().contains(q) || id.lowercase().contains(q))) {
+                    val r = Rect(); n.getBoundsInScreen(r)
+                    if (r.width() > 0 && r.height() > 0) { best = r; label = t.take(60) }
+                }
+                for (i in 0 until n.childCount) walk(n.getChild(i))
+            }
+            walk(root)
+            val r = best ?: return "not found: '$query'"
+            val c = CursorGeometry.toNorm(r.centerX().toFloat(), r.centerY().toFloat(), sz)
+            return "'${label}' at x=${CursorGeometry.fmt(c.x)} y=${CursorGeometry.fmt(c.y)} (bounds ${r.left},${r.top},${r.right},${r.bottom})"
         }
 
         private fun gesture(build: (GestureDescription.Builder, Float, Float) -> Unit): Boolean {
