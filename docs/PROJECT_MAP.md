@@ -1,12 +1,15 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 16:51 · 252 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 16:56 · 254 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- Pending.md
-- Task.md
-- docs/HANDOFF_STATE.md
+- app/src/main/java/com/jarvis/app/MainActivity.kt
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
+- app/src/main/java/com/jarvis/app/live/Diag.kt
+- app/src/main/java/com/jarvis/app/net/JarvisServer.kt
+- app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ServerScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -14,7 +17,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### (root)/
 - `AssistantActivity.kt` · 118 · Floating Siri-style assistant that opens over whatever is on screen (started by the wake p · AssistantActivity, Overlay, Circle · uses: AudioRouter.kt, ModelCatalog.kt, Prefs.kt, CallEngine.kt, LiveClient.kt, WakeService.kt
-- `MainActivity.kt` · 166 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
+- `MainActivity.kt` · 167 · A screen requested from outside the UI (floating bubble, popup, notification). · Launch, MainActivity, bottomRoutes, JarvisApp · uses: AppLog.kt, CustomProviders.kt, Speaker.kt, ChatStore.kt, Device.kt, ModelCatalog.kt
 
 ### assistant/
 - `Assistant.kt` · 42 · Registers the app as a real Android "digital assistant" (the same slot Google Assistant us · JarvisInteractionService, JarvisSessionService, JarvisSession, JarvisRecognitionService · uses: AssistantActivity.kt
@@ -51,7 +54,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ModelRouter.kt` · 172 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `NavState.kt` · 11 · The screen the app is showing right now, so the assistant knows where the user is (get_app · NavState
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 185 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 195 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
@@ -72,7 +75,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CursorController.kt` · 444 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
 - `CursorGeometry.kt` · 44 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
 - `CursorPanel.kt` · 292 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
-- `Diag.kt` · 116 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
+- `Diag.kt` · 132 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
 - `JarvisAccessibilityService.kt` · 552 · The real result of a dispatched gesture (bugfix Masla A / §2.1). Top-level so CursorContro · GestureOutcome, JarvisAccessibilityService · uses: Prefs.kt
 - `LiveClient.kt` · 647 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `MicCaptureHub.kt` · 304 · The ONE owner of the microphone. Everything that needs mic PCM (the Gemini sender, the in- · MicCaptureHub · uses: AppLog.kt
@@ -84,6 +87,9 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ScreenShareService.kt` · 183 · Shares the screen with the live call WITHOUT opening a second MediaProjection session (tha · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
 - `VoskModels.kt` · 61 · The small offline speech models (about 40 MB each) used by the keyless wake phrase engine. · VoskModels · uses: AppLog.kt
 - `WakeService.kt` · 397 · Listens in the background for your wake phrase (any name / command you chose). When heard, · WakeService · uses: AppLog.kt, AssistantActivity.kt, MainActivity.kt, Prefs.kt
+
+### net/
+- `JarvisServer.kt` · 162 · The app's ONE door to the owner's own "brain server" (Phase 4). · JarvisServer · uses: Prefs.kt, Diag.kt
 
 ### overlay/
 - `DragLayout.kt` · 62 · Root view of a floating window. Taps go to the Compose content (buttons); as soon as a fin · DragLayout
@@ -110,14 +116,15 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
 - `CursorLabScreen.kt` · 165 · Cursor Lab: proves the normalized coordinate system (center 0,0; right/up positive; 2 deci · targets, targetNames, CursorLabScreen · uses: CursorController.kt, CursorGeometry.kt, CursorPanel.kt, JarvisAccessibilityService.kt, Components.kt
 - `CursorMemoryScreen.kt` · 92 · Cursor memory: the click lessons JARVIS learned (ui_clicks.json / ui_clicks.md). The user  · CursorMemoryScreen · uses: ClickMemory.kt, CursorGeometry.kt, Components.kt
-- `DiagnosticsScreen.kt` · 205 · Diagnostics (bugfix guide Phase 1). One screen with the live evidence: microphone state +  · DiagnosticsScreen, Card · uses: CursorController.kt, Prefs.kt, CallHost.kt, CallService.kt, Diag.kt, WakeService.kt
+- `DiagnosticsScreen.kt` · 223 · Diagnostics (bugfix guide Phase 1). One screen with the live evidence: microphone state +  · DiagnosticsScreen, Card · uses: CursorController.kt, Prefs.kt, CallHost.kt, CallService.kt, Diag.kt, WakeService.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
 - `LiveVoiceScreen.kt` · 318 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
-- `ProfileScreen.kt` · 287 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
+- `ProfileScreen.kt` · 288 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
 - `ProvidersScreen.kt` · 357 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `RouterLogScreen.kt` · 59 · Shows the smart router's real local health: what it used today, what is cooling down and h · RouterWarn, RouterLogScreen, maybeProvider · uses: ModelRouter.kt
+- `ServerScreen.kt` · 227 · Profile > Brain server (Phase 4 step S2). · ServerScreen, SwitchRow, StatRow, Card · uses: Prefs.kt, Diag.kt, JarvisServer.kt, Components.kt
 - `SkillsScreen.kt` · 172 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, Color2, SkillEditor · uses: Skills.kt, AppLog.kt
 - `TapTestScreen.kt` · 213 · Tap Test (bugfix Masla A / §2.6). Five targets (centre + 4 corners). For each one it puts  · TapTestScreen, TapRow, TapTestView · uses: CursorController.kt, CursorGeometry.kt, Diag.kt, JarvisAccessibilityService.kt, Components.kt, Color.kt
 - `ThemeLabScreen.kt` · 117 · Debug screen: shows every theme at once with live state/level/sound controls. · ThemeLabScreen · uses: AudioLevel.kt, Prefs.kt, Components.kt, AssistantState.kt, AssistantTheme.kt, ThemeRepository.kt
