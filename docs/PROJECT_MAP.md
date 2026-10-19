@@ -1,10 +1,36 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 02:50 · 227 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 15:59 · 252 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- docs/HANDOFF_STATE.md
+- Goal.md
+- Roadmap.md
+- Task.md
+- .github/workflows/server-ci.yml
+- docs/APP_SERVER_CONNECTION.md
+- docs/SERVER_DEPLOY_FREE.md
+- docs/SERVER_SETUP_TERMUX.md
+- docs/SERVER_SYSTEM.md
+- server/.env.example
+- server/Dockerfile
+- server/Procfile
+- server/README.md
+- server/conftest.py
+- server/requirements.txt
+- server/run_termux.sh
+- server/wsgi.py
+- server/jarvis_server/__init__.py
+- server/jarvis_server/__main__.py
+- server/jarvis_server/affect.py
+- server/jarvis_server/api.py
+- server/jarvis_server/config.py
+- server/jarvis_server/learner.py
+- server/jarvis_server/llm.py
+- server/jarvis_server/memory.py
+- server/jarvis_server/sdui.py
+- server/jarvis_server/skills.py
+- server/jarvis_server/store.py
+- server/tests/test_api.py
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -166,12 +192,12 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `.gitignore` · 9 lines
 - `Complete.md` · 35 lines
 - `FEATURES.md` · 54 lines
-- `Goal.md` · 8 lines
+- `Goal.md` · 15 lines
 - `Pending.md` · 51 lines
 - `Planning.md` · 42 lines
 - `README.md` · 110 lines
-- `Roadmap.md` · 17 lines
-- `Task.md` · 24 lines
+- `Roadmap.md` · 33 lines
+- `Task.md` · 23 lines
 - `build.gradle.kts` · 5 lines
 - `gradle.properties` · 5 lines
 - `settings.gradle.kts` · 8 lines
@@ -179,6 +205,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `.github/workflows/build.yml` · 24 lines
 - `.github/workflows/map.yml` · 21 lines
 - `.github/workflows/pack.yml` · 34 lines
+- `.github/workflows/server-ci.yml` · 38 lines
 - `app/build.gradle.kts` · 48 lines
 - `app/src/main/AndroidManifest.xml` · 130 lines
 - `app/src/main/assets/model_catalog.json` · 12 lines
@@ -204,6 +231,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `design/icons/pref_voice.svg` · 1 lines
 - `design/icons/pref_wake.svg` · 1 lines
 - `docs/AI_GUIDE.md` · 68 lines
+- `docs/APP_SERVER_CONNECTION.md` · 120 lines
 - `docs/ARCHITECTURE.md` · 52 lines
 - `docs/CHANGES_20261016_custom-provider-models.md` · 28 lines
 - `docs/CHANGES_20261016_network-resilience-phase4.md` · 51 lines
@@ -248,12 +276,35 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/REPORT_20261018_masla2_cursor.md` · 50 lines
 - `docs/REPORT_20261018_masla3_call_stalling.md` · 65 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
+- `docs/SERVER_DEPLOY_FREE.md` · 103 lines
+- `docs/SERVER_SETUP_TERMUX.md` · 163 lines
+- `docs/SERVER_SYSTEM.md` · 99 lines
 - `docs/START_PROMPT.md` · 16 lines
 - `docs/skills/add-feature.md` · 12 lines
 - `docs/skills/delivery-format.md` · 10 lines
 - `docs/skills/fix-bug.md` · 10 lines
 - `docs/skills/light-model-boost.md` · 8 lines
 - `docs/skills/ui-design.md` · 12 lines
+- `server/.env.example` · 25 lines
+- `server/Dockerfile` · 11 lines
+- `server/Procfile` · 4 lines
+- `server/README.md` · 57 lines
+- `server/conftest.py` · 2 lines
+- `server/requirements.txt` · 5 lines
+- `server/run_termux.sh` · 16 lines
+- `server/wsgi.py` · 7 lines
+- `server/jarvis_server/__init__.py` · 10 lines
+- `server/jarvis_server/__main__.py` · 19 lines
+- `server/jarvis_server/affect.py` · 149 lines
+- `server/jarvis_server/api.py` · 241 lines
+- `server/jarvis_server/config.py` · 61 lines
+- `server/jarvis_server/learner.py` · 121 lines
+- `server/jarvis_server/llm.py` · 70 lines
+- `server/jarvis_server/memory.py` · 106 lines
+- `server/jarvis_server/sdui.py` · 58 lines
+- `server/jarvis_server/skills.py` · 63 lines
+- `server/jarvis_server/store.py` · 273 lines
+- `server/tests/test_api.py` · 161 lines
 - `tools/apply_edits.py` · 25 lines
 - `tools/make_map.py` · 120 lines
 - `tools/pack_context.py` · 108 lines
