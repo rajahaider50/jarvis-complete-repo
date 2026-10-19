@@ -1,23 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 02:41 · 227 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 02:45 · 227 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- Pending.md
-- app/src/main/java/com/jarvis/app/audio/AudioRouter.kt
-- app/src/main/java/com/jarvis/app/audio/PcmPlayer.kt
-- app/src/main/java/com/jarvis/app/data/Prefs.kt
-- app/src/main/java/com/jarvis/app/live/AudioMixer.kt
-- app/src/main/java/com/jarvis/app/live/CallAudioTap.kt
-- app/src/main/java/com/jarvis/app/live/Diag.kt
-- app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/live/PipelineClient.kt
 - app/src/main/java/com/jarvis/app/live/ScreenRecordService.kt
-- app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
-- docs/CHANGES_20261019_recording-both-voices.md
-- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
