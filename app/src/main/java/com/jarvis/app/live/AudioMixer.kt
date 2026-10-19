@@ -29,15 +29,26 @@ class AudioMixer(private val outRate: Int = 44100) {
         }
     }
 
-    /** Blocks until at least one sample is available (or stopped); returns how many shorts were written to [dst]. */
-    fun drain(dst: ShortArray): Int {
+    /** Blocks until at least one sample is available (or stopped, or [waitMs] passed); returns how many shorts were written to [dst]. */
+    fun drain(dst: ShortArray, waitMs: Long = 200): Int {
         synchronized(lock) {
-            while (size == 0 && active) { try { lock.wait(200) } catch (e: InterruptedException) { } }
+            if (waitMs > 0) {
+                val end = System.currentTimeMillis() + waitMs
+                while (size == 0 && active && System.currentTimeMillis() < end) {
+                    try { lock.wait(waitMs) } catch (e: InterruptedException) { }
+                }
+            }
             val n = minOf(dst.size, size)
             for (i in 0 until n) { dst[i] = ring[r]; r = (r + 1) % ring.size; size-- }
             return n
         }
     }
+
+    /** How many samples were ever handed out to the encoder (evidence for the recording log). */
+    @Volatile var samplesOut = 0L
+        private set
+
+    fun countOut(n: Int) { samplesOut += n }
 
     fun stop() { active = false; synchronized(lock) { lock.notifyAll() } }
 

@@ -421,8 +421,8 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             // evidence: was this the user speaking, or the assistant's own voice coming back in through the speaker?
             val since = if (lastWriteAt == 0L) -1L else System.currentTimeMillis() - lastWriteAt
             val q = try { ws?.queueSize() ?: 0L } catch (e: Exception) { 0L }
-            Diag.lastInterrupt = "mic=${"%.3f".format(MicCaptureHub.level)} spoken_until_${since}ms_ago route=${AudioRouter.active} aec=${MicCaptureHub.aecEnabled} halfDuplex=${halfDuplexActive()} wsQueue=${q}B"
-            Diag.log("Live", "interrupted -> flush playback (mic=${"%.3f".format(MicCaptureHub.level)} assistant_spoke_until=${since}ms_ago route=${AudioRouter.active} aec=${MicCaptureHub.aecEnabled} halfDuplex=${halfDuplexActive()} echoGuard=$echoGuardOn wsQueue=${q}B)")
+            Diag.lastInterrupt = "mic=${"%.3f".format(MicCaptureHub.level)} spoken_until_${since}ms_ago route=${AudioRouter.active} aec=${MicCaptureHub.aecEnabled} halfDuplex=${halfDuplexActive()} mediaPlayback=${Prefs.shareToRecorders} wsQueue=${q}B"
+            Diag.log("Live", "interrupted -> flush playback (mic=${"%.3f".format(MicCaptureHub.level)} assistant_spoke_until=${since}ms_ago route=${AudioRouter.active} aec=${MicCaptureHub.aecEnabled} halfDuplex=${halfDuplexActive()} echoGuard=$echoGuardOn mediaPlayback=${Prefs.shareToRecorders} wsQueue=${q}B)")
             playQ.clear(); playQBytes = 0
             try { track?.pause(); track?.flush(); track?.play() } catch (e: Exception) { AppLog.w(e); }
             ui { speaking = false }
@@ -488,7 +488,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private val micListener: (ByteArray, Int) -> Unit = { buf, n ->
         val now = System.currentTimeMillis()
         if (now - lastMicUi >= 50) { lastMicUi = now; ui { micLevel = if (muted) 0f else MicCaptureHub.level } }
-        CallAudioTap.mic?.invoke(buf, n)                       // hand the mic PCM to the in-app recorder
+        CallAudioTap.putMic(buf, n, 16000)                     // hand the mic PCM to the in-app recorder
         if (!muted && !echoGuard(now)) {
             ws?.send(JSONObject().put("realtimeInput", JSONObject().put("audio",
                 JSONObject().put("data", Base64.encodeToString(buf, 0, n, Base64.NO_WRAP)).put("mimeType", "audio/pcm;rate=16000"))).toString())
@@ -503,7 +503,10 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private fun halfDuplexActive(): Boolean = when (Prefs.halfDuplex) {
         "on" -> true
         "off" -> false
-        else -> !(AudioRouter.hasWired || AudioRouter.hasBt) && !MicCaptureHub.aecEnabled
+        // "Phone recorders can hear Jarvis" plays the assistant on the MEDIA stream. The platform echo canceller is
+        // attached to the voice-call mic session and does not use that stream as its reference, so on a speaker the
+        // only reliable guard is holding the mic back while the assistant speaks (a loud voice still gets through).
+        else -> !(AudioRouter.hasWired || AudioRouter.hasBt) && !(MicCaptureHub.aecEnabled && !Prefs.shareToRecorders)
     }
 
     private fun echoGuard(now: Long): Boolean {
@@ -512,7 +515,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         if (hold != echoGuardOn) {
             echoGuardOn = hold
             ui { echoGuard = hold }
-            if (hold) Diag.log("mic", "half-duplex: mic held back while the assistant speaks (aec=${MicCaptureHub.aecEnabled} headphones=${AudioRouter.hasWired || AudioRouter.hasBt})")
+            if (hold) Diag.log("mic", "half-duplex: mic held back while the assistant speaks (aec=${MicCaptureHub.aecEnabled} headphones=${AudioRouter.hasWired || AudioRouter.hasBt} mediaPlayback=${Prefs.shareToRecorders})")
         }
         return hold
     }
@@ -538,11 +541,19 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         val min = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
         val bufBytes = maxOf(min, rate * 2)                 // ~1 s of audio, so a bursty network stream does not tuk-tuk
         val t = AudioTrack.Builder()
-            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+            // Round 3 (recording): USAGE_MEDIA (not USAGE_VOICE_COMMUNICATION) when the user allows it, because
+            // Android's PLAYBACK CAPTURE — what the built-in screen recorder uses for "Media sounds" — refuses to
+            // capture voice-communication audio. On the media stream both the in-app recorder and the phone's own
+            // screen recorder can hear JARVIS. The half-duplex echo guard covers the weaker echo cancellation.
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(if (Prefs.shareToRecorders) AudioAttributes.USAGE_MEDIA else AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
+            )
             .setAudioFormat(AudioFormat.Builder().setSampleRate(rate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
             .setBufferSizeInBytes(bufBytes).setTransferMode(AudioTrack.MODE_STREAM).build()
         track = t; t.play(); playing = true
-        Diag.log("play", "AudioTrack started 24k buffer=${bufBytes}B min=${min}B")
+        Diag.log("play", "AudioTrack started 24k buffer=${bufBytes}B min=${min}B usage=${if (Prefs.shareToRecorders) "MEDIA (capturable by other recorders)" else "VOICE_COMMUNICATION"}")
         playThread = thread(name = "live-play") {
             try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO) } catch (e: Exception) { AppLog.w(e) }
             var urnCheck = 0L
@@ -575,7 +586,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                 val lvl = (sqrt(sum / (b.size / 2).coerceAtLeast(1)) / 32768.0 * 6).toFloat().coerceIn(0f, 1f)
                 val now = System.currentTimeMillis()
                 if (now - lastOutUi >= 50) { lastOutUi = now; ui { speaking = true; outLevel = lvl } }
-                CallAudioTap.out?.invoke(b, b.size)                 // hand the assistant's PCM to the in-app recorder
+                CallAudioTap.putOut(b, b.size, 24000)               // hand the assistant's PCM to the in-app recorder
                 try { t.write(b, 0, b.size); lastWriteAt = System.currentTimeMillis() } catch (e: Exception) { AppLog.w(e); }
                 playQBytes = (playQBytes - b.size).coerceAtLeast(0)
             }

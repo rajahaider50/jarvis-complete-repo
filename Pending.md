@@ -40,3 +40,11 @@
 - [ ] Round 3 Step D (wake vs call): wake word ON rakhein aur call ke doran wake phrase bolein — wake engine mic **na** le (`wake micOpen=false`), `interrupted` na badhe.
 - [ ] Round 3 Step D (wake wapas): call khatam hone ke baad wake word phir kaam kare (`wake: the mic is free again -> wake word resumes by itself`).
 - [ ] Round 3 Step D (cause line): agar mic phir bhi zero ho to dump se `mic zeroCause=…` bhejein — uska matlab poora naam se likha hoga (FGS / app-op / wake listener / doosri app).
+
+## Recording (both voices + phone recorders) — code done, phone evidence pending
+- [ ] Record a call with the in-app Record button (Gemini Live **aur** ek custom provider dono) — Movies/Jarvis ki file mein **dono awaazein** aani chahiye, aur aawaz video ke saath sync honi chahiye (pehle sirf picture thi).
+- [ ] Profile > Diagnostics > **Call recording**: `YOUR voice fed in` aur `JARVIS's voice fed in` dono non-zero; agar koi 0B ho to screen/dump ka WARNING line bata dega kaun sa side missing hai.
+- [ ] `adb logcat -v time JARVIS_DIAG:V *:S` mein `rec: video first pts=… -> normalised to 0`, `rec: audio first pts=…` aur har 2 s ka `rec: mic=…B out=…B mixed=…B muxStarted=…` dikhna chahiye.
+- [ ] Android ka apna screen recorder: dialog mein **"Media sounds" ON** rakhein → system recording mein **JARVIS ki awaaz** aani chahiye. Agar recorder microphone bhi le le to JARVIS red "microphone is silent" warning dikhayega aur recorder band hone par mic khud wapas le lega.
+- [ ] Profile > "Phone recorders can hear JARVIS" ON (media stream) par bhi awaaz suni jaani chahiye aur "Call volume" ka percent kaam karna chahiye; OFF karne par voice-call route (earpiece/BT) waisa hi rehna chahiye.
+- [ ] "Call recording voices" = Both voices / My voice only — dono modes check karein.

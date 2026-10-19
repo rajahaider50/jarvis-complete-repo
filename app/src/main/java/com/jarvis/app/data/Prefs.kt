@@ -36,6 +36,8 @@ object Prefs {
     var autoEarpiece by mutableStateOf(false)   // AUTO route may move to the earpiece using the proximity sensor
     var halfDuplex by mutableStateOf("auto")    // auto | on | off — stop sending the mic upstream while the assistant speaks
     var shareQuality by mutableStateOf("detailed") // fast | detailed — screen-share frame size/quality
+    var shareToRecorders by mutableStateOf(true) // play JARVIS's voice on the MEDIA stream so phone recorders can capture it
+    var recBothVoices by mutableStateOf(true)   // in-app call recording mixes the mic AND JARVIS (never one-only)
     var noAudioModels by mutableStateOf("")     // live models that answered "AUDIO is not supported" (server code 1007)
     var resumeHandle by mutableStateOf("")      // last Gemini Live session-resumption handle
     var resumeAt by mutableStateOf(0L)          // when the handle was received (valid ~30 min)
@@ -107,6 +109,8 @@ object Prefs {
         autoEarpiece = sp.getBoolean("autoear", false)
         halfDuplex = sp.getString("halfduplex", "auto") ?: "auto"
         shareQuality = sp.getString("shareq", "detailed") ?: "detailed"
+        shareToRecorders = sp.getBoolean("shareRec", true)
+        recBothVoices = sp.getBoolean("recBoth", true)
         noAudioModels = sp.getString("noaudio", "") ?: ""
         resumeHandle = sp.getString("resumehandle", "") ?: ""
         resumeAt = sp.getLong("resumeat", 0L)
@@ -171,6 +175,7 @@ object Prefs {
             .putInt("callvol", callVolume).putBoolean("autoear", autoEarpiece)
             .putString("halfduplex", halfDuplex).putString("shareq", shareQuality)
             .putString("noaudio", noAudioModels)
+            .putBoolean("shareRec", shareToRecorders).putBoolean("recBoth", recBothVoices)
             .putString("resumehandle", resumeHandle).putLong("resumeat", resumeAt)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .putString("livemodels", JSONArray(liveModels.toList()).toString())

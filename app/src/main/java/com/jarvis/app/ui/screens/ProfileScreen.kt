@@ -219,6 +219,38 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                         JText(Prefs.shareQuality.replaceFirstChar { it.uppercase() }, 13, Gold, FontWeight.Medium)
                     }
                     Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.VolumeUp, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Phone recorders can hear ${Prefs.assistantName}", 15, Ivory)
+                            JText("Plays ${Prefs.assistantName}'s voice on the media stream so the phone's own screen recorder (choose \"Media sounds\") records both voices. Off = voice-call stream: Android hides it from recorders, but earpiece/BT-call routing is exact", 11, Muted)
+                        }
+                        JToggle(Prefs.shareToRecorders) { Prefs.shareToRecorders = it; Prefs.save() }
+                    }
+                    Hairline(0.12f)
+                    Row(
+                        Modifier.fillMaxWidth().clickable {
+                            Prefs.recBothVoices = !Prefs.recBothVoices
+                            Prefs.save()
+                        }.padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoldIconBox(Icons.Outlined.RecordVoiceOver, box = 38, iconSize = 22, radius = 12)
+                        Column(Modifier.weight(1f)) {
+                            JText("Call recording voices", 15, Ivory)
+                            JText("Both voices = ${Prefs.assistantName}'s own Record button saves my voice AND ${Prefs.assistantName}'s voice in the video (kept in sync with the picture). My voice only = just the microphone", 11, Muted)
+                        }
+                        JText(if (Prefs.recBothVoices) "Both voices" else "My voice only", 13, Gold, FontWeight.Medium)
+                    }
+                    Hairline(0.12f)
+                    JText(
+                        "Using Android's own screen recorder? In its dialog turn ON \"Media sounds\" (that carries ${Prefs.assistantName}'s voice) and, if you also turn on Microphone, Android may give the mic to the recorder — ${Prefs.assistantName} then shows a red \"microphone is silent\" warning and takes the mic back by itself once the recorder stops.",
+                        11, Muted, lh = 16, modifier = Modifier.padding(vertical = 10.dp)
+                    )
+                    Hairline(0.12f)
                     JText(
                         "Quick A/B test for stalling: run the same call twice — once with headphones (echo canceller works) and once on speaker — then turn \"Let me interrupt\" off and on. If the interruptions stop with headphones or with interrupt off, it was echo, not the AI.",
                         11, Muted, lh = 16, modifier = Modifier.padding(vertical = 10.dp)

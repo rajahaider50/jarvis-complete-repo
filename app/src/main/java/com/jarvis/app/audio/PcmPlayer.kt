@@ -1,6 +1,7 @@
 package com.jarvis.app.audio
 
 import com.jarvis.app.data.AppLog
+import com.jarvis.app.live.CallAudioTap
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
@@ -33,6 +34,7 @@ object PcmPlayer {
             while (off < pcm.size && isActive) {
                 val n = minOf(4096, pcm.size - off)
                 track.write(pcm, off, n)
+                if (CallAudioTap.outAttached) CallAudioTap.putOut(pcm.copyOfRange(off, off + n), n, rate)   // JARVIS's voice also goes to the in-app call recorder
                 off += n
             }
             val frames = pcm.size / 2

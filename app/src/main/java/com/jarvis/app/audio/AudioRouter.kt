@@ -42,6 +42,7 @@ object AudioRouter {
     private var sm: SensorManager? = null
     private var wake: PowerManager.WakeLock? = null
     private var savedVoiceVol = -1
+    private var savedMusicVol = -1
 
     private val main = Handler(Looper.getMainLooper())
     private val nearApply = Runnable { near = nearRaw; if (selected == Route.AUTO) apply() }
@@ -76,6 +77,7 @@ object AudioRouter {
         val a = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         am = a
         savedVoiceVol = a.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
+        savedMusicVol = a.getStreamVolume(AudioManager.STREAM_MUSIC)
         a.mode = AudioManager.MODE_IN_COMMUNICATION
         applyVolume()                                               // set the user's volume ONCE for the whole call
         a.registerAudioDeviceCallback(devCallback, Handler(Looper.getMainLooper()))
@@ -101,11 +103,12 @@ object AudioRouter {
             if (Build.VERSION.SDK_INT >= 31) a.clearCommunicationDevice()
             else { @Suppress("DEPRECATION") a.isSpeakerphoneOn = false; @Suppress("DEPRECATION") a.stopBluetoothSco() }
             if (savedVoiceVol >= 0) a.setStreamVolume(AudioManager.STREAM_VOICE_CALL, savedVoiceVol, 0)
+            if (savedMusicVol >= 0) a.setStreamVolume(AudioManager.STREAM_MUSIC, savedMusicVol, 0)
         } catch (e: Exception) { AppLog.w(e); }
         a.mode = AudioManager.MODE_NORMAL
     }
 
-    /** Push the user's "Call volume" setting to the voice-call stream (start of the call, or when the slider moves). */
+    /** Push the user's "Call volume" setting to the stream JARVIS actually plays on (start of the call, or when the slider moves). */
     fun applyVolume() {
         val a = am ?: return
         val pct = Prefs.callVolume.coerceIn(0, 100)
@@ -113,6 +116,14 @@ object AudioRouter {
             val max = a.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL)
             a.setStreamVolume(AudioManager.STREAM_VOICE_CALL, Math.round(max * pct / 100f), 0)
         } catch (e: Exception) { AppLog.w(e) }
+        // "Phone recorders can hear Jarvis" plays the assistant on the MEDIA stream (playback capture cannot see the
+        // voice-call stream), so the same percentage has to go there too — otherwise the Call volume row would do nothing.
+        if (Prefs.shareToRecorders) {
+            try {
+                val max = a.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                a.setStreamVolume(AudioManager.STREAM_MUSIC, Math.round(max * pct / 100f), 0)
+            } catch (e: Exception) { AppLog.w(e) }
+        }
     }
 
     fun select(r: Route) { selected = r; apply() }

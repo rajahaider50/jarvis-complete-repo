@@ -1,6 +1,7 @@
 package com.jarvis.app.live
 
 import com.jarvis.app.data.AppLog
+import com.jarvis.app.data.Prefs
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -34,6 +35,9 @@ import java.nio.ByteBuffer
  * In-app screen recorder: captures the screen (MediaProjection -> H.264) and mixes both sides of the call
  * (user mic + assistant voice, fed via [CallAudioTap]) into an AAC track, writing one .mp4 into Movies/Jarvis.
  * Runs as a foreground service of type mediaProjection.
+ *
+ * Round 3 (recording): every engine feeds the tap (Gemini Live and the provider pipeline both) and the audio track
+ * keeps real time (silence is padded), so neither voice can be missing and the voices stay in sync with the video.
  */
 class ScreenRecordService : Service() {
     companion object {
@@ -118,10 +122,13 @@ class ScreenRecordService : Service() {
         }, Handler(Looper.getMainLooper()))
         virtualDisplay = p.createVirtualDisplay("jarvis-rec", w, h, dpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, surface, null, null)
 
-        CallAudioTap.mic = { buf, len -> mixer.add(buf, len, 16000) }
-        CallAudioTap.out = { buf, len -> mixer.add(buf, len, 24000) }
+        CallAudioTap.resetCounters()
+        val tap: (ByteArray, Int, Int) -> Unit = { buf, len, rate -> mixer.add(buf, len, rate) }
+        CallAudioTap.mic = tap
+        CallAudioTap.out = if (Prefs.recBothVoices) tap else null
         active = true
-        AppLog.i("Rec", "started ${w}x$h -> $sinkUri")
+        Diag.log("rec", "started ${w}x$h -> $sinkUri taps mic=true out=${CallAudioTap.outAttached} rate=44100 bothVoices=${Prefs.recBothVoices}")
+        Diag.log("rec", "waiting for the first mic + assistant buffers (a silent side shows up in this dump)")
 
         drainVideo()
         feedAudio()
@@ -151,12 +158,13 @@ class ScreenRecordService : Service() {
     }
 
     private fun drainVideo() {
-        Thread {
+        Thread(name = "rec-video") {
             val info = MediaCodec.BufferInfo()
             var eos = false
+            var basePts = -1L
             while (!eos) {
                 val codec = video ?: break
-                val idx = try { codec.dequeueOutputBuffer(info, 10_000) } catch (e: Exception) { AppLog.w(e); break }
+                val idx = try { codec.dequeueOutputBuffer(info, 10_000) } catch (e: Exception) { Diag.fail("rec.video", e); break }
                 when {
                     idx == MediaCodec.INFO_TRY_AGAIN_LATER -> { }
                     idx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> { videoFormat = codec.outputFormat; maybeStart() }
@@ -164,6 +172,13 @@ class ScreenRecordService : Service() {
                         val buf = codec.getOutputBuffer(idx)
                         if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) info.size = 0
                         if (info.size > 0 && buf != null) {
+                            // A surface-fed encoder stamps frames with the DEVICE UPTIME (nanoseconds), so the first video
+                            // sample can sit days away from the audio track's zero. Normalise it, otherwise the audio
+                            // appears to be "in the past" and players show the video without it.
+                            if (info.presentationTimeUs > 0) {
+                                if (basePts < 0) { basePts = info.presentationTimeUs; Diag.log("rec", "video first pts=${basePts}us -> normalised to 0") }
+                                info.presentationTimeUs -= basePts
+                            }
                             synchronized(muxLock) { if (muxerStarted) { buf.position(info.offset); buf.limit(info.offset + info.size); muxer!!.writeSampleData(videoTrack, buf, info) } }
                         }
                         codec.releaseOutputBuffer(idx, false)
@@ -175,36 +190,71 @@ class ScreenRecordService : Service() {
     }
 
     private fun feedAudio() {
-        Thread {
+        Thread(name = "rec-audio-in") {
             val frame = ShortArray(1024)
-            var pts = 0L
+            var produced = 0L                     // samples already handed to the encoder (the audio timeline)
+            var base = System.currentTimeMillis() // wall clock of the very first sample
+            var lastLog = 0L
+            var warnedMic = false
+            var warnedOut = false
             while (mixer.active) {
                 val codec = audio ?: break
-                val n = mixer.drain(frame)
-                if (n <= 0) continue
-                val idx = try { codec.dequeueInputBuffer(10_000) } catch (e: Exception) { AppLog.w(e); break }
+                // The audio track must keep REAL time: if the mixer has nothing for a moment we pad with silence,
+                // otherwise every pause between turns would shift the voices later and later against the video.
+                val due = (System.currentTimeMillis() - base) * outRate / 1000L
+                if (due - produced > outRate * 3L) base = System.currentTimeMillis() - produced * 1000L / outRate   // resync after a long stall
+                var n = if (due > produced) mixer.drain(frame, 60) else 0
+                if (n < 0) n = 0
+                if (n < frame.size && due > produced + n) {
+                    val pad = minOf((due - produced - n).toInt(), frame.size - n)
+                    java.util.Arrays.fill(frame, n, n + pad, 0.toShort())
+                    n += pad
+                }
+                if (n <= 0) { Thread.sleep(4); continue }
+                val pts = produced * 1_000_000L / outRate
+                val idx = try { codec.dequeueInputBuffer(10_000) } catch (e: Exception) { Diag.fail("rec.audio.in", e); break }
                 if (idx >= 0) {
-                    val ib = codec.getInputBuffer(idx) ?: continue
+                    val ib = codec.getInputBuffer(idx)
+                    if (ib == null) { Thread.sleep(4); continue }
                     ib.clear()
                     for (i in 0 until n) { val s = frame[i].toInt(); ib.put(s.toByte()); ib.put((s shr 8).toByte()) }
                     codec.queueInputBuffer(idx, 0, n * 2, pts, 0)
-                    pts += n.toLong() * 1_000_000L / outRate
+                    produced += n
+                    mixer.countOut(n)
+                }
+                val now = System.currentTimeMillis()
+                if (now - lastLog >= 2000) {
+                    lastLog = now
+                    Diag.recMicBytes = CallAudioTap.micBytes
+                    Diag.recOutBytes = CallAudioTap.outBytes
+                    Diag.recSamples = mixer.samplesOut
+                    Diag.log("rec", "mic=${CallAudioTap.micBytes}B out=${CallAudioTap.outBytes}B mixed=${mixer.samplesOut * 2}B muxStarted=$muxerStarted")
+                    if (!warnedMic && CallAudioTap.micBytes == 0L) {
+                        warnedMic = true
+                        Diag.log("rec", "WARNING: YOUR voice has not reached the recorder (mic=0B) -> the mic tap is not being fed")
+                    }
+                    if (!warnedOut && CallAudioTap.outBytes == 0L) {
+                        warnedOut = true
+                        Diag.log("rec", "WARNING: JARVIS's voice has not reached the recorder (out=0B) -> playback is not tapped on this engine")
+                    }
                 }
             }
-        }
-        Thread {
+        }.start()
+        Thread(name = "rec-audio-out") {
             val info = MediaCodec.BufferInfo()
             var eos = false
+            var firstAudio = true
             while (!eos) {
                 val codec = audio ?: break
-                val idx = try { codec.dequeueOutputBuffer(info, 10_000) } catch (e: Exception) { AppLog.w(e); break }
+                val idx = try { codec.dequeueOutputBuffer(info, 10_000) } catch (e: Exception) { Diag.fail("rec.audio.out", e); break }
                 when {
                     idx == MediaCodec.INFO_TRY_AGAIN_LATER -> { }
-                    idx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> { audioFormat = codec.outputFormat; maybeStart() }
+                    idx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> { audioFormat = codec.outputFormat; Diag.log("rec", "audio format ${codec.outputFormat}"); maybeStart() }
                     idx >= 0 -> {
                         val buf = codec.getOutputBuffer(idx)
                         if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) info.size = 0
                         if (info.size > 0 && buf != null) {
+                            if (firstAudio) { firstAudio = false; Diag.log("rec", "audio first pts=${info.presentationTimeUs}us size=${info.size}B muxStarted=$muxerStarted") }
                             synchronized(muxLock) { if (muxerStarted) { buf.position(info.offset); buf.limit(info.offset + info.size); muxer!!.writeSampleData(audioTrack, buf, info) } }
                         }
                         codec.releaseOutputBuffer(idx, false)
@@ -231,6 +281,7 @@ class ScreenRecordService : Service() {
     private fun cleanup() {
         if (!active && muxer == null) return
         active = false
+        Diag.log("rec", "stopping: mic=${CallAudioTap.micBytes}B out=${CallAudioTap.outBytes}B mixed=${mixer.samplesOut * 2}B muxStarted=$muxerStarted file=$lastFile")
         CallAudioTap.mic = null; CallAudioTap.out = null
         mixer.stop()
         try { video?.signalEndOfInputStream() } catch (e: Exception) { AppLog.w(e) }
@@ -249,6 +300,7 @@ class ScreenRecordService : Service() {
             muxer = null; muxerStarted = false
         }
         AppLog.i("Rec", "saved $lastFile")
+        Diag.log("rec", "saved $lastFile")
     }
 
     override fun onDestroy() { cleanup(); super.onDestroy() }

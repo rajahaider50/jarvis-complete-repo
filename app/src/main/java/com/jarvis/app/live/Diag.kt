@@ -58,6 +58,9 @@ object Diag {
     var lastGesture by mutableStateOf("-")            // outcome of the most recent gesture
     var foreignRecorder by mutableStateOf("-")        // package name of another app holding the mic, if any
     var micZeroCause by mutableStateOf("-")           // WHY the mic buffers were zero (FGS off / app-op / wake listener / another app)
+    var recMicBytes by mutableStateOf(0L)             // bytes of YOUR voice that reached the in-app recorder
+    var recOutBytes by mutableStateOf(0L)             // bytes of JARVIS's voice that reached the in-app recorder
+    var recSamples by mutableStateOf(0L)              // mixed 44.1 kHz samples written to the recorder's AAC track
     var tick by mutableStateOf(0)
 
     /** Log one line: logcat (authoritative, timestamped) + the in-memory ring. */
@@ -99,6 +102,7 @@ object Diag {
         sb.append("ws=").append(wsState).append(" underruns=").append(underruns).append(" interrupted=").append(interrupted).append(" reconnects=").append(reconnects).append(" lastClose=").append(lastClose).append("\n")
         sb.append("toolCalls=").append(toolCalls).append(" lastTool=").append(lastTool).append(" framesSent=").append(framesSent).append(" framesDropped=").append(framesDropped).append("\n")
         sb.append("cursorAdds=").append(cursorAdds).append(" cursorAddFails=").append(cursorAddFails).append(" foreignRecorder=").append(foreignRecorder).append("\n")
+        sb.append("rec mic=").append(recMicBytes).append("B out=").append(recOutBytes).append("B mixed=").append(recSamples * 2).append("B active=").append(ScreenRecordService.active).append("\n")
         val dm = CursorController.ctxOrNull()?.resources?.displayMetrics
         sb.append("display densityService=").append(dm?.density).append(" densityDpiService=").append(dm?.densityDpi)
             .append(" screen=").append(CursorGeometry.screenSizeOrNull()?.let { "${it.w}x${it.h}" } ?: "-")

@@ -141,6 +141,7 @@ class PipelineClient(private val ctx: Context, private val scope: CoroutineScope
                 for (i in 0 until n) sum += frame[i].toDouble() * frame[i]
                 val rms = sqrt(sum / n) / 32768.0
                 if (muted) { started = false; voiced = 0; speech.reset(); continue }
+                CallAudioTap.putMicShorts(frame, n, rate)                  // your voice also goes to the in-app call recorder
                 val now = System.currentTimeMillis()
                 if (now - lastUi > 100) { lastUi = now; val l = (rms * 7).toFloat().coerceIn(0f, 1f); withContext(Dispatchers.Main) { micLevel = l } }
                 if (!started) {

@@ -88,6 +88,15 @@ fun DiagnosticsScreen(onBack: () -> Unit, onNav: (String) -> Unit = {}) {
                     }, Modifier.padding(top = 6.dp))
                 } }
 
+                item { Card("Call recording") {
+                    Row(Modifier.fillMaxWidth()) { JText("recorder active", 12, Muted, modifier = Modifier.weight(1f)); JText(if (com.jarvis.app.live.ScreenRecordService.active) "YES" else "no", 12, if (com.jarvis.app.live.ScreenRecordService.active) Gold else Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("YOUR voice fed in", 12, Muted, modifier = Modifier.weight(1f)); JText(if (Diag.recMicBytes > 0) "${Diag.recMicBytes}B ok" else "0B — NOT reaching the recorder", 12, if (Diag.recMicBytes > 0) Ivory else Gold) }
+                    Row(Modifier.fillMaxWidth()) { JText("JARVIS's voice fed in", 12, Muted, modifier = Modifier.weight(1f)); JText(if (Diag.recOutBytes > 0) "${Diag.recOutBytes}B ok" else "0B — NOT reaching the recorder", 12, if (Diag.recOutBytes > 0) Ivory else Gold) }
+                    Row(Modifier.fillMaxWidth()) { JText("mixed into the video", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.recSamples * 2}B", 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("phone recorders hear JARVIS", 12, Muted, modifier = Modifier.weight(1f)); JText(if (Prefs.shareToRecorders) "yes (media stream)" else "no (voice-call stream)", 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("last file", 12, Muted, modifier = Modifier.weight(1f)); JText(com.jarvis.app.live.ScreenRecordService.lastFile ?: "-", 12, Ivory) }
+                } }
+
                 item { Card("Connection") {
                     Row(Modifier.fillMaxWidth()) { JText("websocket", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.wsState, 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("playback underruns", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.underruns}", 12, Ivory) }
