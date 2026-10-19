@@ -1,9 +1,10 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 02:45 · 227 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 02:50 · 227 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/live/ScreenRecordService.kt
+- Complete.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
