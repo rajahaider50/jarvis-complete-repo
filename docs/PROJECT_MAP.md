@@ -1,9 +1,12 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 16:32 · 252 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 16:51 · 252 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- server/tests/test_api.py
+- Complete.md
+- Pending.md
+- Task.md
+- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -163,14 +166,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 35 lines
+- `Complete.md` · 36 lines
 - `FEATURES.md` · 54 lines
 - `Goal.md` · 15 lines
-- `Pending.md` · 51 lines
+- `Pending.md` · 64 lines
 - `Planning.md` · 42 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 33 lines
-- `Task.md` · 23 lines
+- `Task.md` · 29 lines
 - `build.gradle.kts` · 5 lines
 - `gradle.properties` · 5 lines
 - `settings.gradle.kts` · 8 lines
@@ -242,7 +245,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md` · 94 lines
 - `docs/CHANGES_20261018_bugfix-round3-stepD-settings-and-background-mic.md` · 110 lines
 - `docs/CHANGES_20261019_recording-both-voices.md` · 119 lines
-- `docs/HANDOFF_STATE.md` · 57 lines
+- `docs/HANDOFF_STATE.md` · 58 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REPORT_20261018_bugfix-final-summary.md` · 57 lines
 - `docs/REPORT_20261018_masla1_mic_recording.md` · 63 lines
