@@ -1,5 +1,5 @@
 # TASK (current task; ONE at a time)
-Status: in progress — S1 done (green), S2 is next.
+Status: in progress — S1 + S2 done (green), S3 is next.
 
 - **Task:** Phase 4 — Autonomous companion server (see Roadmap.md). Owner's request: a real backend that
   learns in the background, keeps human-like memory/skills, has an honest affect model, syncs with the app,
@@ -10,10 +10,14 @@ Status: in progress — S1 done (green), S2 is next.
   Termux + free-hosting + app-connection guides. App untouched, `Build APK` green.
   One fix during the step: the bad-job test had to run the learner `JARVIS_LEARNER_TRIES` times
   (the retry policy is real, not a single-shot failure).
-- **Step S2 (next)** — app side: `Prefs.serverUrl` / `serverToken` / `serverEnabled`,
-  `net/JarvisServer.kt` (real HTTP over `HttpURLConnection`, same style as `data/CustomProviders.kt`),
-  Profile > **Brain server** page (Test connection shows real version/counts/mood, real error text),
-  Diagnostics "Brain server" card. Must stay offline-safe: no server = app behaves exactly as today.
+- **Step S2 — DONE (`Build APK` run 39289817001, commit `31d8a574`)** — app side: `net/JarvisServer.kt`
+  (real HTTP, no fake replies), `Prefs.serverUrl/serverToken/serverEnabled/serverSyncMemory`,
+  Profile > **Brain server** page (Test connection = real `/health` + `/api/state`, live state, Teach
+  JARVIS → real `/api/learn` job, Read the queue), Diagnostics "Brain server" card + `srv` dump line.
+  Offline-safe: no URL set = zero server calls. See docs/CHANGES_20261019_server-s2-app-connection.md.
+- **Step S3 (next)** — memory sync both ways: push local memories (chat memory + click lessons) with
+  `POST /api/sync`, pull the server's memories, merge into the AI context for chat + live calls, and show
+  real pushed/pulled/last-sync counters in Diagnostics.
 - **Later steps** — S3 memory sync, S4 background learning ("learn this while I'm busy"), S5 skills sync,
   S6 affect wired to real app events, S7 Server-Driven UI renderer, S8 step-by-step Profile pages,
   S9 Termux always-on. One step per task, each ends green (`Build APK` + `Server CI`) and moves lines

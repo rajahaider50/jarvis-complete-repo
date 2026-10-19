@@ -43,7 +43,7 @@
 
 ## Phase 4 — Autonomous companion server (see Roadmap.md; S1 done 2026-10-19)
 - [x] S1 Foundation — `server/` (Flask + SQLite store, learner thread, affect model, SDUI whitelist, token auth, `/health`, dashboard), 11 pytest tests, `Server CI` workflow, Termux + free-host + app-connection guides. Server CI green (run 39286186755).
-- [ ] S2 App connection — `Prefs.serverUrl/serverToken/serverEnabled`, `net/JarvisServer.kt` (real HTTP), Profile > **Brain server** page (Test connection shows the real version/counts/mood), Diagnostics card with the real last error. Must stay offline-safe.
+- [x] S2 App connection — `net/JarvisServer.kt` (real HTTP), `Prefs.serverUrl/serverToken/serverEnabled/serverSyncMemory`, Profile > **Brain server** page (Test connection = real `/health`+`/api/state`, live state, teach/queue), Diagnostics card + `srv` dump line. Build green (run 39289817001, commit `31d8a574`). Offline-safe verified in code (no URL = zero server calls).
 - [ ] S3 Memory sync — push local memories, pull server memories, chat + live call use the merged memory; Diagnostics shows pushed/pulled/last-sync.
 - [ ] S4 Background learning — "learn this while I'm busy" (long-press chat message / voice) → `/api/learn`, real job list with status/result/error, notification when done.
 - [ ] S5 Skills — server skills merged into the Skills screen; `uses` grows when a skill is really used.
@@ -53,6 +53,7 @@
 - [ ] S9 Always-on phone server (optional) — Termux boot script + cloudflared quick tunnel; document that the URL changes and the token is mandatory.
 - [ ] Server ops (user side): run `server/run_termux.sh`, open the dashboard, and complete one real learning job (`status=done`, `result=memories=…; skill=…`). Report the output.
 - [ ] Hosting decision: phone (Termux, recommended) or free host (Render/Koyeb/Fly/HF Spaces per docs/SERVER_DEPLOY_FREE.md). If a cloud host is used: set `JARVIS_TOKEN`, one worker only, and expect free-tier sleep + possible disk resets.
+- [ ] Phone test for S2 (user): Profile > Brain server with the Termux server running → "Connected to v0.1.0: … memories, … skills, … jobs queued, mood …, learner on/15s"; queue one learning task → "Read the queue" shows `done` + `memories=…; skill=…`; stop the server → "Not reachable — ConnectException: …" and the app keeps working; Diagnostics "Brain server" card + `JARVIS_DIAG` dump line `srv url=… state=… mem=… skills=… mood=… calls=… lastOk=…`.
 
 ## Recording (both voices + phone recorders) — code done, phone evidence pending
 - [ ] Record a call with the in-app Record button (Gemini Live **aur** ek custom provider dono) — Movies/Jarvis ki file mein **dono awaazein** aani chahiye, aur aawaz video ke saath sync honi chahiye (pehle sirf picture thi).
