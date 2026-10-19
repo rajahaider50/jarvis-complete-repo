@@ -1,12 +1,22 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-18 16:43 · 226 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 02:41 · 227 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
 - Complete.md
-- FEATURES.md
 - Pending.md
-- docs/CHANGES_20261018_bugfix-round3-stepD-settings-and-background-mic.md
+- app/src/main/java/com/jarvis/app/audio/AudioRouter.kt
+- app/src/main/java/com/jarvis/app/audio/PcmPlayer.kt
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
+- app/src/main/java/com/jarvis/app/live/AudioMixer.kt
+- app/src/main/java/com/jarvis/app/live/CallAudioTap.kt
+- app/src/main/java/com/jarvis/app/live/Diag.kt
+- app/src/main/java/com/jarvis/app/live/LiveClient.kt
+- app/src/main/java/com/jarvis/app/live/PipelineClient.kt
+- app/src/main/java/com/jarvis/app/live/ScreenRecordService.kt
+- app/src/main/java/com/jarvis/app/ui/screens/DiagnosticsScreen.kt
+- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
+- docs/CHANGES_20261019_recording-both-voices.md
 - docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
@@ -23,8 +33,8 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ### audio/
 - `AudioLevel.kt` · 19 · Turns 16-bit PCM into a 0..1 loudness value so themes can react to the voice. · AudioLevel
-- `AudioRouter.kt` · 174 · Call audio routing. AUTO = wired headset > Bluetooth > earpiece when the phone is at your  · Route, AudioRouter · uses: AppLog.kt, Prefs.kt, Diag.kt
-- `PcmPlayer.kt` · 47 · - · PcmPlayer · uses: AppLog.kt
+- `AudioRouter.kt` · 185 · Call audio routing. AUTO = wired headset > Bluetooth > earpiece when the phone is at your  · Route, AudioRouter · uses: AppLog.kt, Prefs.kt, Diag.kt
+- `PcmPlayer.kt` · 49 · - · PcmPlayer · uses: AppLog.kt, CallAudioTap.kt
 - `Speaker.kt` · 79 · Speaks ONLY with Gemini's own voices. There is deliberately no phone / Google default-voic · Speaker · uses: AppLog.kt, GeminiClient.kt, ModelCatalog.kt, Prefs.kt
 - `WavUtil.kt` · 60 · Small helpers to move audio between phone PCM and the WAV files that speech servers use. · WavUtil
 
@@ -52,7 +62,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ModelRouter.kt` · 172 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `NavState.kt` · 11 · The screen the app is showing right now, so the assistant knows where the user is (get_app · NavState
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 180 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 185 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
@@ -62,8 +72,8 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ### live/
 - `AiPanel.kt` · 85 · The floating option popups the assistant shows during a call ("5-5"): orb styles, colour t · AiPanel · uses: Prefs.kt, SiriOrb.kt, IfaceCatalog.kt, Color.kt, ThemeRegistry.kt
 - `AppControl.kt` · 225 · App-control tools the Gemini Live model can call during a call: show option popups ("5-5") · AppControl · uses: MainActivity.kt, AppLog.kt, NavState.kt, Prefs.kt, SiriOrb.kt
-- `AudioMixer.kt` · 66 · Joins the two sides of a live call into one 44.1 kHz mono stream for the in-app screen rec · AudioMixer
-- `CallAudioTap.kt` · 15 · A tap into the live call's raw audio, used by the in-app screen recorder to mix both sides · CallAudioTap
+- `AudioMixer.kt` · 77 · Joins the two sides of a live call into one 44.1 kHz mono stream for the in-app screen rec · AudioMixer
+- `CallAudioTap.kt` · 68 · A tap into the live call's raw audio, used by the in-app screen recorder to mix both sides · CallAudioTap
 - `CallCamera.kt` · 14 · The live call camera, owned by the app (not the screen) so both the UI and the assistant c · CallCamera
 - `CallEngine.kt` · 52 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
 - `CallHost.kt` · 100 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
@@ -73,14 +83,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CursorController.kt` · 444 · Draws the on-screen AI cursor(s) with TYPE_ACCESSIBILITY_OVERLAY (no extra permission need · CursorController, CursorView, GridView · uses: AppLog.kt
 - `CursorGeometry.kt` · 44 · The JARVIS cursor coordinate system. The screen CENTER is (0,0). X: left -100, right +100. · CursorGeometry
 - `CursorPanel.kt` · 292 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
-- `Diag.kt` · 112 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
+- `Diag.kt` · 116 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
 - `JarvisAccessibilityService.kt` · 552 · The real result of a dispatched gesture (bugfix Masla A / §2.1). Top-level so CursorContro · GestureOutcome, JarvisAccessibilityService · uses: Prefs.kt
-- `LiveClient.kt` · 636 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
+- `LiveClient.kt` · 647 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `MicCaptureHub.kt` · 304 · The ONE owner of the microphone. Everything that needs mic PCM (the Gemini sender, the in- · MicCaptureHub · uses: AppLog.kt
 - `PhoneTools.kt` · 203 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
-- `PipelineClient.kt` · 169 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
+- `PipelineClient.kt` · 170 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
 - `ScreenRecordRequestActivity.kt` · 39 · Invisible screen that shows Android's own "start recording?" question so the assistant can · ScreenRecordRequestActivity · uses: AppLog.kt
-- `ScreenRecordService.kt` · 256 · In-app screen recorder: captures the screen (MediaProjection -> H.264) and mixes both side · ScreenRecordService · uses: AppLog.kt
+- `ScreenRecordService.kt` · 308 · In-app screen recorder: captures the screen (MediaProjection -> H.264) and mixes both side · ScreenRecordService · uses: AppLog.kt, Prefs.kt
 - `ScreenShareRequestActivity.kt` · 26 · Kept for compatibility. Screen sharing no longer needs Android's MediaProjection question, · ScreenShareRequestActivity · uses: AppLog.kt
 - `ScreenShareService.kt` · 183 · Shares the screen with the live call WITHOUT opening a second MediaProjection session (tha · ScreenShareService · uses: AppLog.kt, ImageUtil.kt
 - `VoskModels.kt` · 61 · The small offline speech models (about 40 MB each) used by the keyless wake phrase engine. · VoskModels · uses: AppLog.kt
@@ -111,12 +121,12 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `ControlScreen.kt` · 151 · - · ControlScreen, Tile, SliderRow, PermRow · uses: Device.kt
 - `CursorLabScreen.kt` · 165 · Cursor Lab: proves the normalized coordinate system (center 0,0; right/up positive; 2 deci · targets, targetNames, CursorLabScreen · uses: CursorController.kt, CursorGeometry.kt, CursorPanel.kt, JarvisAccessibilityService.kt, Components.kt
 - `CursorMemoryScreen.kt` · 92 · Cursor memory: the click lessons JARVIS learned (ui_clicks.json / ui_clicks.md). The user  · CursorMemoryScreen · uses: ClickMemory.kt, CursorGeometry.kt, Components.kt
-- `DiagnosticsScreen.kt` · 196 · Diagnostics (bugfix guide Phase 1). One screen with the live evidence: microphone state +  · DiagnosticsScreen, Card · uses: CursorController.kt, Prefs.kt, CallHost.kt, CallService.kt, Diag.kt, WakeService.kt
+- `DiagnosticsScreen.kt` · 205 · Diagnostics (bugfix guide Phase 1). One screen with the live evidence: microphone state +  · DiagnosticsScreen, Card · uses: CursorController.kt, Prefs.kt, CallHost.kt, CallService.kt, Diag.kt, WakeService.kt
 - `HomeScreen.kt` · 224 · - · Boot, HomeScreen, BootRings, StatTile, QTile, LoadingDialog · uses: Startup.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, AuroraScreens.kt
 - `LiveVoiceScreen.kt` · 318 · - · has, LiveVoiceScreen, LiveCallContent, CameraPip, RoundBtn, RouteChips · uses: AppLog.kt, AudioRouter.kt, ImageUtil.kt, Langs.kt, ModelCatalog.kt, Prefs.kt
 - `MemoryScreen.kt` · 129 · - · MemoryScreen · uses: MemoryStore.kt, ChatStore.kt, Prefs.kt
 - `Onboarding.kt` · 194 · - · StepHeader, LanguageScreen, PermissionsScreen, PRow, ApiSetupScreen, SetupScreen · uses: Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Startup.kt
-- `ProfileScreen.kt` · 255 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
+- `ProfileScreen.kt` · 287 · - · ProfileScreen, PrefRowV, PrefRow · uses: ModelCatalog.kt, Prefs.kt
 - `ProvidersScreen.kt` · 357 · Add models from any other AI provider. Anything that offers an OpenAI-compatible API works · ProvidersScreen, ProviderList, ProviderEditor, Field, SwitchRow, ModelRow · uses: PcmPlayer.kt, AppLog.kt, CustomProviders.kt, GeminiClient.kt, ModelCatalogFile.kt, Prefs.kt
 - `RouterLogScreen.kt` · 59 · Shows the smart router's real local health: what it used today, what is cooling down and h · RouterWarn, RouterLogScreen, maybeProvider · uses: ModelRouter.kt
 - `SkillsScreen.kt` · 172 · Teach the agent new skills: short instruction packs it opens when a task needs them. · SkillsScreen, SkillList, Color2, SkillEditor · uses: Skills.kt, AppLog.kt
@@ -167,10 +177,10 @@ format: `path` · lines · what it is · declares · uses (other project files)
 ## Resources, manifest, build, CI, docs
 
 - `.gitignore` · 9 lines
-- `Complete.md` · 34 lines
+- `Complete.md` · 35 lines
 - `FEATURES.md` · 54 lines
 - `Goal.md` · 8 lines
-- `Pending.md` · 43 lines
+- `Pending.md` · 51 lines
 - `Planning.md` · 42 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 17 lines
@@ -243,7 +253,8 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261018_bugfix-round2-step1-click-truthtest.md` · 92 lines
 - `docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md` · 94 lines
 - `docs/CHANGES_20261018_bugfix-round3-stepD-settings-and-background-mic.md` · 110 lines
-- `docs/HANDOFF_STATE.md` · 54 lines
+- `docs/CHANGES_20261019_recording-both-voices.md` · 119 lines
+- `docs/HANDOFF_STATE.md` · 57 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REPORT_20261018_bugfix-final-summary.md` · 57 lines
 - `docs/REPORT_20261018_masla1_mic_recording.md` · 63 lines
