@@ -1,35 +1,8 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 15:59 · 252 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 16:32 · 252 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Goal.md
-- Roadmap.md
-- Task.md
-- .github/workflows/server-ci.yml
-- docs/APP_SERVER_CONNECTION.md
-- docs/SERVER_DEPLOY_FREE.md
-- docs/SERVER_SETUP_TERMUX.md
-- docs/SERVER_SYSTEM.md
-- server/.env.example
-- server/Dockerfile
-- server/Procfile
-- server/README.md
-- server/conftest.py
-- server/requirements.txt
-- server/run_termux.sh
-- server/wsgi.py
-- server/jarvis_server/__init__.py
-- server/jarvis_server/__main__.py
-- server/jarvis_server/affect.py
-- server/jarvis_server/api.py
-- server/jarvis_server/config.py
-- server/jarvis_server/learner.py
-- server/jarvis_server/llm.py
-- server/jarvis_server/memory.py
-- server/jarvis_server/sdui.py
-- server/jarvis_server/skills.py
-- server/jarvis_server/store.py
 - server/tests/test_api.py
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
@@ -304,7 +277,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `server/jarvis_server/sdui.py` · 58 lines
 - `server/jarvis_server/skills.py` · 63 lines
 - `server/jarvis_server/store.py` · 273 lines
-- `server/tests/test_api.py` · 161 lines
+- `server/tests/test_api.py` · 164 lines
 - `tools/apply_edits.py` · 25 lines
 - `tools/make_map.py` · 120 lines
 - `tools/pack_context.py` · 108 lines
