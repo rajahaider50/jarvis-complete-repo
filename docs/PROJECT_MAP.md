@@ -3,7 +3,6 @@
 Updated 2026-10-19 19:40 · 259 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- docs/SERVER_ONE_COMMAND.md
 - server/start.sh
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
