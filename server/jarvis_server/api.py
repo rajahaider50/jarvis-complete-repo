@@ -25,6 +25,140 @@ from .skills import SkillBook
 from .store import Store
 
 
+CONTROL_HTML = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JARVIS control</title>
+<style>
+ body{background:#0e0d0b;color:#f2e9d8;font:15px/1.55 system-ui;margin:0;padding:16px}
+ h1{color:#d8b46a;font-size:20px;margin:0 0 2px}
+ h2{color:#d8b46a;font-size:12px;margin:0 0 6px;letter-spacing:.08em;text-transform:uppercase}
+ small{color:#9c9285} a{color:#e9cf95}
+ .b{background:#1b1814;border:1px solid #3a3128;border-radius:14px;padding:12px;margin:10px 0}
+ input,textarea{background:#12100d;border:1px solid #3a3128;border-radius:10px;color:#f2e9d8;padding:9px;width:100%;box-sizing:border-box;font:inherit}
+ button{background:linear-gradient(180deg,#e9cf95,#c9a24f);border:0;border-radius:10px;color:#1b1814;font-weight:600;padding:10px 14px;margin-top:8px;cursor:pointer}
+ button.ghost{background:#241f19;color:#e9cf95;border:1px solid #4a3f31}
+ .row{display:flex;gap:8px;flex-wrap:wrap} .row>*{flex:1 1 130px}
+ pre{white-space:pre-wrap;word-break:break-word;margin:8px 0 0;font-size:12px;color:#cbbfa6}
+ .ok{color:#8fce8f}.bad{color:#e08b7d}
+ table{width:100%;border-collapse:collapse;font-size:12px} td,th{text-align:left;padding:4px 6px;border-bottom:1px solid #2a241d}
+</style></head><body>
+<h1>JARVIS brain server · control</h1>
+<small>Every number below comes from the server's own SQLite database. Writes need the token.</small>
+
+<div class="b"><h2>Token</h2>
+  <div class="row">
+    <input id="tok" type="password" placeholder="JARVIS_TOKEN (kept only in this browser)">
+    <button onclick="saveTok()">Save</button>
+    <button class="ghost" onclick="clearTok()">Clear</button>
+  </div>
+  <small id="tokstate"></small>
+</div>
+
+<div class="b"><h2>Live state</h2><pre id="state">…</pre></div>
+
+<div class="b"><h2>Add a memory</h2>
+  <textarea id="mtext" rows="2" placeholder="e.g. Owner builds dynamic 3D websites"></textarea>
+  <div class="row"><input id="mkind" value="fact" placeholder="kind (fact / preference / lesson)">
+  <input id="mtags" placeholder="tags (comma separated)"></div>
+  <button onclick="addMem()">Save memory</button>
+</div>
+
+<div class="b"><h2>Teach JARVIS (background learning)</h2>
+  <textarea id="ltask" rows="2" placeholder="e.g. learn how to build a dynamic 3D website"></textarea>
+  <input id="lobs" placeholder="what was observed or known (optional)">
+  <div class="row"><button onclick="queueLearn()">Queue learning job</button>
+  <button class="ghost" onclick="loadJobs()">Refresh queue</button></div>
+  <div id="jobs"></div>
+</div>
+
+<div class="b"><h2>Mood (real events)</h2>
+  <div class="row">
+    <button class="ghost" onclick="ev('call_ok')">call worked</button>
+    <button class="ghost" onclick="ev('call_fail')">call failed</button>
+    <button class="ghost" onclick="ev('tool_ok')">action worked</button>
+    <button class="ghost" onclick="ev('praise')">praise</button>
+    <button class="ghost" onclick="ev('anger')">upset</button>
+  </div>
+  <pre id="affect">…</pre>
+</div>
+
+<div class="b"><h2>Recall</h2>
+  <input id="q" placeholder="ask the memory…">
+  <button onclick="recall()">Search</button>
+  <pre id="hits"></pre>
+</div>
+<small>API: <a href="/health">/health</a> · /api/state · /api/memories · /api/recall · /api/learn · /api/jobs · /api/affect · /api/skills</small>
+<script>
+var $ = function(id){ return document.getElementById(id); };
+function tok(){ return localStorage.getItem('jarvis_token') || ''; }
+function saveTok(){ localStorage.setItem('jarvis_token', $('tok').value.trim()); paintTok(); refresh(); }
+function clearTok(){ localStorage.removeItem('jarvis_token'); $('tok').value = ''; paintTok(); refresh(); }
+function paintTok(){ $('tokstate').textContent = tok() ? 'token saved in this browser' : 'no token saved - write actions will answer HTTP 401'; }
+async function api(path, opts){
+  var o = Object.assign({headers:{'Accept':'application/json'}}, opts || {});
+  if (tok()) o.headers['X-Jarvis-Token'] = tok();
+  if (o.body) o.headers['Content-Type'] = 'application/json';
+  var r = await fetch(path, o);
+  var t = await r.text();
+  var j = null; try { j = JSON.parse(t); } catch (e) {}
+  return {ok:r.ok, code:r.status, body:j, raw:t};
+}
+async function refresh(){
+  var h = await api('/health'), s = await api('/api/state'), a = await api('/api/affect');
+  var lines = [];
+  lines.push('health      ' + (h.ok ? 'ok  v' + (h.body.version || '?') : 'FAILED'));
+  if (s.body && s.body.counts) lines.push('memories    ' + s.body.counts.memories + '      skills ' + s.body.counts.skills + '      jobs ' + s.body.counts.jobs + '      events ' + s.body.counts.events);
+  if (s.body && s.body.learner) lines.push('learner     ' + (s.body.learner.running ? 'on' : 'off') + ' / ' + s.body.learner.interval_s + 's      queued ' + s.body.learner.queued + '      done ' + s.body.learner.done + '      failed ' + s.body.learner.failed);
+  if (!s.ok) lines.push('state       HTTP ' + s.code + (s.code === 401 ? '   (paste the token above)' : ''));
+  $('state').textContent = lines.join('\\n');
+  if (a.body && a.body.state) {
+    var st = a.body.state;
+    $('affect').textContent = 'mood ' + a.body.mood + '   valence ' + st.valence + '   arousal ' + st.arousal +
+      '   energy ' + st.energy + '   trust ' + st.trust + '   focus ' + st.focus + '\\n' + (a.body.note || '');
+  }
+}
+function esc(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+async function addMem(){
+  var t = $('mtext').value.trim(); if (!t) { alert('write something first'); return; }
+  var r = await api('/api/memories', {method:'POST', body:JSON.stringify({text:t, kind:$('mkind').value || 'fact', tags:$('mtags').value})});
+  alert(r.ok ? 'saved (id ' + r.body.id + ')' : 'failed: HTTP ' + r.code + ' ' + ((r.body && r.body.error) || r.raw.slice(0,120)));
+  if (r.ok) { $('mtext').value = ''; refresh(); }
+}
+async function queueLearn(){
+  var t = $('ltask').value.trim(); if (!t) { alert('write the task first'); return; }
+  var r = await api('/api/learn', {method:'POST', body:JSON.stringify({task:t, observation:$('lobs').value, skill:true})});
+  alert(r.ok ? 'queued job #' + r.body.job + ' (' + r.body.queued + ' waiting) - the learner picks it up within 15s' : 'failed: HTTP ' + r.code);
+  if (r.ok) { $('ltask').value = ''; setTimeout(loadJobs, 17000); }
+}
+async function loadJobs(){
+  var r = await api('/api/jobs?limit=10');
+  if (!r.ok || !r.body) { $('jobs').innerHTML = '<pre class="bad">queue: HTTP ' + r.code + '</pre>'; return; }
+  var rows = (r.body.items || []).map(function(j){
+    var cls = j.status === 'done' ? 'ok' : (j.status === 'failed' ? 'bad' : '');
+    return '<tr><td>#' + j.id + '</td><td>' + j.kind + '</td><td class="' + cls + '">' + j.status + '</td><td>' + esc(j.result || j.error || '') + '</td></tr>';
+  }).join('');
+  $('jobs').innerHTML = '<table><tr><th>job</th><th>kind</th><th>status</th><th>result / error</th></tr>' + rows + '</table>';
+}
+async function ev(kind){
+  var r = await api('/api/affect', {method:'POST', body:JSON.stringify({kind:kind, weight:1, note:'from the control page'})});
+  if (!r.ok) alert('failed: HTTP ' + r.code);
+  refresh();
+}
+async function recall(){
+  var r = await api('/api/recall', {method:'POST', body:JSON.stringify({query:$('q').value, limit:8})});
+  if (!r.ok || !r.body) { $('hits').textContent = 'HTTP ' + r.code; return; }
+  var items = (r.body.items || []).map(function(m){ return '[' + m.kind + '] ' + m.text; });
+  $('hits').textContent = items.length ? items.join('\\n') : 'nothing remembered yet';
+}
+$('tok').value = tok();
+paintTok(); refresh(); loadJobs();
+setInterval(refresh, 5000);
+</script>
+</body></html>
+"""
+
+
 class Runtime:
     """Everything the server needs, built once."""
 
@@ -234,7 +368,12 @@ jobs queued <b>{st.count_queued_jobs()}</b> · events <b>{st.count('events')}</b
 learner: <b>{'on' if rt.learner.running else 'off'}</b> ·
 auth: <b>{'on' if rt.cfg.token else 'off (localhost only)'}</b></div>
 <div class=b><small>API: /health · /api/state · /api/memories · /api/recall · /api/skills · /api/learn ·
-/api/jobs · /api/affect · /api/pages · /api/sync</small></div>"""
+/api/jobs · /api/affect · /api/pages · /api/sync</small></div>
+<div class=b><small><a style="color:#e9cf95" href="/control">open the control page &rarr;</a></small></div>"""
         return Response(html, mimetype="text/html")
+
+    @app.get("/control")
+    def control():
+        return Response(CONTROL_HTML, mimetype="text/html")
 
     return app

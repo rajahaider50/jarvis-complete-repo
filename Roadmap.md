@@ -15,7 +15,8 @@ Proposed starting order. Owner edits freely; AI only appends new ideas at the en
 ## Phase 4 - Autonomous companion server (owner's request, 2026-10-19)
 Order matters: each step must be green (app build + server CI) before the next starts.
 - [ ] **S1 Foundation** — repo layout `server/`, real SQLite store, `GET /health`, token auth, pytest suite, `Server CI` workflow, Termux + free-host guides. (no app change)
-- [ ] **S2 App connection** — `Prefs.serverUrl/serverToken`, `net/JarvisServer.kt` (real HTTP over `HttpURLConnection`), Profile > "Brain server" page with a real Test-connection button and live state. Offline = works exactly as before.
+- [x] **S2 App connection** — `Prefs.serverUrl/serverToken`, `net/JarvisServer.kt` (real HTTP over `HttpURLConnection`), Profile > "Brain server" page with a real Test-connection button and live state. Offline = works exactly as before.
+- [x] **S2.5 One-command server + control site** — `bash server/start.sh` (14-step PASS/FAIL table, watchdog that restarts the server, Termux wakelock + boot, free public HTTPS URL that self-heals, `--status/--stop/--restart/--token`), `/control` website, `selftest.py` (33 checks) and a wheel fallback for broken pip. Docs: `docs/SERVER_ONE_COMMAND.md`.
 - [ ] **S3 Memory sync** — app pushes new memories/lessons, pulls server memories; chat + live call read the merged memory. Diagnostics shows last sync + counts.
 - [ ] **S4 Background learning** — `POST /api/learn` job queue + server-side learner loop (LLM distil -> memories + skills). App gets a "Learn this while I am busy" action (long-press a chat message / voice command) and a job list.
 - [ ] **S5 Skills** — server-side skill store (SKILL.md bodies) synced into the app's existing Skills screen; skills counted when actually used.

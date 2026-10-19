@@ -1,4 +1,6 @@
 # PENDING (not done yet). Delete a line when finished and add it to Complete.md.
+- [ ] Phone test: run `bash server/start.sh` in a fresh Termux tab — share the 14-step table (PASS/FAIL/SKIP), the watcher state (`--status`) and the public URL; then connect the app (Profile > Brain server) and press Test connection.
+- [ ] Phone test: keep the server overnight with the screen off and confirm in the morning that `--status` says UP and `watchdog.log` shows no restart loop.
 - [ ] Phone test: AI cursor — Profile > Cursor Lab (grid + 5 targets, real tap lands on the ring); add/drag cursors (up to 10, colours/numbers); panel nudge + Tap/Dbl/Long/All + PANIC; joystick speed 1-15; grid overlay.
 - [ ] Phone test: AI cursor by voice — "screen par cursor dikhao", "yahan click karo", "do cursor banao aur dono click karo"; cursor moves smoothly and does not swallow its own tap.
 - [ ] Phone test: cursor memory — lessons appear in Profile > Cursor memory with ok counts; a wrong tap fixed with panel "Save spot" replaces the lesson; banking/password screen saves nothing.

@@ -6,3 +6,10 @@ local.properties
 .DS_Store
 *.apk
 *.aab
+
+# JARVIS brain server runtime (created by server/start.sh - never commit)
+server/.env
+server/.pylibs/
+server/data/
+__pycache__/
+*.pyc

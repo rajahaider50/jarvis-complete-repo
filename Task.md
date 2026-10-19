@@ -15,6 +15,15 @@ Status: in progress — S1 + S2 done (green), S3 is next.
   Profile > **Brain server** page (Test connection = real `/health` + `/api/state`, live state, Teach
   JARVIS → real `/api/learn` job, Read the queue), Diagnostics "Brain server" card + `srv` dump line.
   Offline-safe: no URL set = zero server calls. See docs/CHANGES_20261019_server-s2-app-connection.md.
+- **Step S2.5 — DONE (2026-10-20)** — one-command server: `server/start.sh` (14-step table with
+  PASS/FAIL/SKIP + time + detail + per-step log, `--status/--stop/--restart/--logs/--token/--tunnel-only`,
+  watchdog in its own session, Termux wakelock + `~/.termux/boot`, cloudflared quick tunnel with a real
+  internet `/health` proof, localhost.run fallback, tunnel self-heal after 2 failed checks, token kept
+  across runs), `server/selftest.py` (33 real checks, no pytest), `server/vendor_wheels.py` (stdlib wheel
+  downloader for phones/containers where pip is broken), `/control` website (live state, add memory,
+  queue learning, jobs, mood events, recall — token in localStorage), docs/SERVER_ONE_COMMAND.md.
+  Tested in the sandbox: 12 PASS / 0 FAIL / 2 SKIP, selftest 33/33, public 9/9, watchdog restart,
+  URL reuse, tunnel self-heal, cloudflared binary path.
 - **Step S3 (next)** — memory sync both ways: push local memories (chat memory + click lessons) with
   `POST /api/sync`, pull the server's memories, merge into the AI context for chat + live calls, and show
   real pushed/pulled/last-sync counters in Diagnostics.
