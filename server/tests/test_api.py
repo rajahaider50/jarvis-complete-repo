@@ -148,9 +148,12 @@ def test_token_auth_when_configured(tmp_path, monkeypatch):
 def test_job_failure_is_recorded_not_hidden(app):
     rt = app.extensions["jarvis"]
     jid = rt.store.add_job("definitely-not-a-kind", {})
-    rt.learner.run_once()
+    # the learner retries a bad job (JARVIS_LEARNER_TRIES) and only then marks it failed
+    for _ in range(rt.cfg.learner_max_tries):
+        assert rt.learner.run_once() == 1
     job = rt.store.job(jid)
     assert job["status"] == "failed" and "unknown job kind" in job["error"]
+    assert job["tries"] == rt.cfg.learner_max_tries
 
 
 def test_dashboard_and_state_are_served(client):
