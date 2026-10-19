@@ -9,24 +9,32 @@ It never fakes a step: every row is a real command with a real exit code.
 
 ---
 
-## 1. The command
+## 1. The command (public repo — bas yeh paste karo)
 
-**Private repo (this one).** Replace `<TOKEN>` with a GitHub token that can read the repo:
+Naya Termux tab kholo, `cd` ki zarurat **nahi** — jis folder me bhi ho, chalega:
+
+```sh
+pkg install -y curl python
+bash <(curl -fsSL https://raw.githubusercontent.com/rajahaider50/jarvis-complete-repo/main/server/start.sh)
+```
+
+Bas. Doosri baar se sirf:
+
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/rajahaider50/jarvis-complete-repo/main/server/start.sh)
+```
+
+* `curl` + `python` pehle se hon to pehli line skip kar do — ek hi command kaafi hai.
+* Script khud `~/jarvis-src` / `~/.jarvis-server` me apni copy rakhta hai, is liye aapki **current
+  directory se koi farq nahi padta** (na `cd`, na path ka jhanjhat).
+* `git` optional hai: agar git hai to clone/pull karta hai, warna seedha GitHub ka archive
+  download karke `.env` (token) aur `.pylibs` bacha kar rakh deta hai.
+* `pkg install` fail ho to pehle `pkg update -y` chala kar dobara try karo.
+
+**Private fork ho to** (token chahiye):
 
 ```sh
 bash -c 'R=$HOME/jarvis-src; git clone -q https://<TOKEN>@github.com/rajahaider50/jarvis-complete-repo.git $R 2>/dev/null || git -C $R pull -q --ff-only; bash $R/server/start.sh'
-```
-
-**Already cloned?** Then it is literally:
-
-```sh
-bash server/start.sh
-```
-
-**Public fork?** Then no token is needed:
-
-```sh
-bash <(curl -fsSL https://raw.githubusercontent.com/<you>/jarvis-complete-repo/main/server/start.sh)
 ```
 
 In a fresh Termux tab the first run installs `git` + `python` if they are missing

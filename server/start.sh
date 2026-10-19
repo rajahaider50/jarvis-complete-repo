@@ -220,23 +220,75 @@ s_use_local() {
   return 0
 }
 
+repo_slug() {                      # https://github.com/a/b.git -> a/b
+  local s="$1"
+  s="${s#https://github.com/}"; s="${s#http://github.com/}"; s="${s#git@github.com:}"; s="${s%.git}"
+  printf '%s' "$s"
+}
+
+fetch_archive() {                  # fetch_archive <dest> - no git needed; keeps .env and .pylibs
+  local dest="$1" slug
+  slug="$(repo_slug "$REPO_URL")"
+  python3 - "$slug" "$BRANCH" "$dest" <<'PY'
+import os, shutil, sys, tarfile, urllib.request
+slug, branch, dest = sys.argv[1], sys.argv[2], sys.argv[3]
+url = f"https://codeload.github.com/{slug}/tar.gz/refs/heads/{branch}"
+print("downloading", url)
+req = urllib.request.Request(url, headers={"User-Agent": "jarvis-start"})
+with urllib.request.urlopen(req, timeout=240) as r:
+    blob = r.read()
+print("downloaded", len(blob), "bytes")
+new = dest + ".new"
+shutil.rmtree(new, ignore_errors=True)
+os.makedirs(new, exist_ok=True)
+tmp = dest + ".tar.gz"
+with open(tmp, "wb") as f:
+    f.write(blob)
+with tarfile.open(tmp, "r:gz") as t:
+    members = t.getmembers()
+    root = members[0].name.split("/")[0]
+    try:
+        t.extractall(new, filter="data")
+    except TypeError:
+        t.extractall(new)
+src = os.path.join(new, root)
+env = os.path.join(dest, "server", ".env")
+libs = os.path.join(dest, "server", ".pylibs")
+if os.path.isfile(env):
+    shutil.copy2(env, os.path.join(src, "server", ".env"))
+    print("kept the existing token (.env)")
+if os.path.isdir(libs):
+    shutil.move(libs, os.path.join(src, "server", ".pylibs"))
+    print("kept the downloaded libraries (.pylibs)")
+shutil.rmtree(dest, ignore_errors=True)
+os.rename(src, dest)
+os.remove(tmp)
+print("code at", dest)
+PY
+}
+
 s_fetch() {
   mkdir -p "$RUNTIME_DIR" || return 1
-  local dest="$RUNTIME_DIR/repo"
-  if [ -d "$dest/.git" ]; then
-    say "updating $dest"
-    ( cd "$dest" && git fetch --depth 1 origin "$BRANCH" -q && git reset --hard "origin/$BRANCH" -q ) || {
-      say "git update failed (network, or a private repo needs a token)"; return 1; }
+  local dest="$RUNTIME_DIR/repo" ok=1 TG=""
+  command -v timeout >/dev/null 2>&1 && TG="timeout 240"
+  if command -v git >/dev/null 2>&1; then
+    if [ -d "$dest/.git" ]; then
+      say "updating $dest with git"
+      if ( cd "$dest" && $TG git fetch --depth 1 origin "$BRANCH" -q && git reset --hard "origin/$BRANCH" -q ); then ok=0; fi
+    else
+      say "cloning $REPO_URL (branch $BRANCH)"
+      if $TG git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$dest" -q; then ok=0; fi
+    fi
   else
-    say "cloning $REPO_URL (branch $BRANCH)"
-    git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$dest" -q || {
-      say "clone failed - if the repo is private use:"
-      say "  JARVIS_REPO=https://<user>:<token>@github.com/rajahaider50/jarvis-complete-repo.git bash start.sh"
-      return 1; }
+    say "git is not installed - using the repository archive"
+  fi
+  if [ "$ok" != 0 ]; then
+    say "git did not work - downloading the repository archive instead (no git needed)"
+    fetch_archive "$dest" || { say "download failed - check the internet connection"; return 1; }
   fi
   SERVER_DIR="$dest/server"
   REPO_ROOT="$dest"
-  [ -d "$SERVER_DIR/jarvis_server" ] || { say "the clone has no server/jarvis_server - wrong repo?"; return 1; }
+  [ -d "$SERVER_DIR/jarvis_server" ] || { say "the download has no server/jarvis_server - wrong repo?"; return 1; }
   say "code ready at $SERVER_DIR"
   return 0
 }
@@ -314,6 +366,17 @@ s_free_port() {
     say "an instance already answers on port $PORT - stopping it"
     stop_thing "$PID_FILE" "old server"
     sleep 1
+  fi
+  if health_ok; then
+    if command -v pkill >/dev/null 2>&1; then
+      say "port $PORT still answers but it is not our pid - trying pkill -f 'jarvis_server $PORT'"
+      pkill -f "jarvis_server $PORT" 2>/dev/null || true
+      sleep 1
+    fi
+    if health_ok; then
+      say "port $PORT is used by another process this script cannot stop - close it and run again"
+      return 1
+    fi
   fi
   if [ -f "$TUNNEL_PID_FILE" ] && ! pid_alive "$(read_pid "$TUNNEL_PID_FILE")"; then
     rm -f "$TUNNEL_PID_FILE" "$TUNNEL_URL_FILE"
