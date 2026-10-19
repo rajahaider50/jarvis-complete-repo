@@ -158,7 +158,7 @@ class ScreenRecordService : Service() {
     }
 
     private fun drainVideo() {
-        Thread(name = "rec-video") {
+        Thread({
             val info = MediaCodec.BufferInfo()
             var eos = false
             var basePts = -1L
@@ -186,11 +186,11 @@ class ScreenRecordService : Service() {
                     }
                 }
             }
-        }.start()
+        }, "rec-video").start()
     }
 
     private fun feedAudio() {
-        Thread(name = "rec-audio-in") {
+        Thread({
             val frame = ShortArray(1024)
             var produced = 0L                     // samples already handed to the encoder (the audio timeline)
             var base = System.currentTimeMillis() // wall clock of the very first sample
@@ -239,8 +239,8 @@ class ScreenRecordService : Service() {
                     }
                 }
             }
-        }.start()
-        Thread(name = "rec-audio-out") {
+        }, "rec-audio-in").start()
+        Thread({
             val info = MediaCodec.BufferInfo()
             var eos = false
             var firstAudio = true
@@ -262,7 +262,7 @@ class ScreenRecordService : Service() {
                     }
                 }
             }
-        }.start()
+        }, "rec-audio-out").start()
     }
 
     private fun maybeStart() {
