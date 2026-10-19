@@ -1,0 +1,37 @@
+name: Server CI
+
+on:
+  push:
+    paths:
+      - 'server/**'
+      - '.github/workflows/server-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        working-directory: server
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        working-directory: server
+        run: python -m pytest -q
+      - name: Serve a health check with the real WSGI app
+        working-directory: server
+        run: |
+          python - <<'PY'
+          from wsgi import app
+          c = app.test_client()
+          r = c.get("/health")
+          assert r.status_code == 200, r.status_code
+          body = r.get_json()
+          assert body["ok"] is True and body["service"] == "jarvis-server"
+          print("health ok:", body["version"], "memories:", body["memories"])
+          PY

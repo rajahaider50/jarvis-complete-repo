@@ -1,0 +1,4 @@
+# JARVIS companion server - only pure-Python dependencies, so it installs on Termux and tiny free hosts.
+flask>=3.0,<4
+gunicorn>=21.2      # not used on Termux dev runs, used by Procfile / hosts
+pytest>=8.0         # test only: cd server && python -m pytest -q

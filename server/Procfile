@@ -1,0 +1,3 @@
+web: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+# NOTE: keep --workers 1. SQLite + the in-process learner thread are designed for a single worker;
+# more workers would each run their own learner and fight over the same database.
