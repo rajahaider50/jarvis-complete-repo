@@ -1,13 +1,10 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 17:05 · 255 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 17:59 · 255 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
 - Pending.md
-- Task.md
 - docs/CHANGES_20261019_server-s2-app-connection.md
-- docs/HANDOFF_STATE.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -174,7 +171,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `Complete.md` · 37 lines
 - `FEATURES.md` · 54 lines
 - `Goal.md` · 15 lines
-- `Pending.md` · 65 lines
+- `Pending.md` · 67 lines
 - `Planning.md` · 42 lines
 - `README.md` · 110 lines
 - `Roadmap.md` · 33 lines
@@ -250,7 +247,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261018_bugfix-round3-mic-and-tap.md` · 94 lines
 - `docs/CHANGES_20261018_bugfix-round3-stepD-settings-and-background-mic.md` · 110 lines
 - `docs/CHANGES_20261019_recording-both-voices.md` · 119 lines
-- `docs/CHANGES_20261019_server-s2-app-connection.md` · 49 lines
+- `docs/CHANGES_20261019_server-s2-app-connection.md` · 68 lines
 - `docs/HANDOFF_STATE.md` · 59 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REPORT_20261018_bugfix-final-summary.md` · 57 lines
