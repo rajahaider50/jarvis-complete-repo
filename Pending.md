@@ -54,6 +54,8 @@
 - [ ] Server ops (user side): run `server/run_termux.sh`, open the dashboard, and complete one real learning job (`status=done`, `result=memories=…; skill=…`). Report the output.
 - [ ] Hosting decision: phone (Termux, recommended) or free host (Render/Koyeb/Fly/HF Spaces per docs/SERVER_DEPLOY_FREE.md). If a cloud host is used: set `JARVIS_TOKEN`, one worker only, and expect free-tier sleep + possible disk resets.
 - [ ] Phone test for S2 (user): Profile > Brain server with the Termux server running → "Connected to v0.1.0: … memories, … skills, … jobs queued, mood …, learner on/15s"; queue one learning task → "Read the queue" shows `done` + `memories=…; skill=…`; stop the server → "Not reachable — ConnectException: …" and the app keeps working; Diagnostics "Brain server" card + `JARVIS_DIAG` dump line `srv url=… state=… mem=… skills=… mood=… calls=… lastOk=…`.
+- [x] Temporary live test server (2026-10-19, AI sandbox + localhost.run tunnel `https://b84cdbfec0abc8.lhr.life`, token shared in chat): public `/health` 200, `/api/state` 401 without token / 200 with token, memory stored, learn job #1 `done` (`memories=1; skill=… ai=False` because no model key). Local proof: 32/32 checks against the real Flask app. Dies with the session — Termux/free host is the permanent home.
+- [ ] Real distillation on the server (optional): set `JARVIS_LLM_KEY` (and `JARVIS_LLM_MODEL`) so `distil()` writes parsed lessons instead of the raw-note fallback.
 
 ## Recording (both voices + phone recorders) — code done, phone evidence pending
 - [ ] Record a call with the in-app Record button (Gemini Live **aur** ek custom provider dono) — Movies/Jarvis ki file mein **dono awaazein** aani chahiye, aur aawaz video ke saath sync honi chahiye (pehle sirf picture thi).

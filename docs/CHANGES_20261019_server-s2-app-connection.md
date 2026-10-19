@@ -39,6 +39,25 @@ S2→S8 plan). This file is only about the **app side** that landed in S2, and h
    `srv: ConnectException -> …` after step 4. Press *Copy*/*Save* on Diagnostics to keep the dump:
    the line `srv url=… state=… mem=… skills=… mood=… calls=… lastOk=…` is the evidence.
 
+## Live test server (temporary, started by the AI on 2026-10-19)
+
+Because the owner asked to connect right away, the server was also started for real and exposed over
+HTTPS so the app can be tested before Termux is set up:
+
+- What was run: `JARVIS_DATA=/tmp/opencode/jarvis-data JARVIS_TOKEN=<shared in chat> JARVIS_LEARNER=1
+  JARVIS_LEARNER_INTERVAL=10 python3 -m jarvis_server 8787` plus a temporary tunnel to
+  `https://b84cdbfec0abc8.lhr.life` (localhost.run).
+- Verified through the public URL: `/health` 200, `/api/state` **401 without the token** and 200 with it,
+  `POST /api/memories` stored a memory, `POST /api/learn` produced job #1 with status `done` and result
+  `memories=1; skill=learn-how-to-build-a-dynamic-3d-website-like-the-sample ai=False`, and
+  `GET /api/memories` listed both rows (`kind=fact` from the app plus the learner's `kind=raw` note).
+  The same 32 checks were also run locally against the real Flask app (`app.test_client()`) — all passed.
+- The `ai=False` is honest: no `JARVIS_LLM_KEY` was configured, so the learner stored the raw note instead
+  of inventing distilled lessons. With a key set, `Brain.distil()` parses the model's JSON lessons.
+- ⚠️ This instance lives in the AI's own sandbox and dies with it; the URL and token are disposable. The
+  permanent homes are Termux on the phone (`docs/SERVER_SETUP_TERMUX.md`) or a free host
+  (`docs/SERVER_DEPLOY_FREE.md`). Rotate the token afterwards — never keep it in a chat.
+
 ## Not done in this step (next)
 
 - S3: memories actually flow between the phone and the server and into the AI context (chat + live call).
