@@ -30,7 +30,7 @@
 # ==============================================================================
 set -uo pipefail
 
-SCRIPT_VERSION="1.1.0"
+SCRIPT_VERSION="1.2.0"
 REPO_URL="${JARVIS_REPO:-https://github.com/rajahaider50/jarvis-complete-repo.git}"
 BRANCH="${JARVIS_BRANCH:-main}"
 PORT="${JARVIS_PORT:-8787}"
@@ -45,6 +45,9 @@ WATCHDOG="$RUNTIME_DIR/watchdog.sh"
 WANT_TUNNEL="ask"
 WANT_WATCH=1
 PIP_TIMEOUT="${JARVIS_PIP_TIMEOUT:-240}"
+# cloudflared: http2 survives networks that block UDP/QUIC (common on mobile data).
+# Set JARVIS_TUNNEL_PROTOCOL=quic to go back to the default protocol.
+JARVIS_TUNNEL_PROTOCOL="${JARVIS_TUNNEL_PROTOCOL:-http2}"
 ACTION="start"
 SRCDIR=""
 
@@ -472,7 +475,14 @@ s_tunnel() {
   if command -v cloudflared >/dev/null 2>&1; then
     say "opening a cloudflared quick tunnel"
     : > "$LOG_DIR/tunnel.log"
-    tpid="$(spawn "$LOG_DIR/tunnel.log" cloudflared tunnel --no-autoupdate --url "http://127.0.0.1:$PORT")"
+    local -a cfargs
+    cfargs=(tunnel --no-autoupdate)
+    if [ -n "${JARVIS_TUNNEL_PROTOCOL:-}" ]; then
+      cfargs+=(--protocol "$JARVIS_TUNNEL_PROTOCOL")
+      say "cloudflared protocol: $JARVIS_TUNNEL_PROTOCOL"
+    fi
+    cfargs+=(--url "http://127.0.0.1:$PORT")
+    tpid="$(spawn "$LOG_DIR/tunnel.log" cloudflared "${cfargs[@]}")"
     echo "$tpid" > "$TUNNEL_PID_FILE"
     for i in $(seq 1 40); do
       url="$(awk 'match($0,/https:\/\/[a-z0-9-]+\.trycloudflare\.com/){u=substr($0,RSTART,RLENGTH)} END{print u}' "$LOG_DIR/tunnel.log" 2>/dev/null)"

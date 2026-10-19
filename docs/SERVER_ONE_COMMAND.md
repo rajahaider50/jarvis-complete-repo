@@ -104,7 +104,8 @@ Nothing is swallowed.
 | event history | `~/.jarvis-server/events.log` |
 
 Override with env vars: `JARVIS_HOME`, `JARVIS_DATA`, `JARVIS_PORT`, `JARVIS_LLM_KEY`,
-`JARVIS_LLM_MODEL`, `JARVIS_REPO`, `JARVIS_PIP_TIMEOUT`.
+`JARVIS_LLM_MODEL`, `JARVIS_REPO`, `JARVIS_PIP_TIMEOUT`, `JARVIS_TUNNEL_PROTOCOL`
+(default `http2`; use `quic` for Cloudflare's default protocol).
 
 The start script **never overwrites an existing token**; running it again keeps the same one.
 
@@ -175,6 +176,7 @@ If the app says `401`, the token does not match. If it says timeout, the URL is 
 | `FAIL public HTTPS tunnel` | no cloudflared **and** no ssh, or no internet | `pkg install cloudflared`, or use `--no-tunnel` and connect over LAN/VPN |
 | app: `401` | wrong token | `bash server/start.sh --token` |
 | app: timeout | old tunnel address | `bash server/start.sh --status` → paste the new URL |
+| the public URL dies every few minutes | that network blocks UDP/QUIC (common on mobile data) | the script already runs cloudflared with `--protocol http2`; try `JARVIS_TUNNEL_PROTOCOL=quic` if http2 is slow on your network |
 | server dies when phone sleeps | battery optimisation | wakelock + Termux battery = Unrestricted |
 | `git clone` asks for a password | private repo | use the token URL from section 1 |
 
