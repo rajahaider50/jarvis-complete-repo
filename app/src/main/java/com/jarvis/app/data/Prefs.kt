@@ -38,6 +38,10 @@ object Prefs {
     var shareQuality by mutableStateOf("detailed") // fast | detailed — screen-share frame size/quality
     var shareToRecorders by mutableStateOf(true) // play JARVIS's voice on the MEDIA stream so phone recorders can capture it
     var recBothVoices by mutableStateOf(true)   // in-app call recording mixes the mic AND JARVIS (never one-only)
+    var serverUrl by mutableStateOf("")         // own brain server base URL ("" = none; the app stays fully local)
+    var serverToken by mutableStateOf("")       // shared secret, sent as X-Jarvis-Token
+    var serverEnabled by mutableStateOf(true)   // use the brain server whenever it is reachable
+    var serverSyncMemory by mutableStateOf(true) // push/pull memory with the server (S3)
     var noAudioModels by mutableStateOf("")     // live models that answered "AUDIO is not supported" (server code 1007)
     var resumeHandle by mutableStateOf("")      // last Gemini Live session-resumption handle
     var resumeAt by mutableStateOf(0L)          // when the handle was received (valid ~30 min)
@@ -111,6 +115,10 @@ object Prefs {
         shareQuality = sp.getString("shareq", "detailed") ?: "detailed"
         shareToRecorders = sp.getBoolean("shareRec", true)
         recBothVoices = sp.getBoolean("recBoth", true)
+        serverUrl = sp.getString("srvUrl", "") ?: ""
+        serverToken = sp.getString("srvTok", "") ?: ""
+        serverEnabled = sp.getBoolean("srvOn", true)
+        serverSyncMemory = sp.getBoolean("srvMem", true)
         noAudioModels = sp.getString("noaudio", "") ?: ""
         resumeHandle = sp.getString("resumehandle", "") ?: ""
         resumeAt = sp.getLong("resumeat", 0L)
@@ -176,6 +184,8 @@ object Prefs {
             .putString("halfduplex", halfDuplex).putString("shareq", shareQuality)
             .putString("noaudio", noAudioModels)
             .putBoolean("shareRec", shareToRecorders).putBoolean("recBoth", recBothVoices)
+            .putString("srvUrl", serverUrl).putString("srvTok", serverToken)
+            .putBoolean("srvOn", serverEnabled).putBoolean("srvMem", serverSyncMemory)
             .putString("resumehandle", resumeHandle).putLong("resumeat", resumeAt)
             .putString("mem", JSONArray(memories.toList()).toString()).putString("cv", cv.toString())
             .putString("livemodels", JSONArray(liveModels.toList()).toString())

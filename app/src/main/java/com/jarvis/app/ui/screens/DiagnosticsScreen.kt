@@ -97,6 +97,24 @@ fun DiagnosticsScreen(onBack: () -> Unit, onNav: (String) -> Unit = {}) {
                     Row(Modifier.fillMaxWidth()) { JText("last file", 12, Muted, modifier = Modifier.weight(1f)); JText(com.jarvis.app.live.ScreenRecordService.lastFile ?: "-", 12, Ivory) }
                 } }
 
+                item { Card("Brain server") {
+                    Row(Modifier.fillMaxWidth()) { JText("state", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.srvState, 12, if (Diag.srvState == "ok") Ivory else Gold) }
+                    Row(Modifier.fillMaxWidth()) { JText("URL", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.srvUrl.ifBlank { "(not set — local memory only)" }, 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("version · memories · skills", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.srvVersion.ifBlank { "-" }} · ${Diag.srvMemories} · ${Diag.srvSkills}", 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("jobs queued · mood", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.srvJobs} · ${Diag.srvMood.ifBlank { "-" }}", 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("learner", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.srvLearner.ifBlank { "-" }, 12, Ivory) }
+                    Row(Modifier.fillMaxWidth()) { JText("calls · last ok", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.srvCalls} · ${Diag.srvLastOk.ifBlank { "-" }}", 12, Ivory) }
+                    if (Diag.srvLastError.isNotBlank()) Row(Modifier.fillMaxWidth()) { JText("last error", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.srvLastError, 12, Gold) }
+                    OutlineButton("Test the brain server now", null, {
+                        scope.launch {
+                            note = "Contacting the brain server…"
+                            val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.jarvis.app.net.JarvisServer.health() }
+                            note = if (r.ok) "Brain server ok: v${Diag.srvVersion}, ${Diag.srvMemories} memories, ${Diag.srvSkills} skills, mood ${Diag.srvMood}"
+                            else "Brain server: ${r.error}"
+                        }
+                    }, Modifier.padding(top = 6.dp))
+                } }
+
                 item { Card("Connection") {
                     Row(Modifier.fillMaxWidth()) { JText("websocket", 12, Muted, modifier = Modifier.weight(1f)); JText(Diag.wsState, 12, Ivory) }
                     Row(Modifier.fillMaxWidth()) { JText("playback underruns", 12, Muted, modifier = Modifier.weight(1f)); JText("${Diag.underruns}", 12, Ivory) }

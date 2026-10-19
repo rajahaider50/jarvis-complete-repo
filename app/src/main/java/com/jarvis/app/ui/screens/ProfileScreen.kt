@@ -99,6 +99,7 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                     Hairline(0.12f); PrefRowV(Icons.Outlined.GpsFixed, "Cursor Lab (AI cursor)") { onNav("cursorlab") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Bookmark, "Cursor memory (click lessons)") { onNav("cursormemory") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.BugReport, "Diagnostics (mic · call · cursor)") { onNav("diagnostics") }
+                    Hairline(0.12f); PrefRowV(Icons.Outlined.CloudSync, "Brain server (memory · learning)") { onNav("server") }
                     Hairline(0.12f)
                     Row(
                         Modifier.fillMaxWidth().padding(vertical = 12.dp),

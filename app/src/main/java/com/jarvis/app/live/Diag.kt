@@ -61,6 +61,18 @@ object Diag {
     var recMicBytes by mutableStateOf(0L)             // bytes of YOUR voice that reached the in-app recorder
     var recOutBytes by mutableStateOf(0L)             // bytes of JARVIS's voice that reached the in-app recorder
     var recSamples by mutableStateOf(0L)              // mixed 44.1 kHz samples written to the recorder's AAC track
+    // --- brain server (Phase 4): real values returned by the owner's own server, never invented ---
+    var srvUrl by mutableStateOf("")                  // base URL in use
+    var srvState by mutableStateOf("not configured")  // last real result: ok / unreachable / HTTP 401 ...
+    var srvVersion by mutableStateOf("")              // /health version
+    var srvMemories by mutableStateOf(0)              // memories on the server
+    var srvSkills by mutableStateOf(0)                // skills on the server
+    var srvJobs by mutableStateOf(0)                  // queued learning jobs
+    var srvMood by mutableStateOf("")                 // server affect label
+    var srvLearner by mutableStateOf("")              // learner running? (with its interval)
+    var srvCalls by mutableStateOf(0)                 // HTTP calls made to the server
+    var srvLastError by mutableStateOf("")            // real exception/status text of the last failure
+    var srvLastOk by mutableStateOf("")               // when the last successful call happened
     var tick by mutableStateOf(0)
 
     /** Log one line: logcat (authoritative, timestamped) + the in-memory ring. */
@@ -103,6 +115,10 @@ object Diag {
         sb.append("toolCalls=").append(toolCalls).append(" lastTool=").append(lastTool).append(" framesSent=").append(framesSent).append(" framesDropped=").append(framesDropped).append("\n")
         sb.append("cursorAdds=").append(cursorAdds).append(" cursorAddFails=").append(cursorAddFails).append(" foreignRecorder=").append(foreignRecorder).append("\n")
         sb.append("rec mic=").append(recMicBytes).append("B out=").append(recOutBytes).append("B mixed=").append(recSamples * 2).append("B active=").append(ScreenRecordService.active).append("\n")
+        sb.append("srv url=").append(srvUrl.ifBlank { "-" }).append(" state=").append(srvState).append(" ver=").append(srvVersion.ifBlank { "-" })
+        sb.append(" mem=").append(srvMemories).append(" skills=").append(srvSkills).append(" jobs=").append(srvJobs).append(" mood=").append(srvMood.ifBlank { "-" })
+        sb.append(" learner=").append(srvLearner.ifBlank { "-" }).append(" calls=").append(srvCalls).append(" lastOk=").append(srvLastOk.ifBlank { "-" }).append("\n")
+        sb.append("srv lastError=").append(srvLastError.ifBlank { "-" }).append("\n")
         val dm = CursorController.ctxOrNull()?.resources?.displayMetrics
         sb.append("display densityService=").append(dm?.density).append(" densityDpiService=").append(dm?.densityDpi)
             .append(" screen=").append(CursorGeometry.screenSizeOrNull()?.let { "${it.w}x${it.h}" } ?: "-")
