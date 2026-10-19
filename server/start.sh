@@ -270,7 +270,7 @@ PY
 s_fetch() {
   mkdir -p "$RUNTIME_DIR" || return 1
   local dest="$RUNTIME_DIR/repo" ok=1 TG=""
-  command -v timeout >/dev/null 2>&1 && TG="timeout 240"
+  command -v timeout >/dev/null 2>&1 && TG="timeout 90"
   if command -v git >/dev/null 2>&1; then
     if [ -d "$dest/.git" ]; then
       say "updating $dest with git"
