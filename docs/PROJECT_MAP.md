@@ -1,10 +1,19 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 17:59 · 255 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-19 19:12 · 259 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
+- .gitignore
+- Complete.md
 - Pending.md
-- docs/CHANGES_20261019_server-s2-app-connection.md
+- Roadmap.md
+- Task.md
+- docs/HANDOFF_STATE.md
+- docs/SERVER_ONE_COMMAND.md
+- server/selftest.py
+- server/start.sh
+- server/vendor_wheels.py
+- server/jarvis_server/api.py
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -167,15 +176,15 @@ format: `path` · lines · what it is · declares · uses (other project files)
 
 ## Resources, manifest, build, CI, docs
 
-- `.gitignore` · 9 lines
-- `Complete.md` · 37 lines
+- `.gitignore` · 16 lines
+- `Complete.md` · 38 lines
 - `FEATURES.md` · 54 lines
 - `Goal.md` · 15 lines
-- `Pending.md` · 67 lines
+- `Pending.md` · 69 lines
 - `Planning.md` · 42 lines
 - `README.md` · 110 lines
-- `Roadmap.md` · 33 lines
-- `Task.md` · 33 lines
+- `Roadmap.md` · 34 lines
+- `Task.md` · 42 lines
 - `build.gradle.kts` · 5 lines
 - `gradle.properties` · 5 lines
 - `settings.gradle.kts` · 8 lines
@@ -248,7 +257,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/CHANGES_20261018_bugfix-round3-stepD-settings-and-background-mic.md` · 110 lines
 - `docs/CHANGES_20261019_recording-both-voices.md` · 119 lines
 - `docs/CHANGES_20261019_server-s2-app-connection.md` · 68 lines
-- `docs/HANDOFF_STATE.md` · 59 lines
+- `docs/HANDOFF_STATE.md` · 60 lines
 - `docs/HOW_TO_WORK_WITH_AI.md` · 53 lines
 - `docs/REPORT_20261018_bugfix-final-summary.md` · 57 lines
 - `docs/REPORT_20261018_masla1_mic_recording.md` · 63 lines
@@ -256,6 +265,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/REPORT_20261018_masla3_call_stalling.md` · 65 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/SERVER_DEPLOY_FREE.md` · 103 lines
+- `docs/SERVER_ONE_COMMAND.md` · 199 lines
 - `docs/SERVER_SETUP_TERMUX.md` · 163 lines
 - `docs/SERVER_SYSTEM.md` · 99 lines
 - `docs/START_PROMPT.md` · 16 lines
@@ -271,11 +281,14 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `server/conftest.py` · 2 lines
 - `server/requirements.txt` · 5 lines
 - `server/run_termux.sh` · 16 lines
+- `server/selftest.py` · 141 lines
+- `server/start.sh` · 692 lines
+- `server/vendor_wheels.py` · 122 lines
 - `server/wsgi.py` · 7 lines
 - `server/jarvis_server/__init__.py` · 10 lines
 - `server/jarvis_server/__main__.py` · 19 lines
 - `server/jarvis_server/affect.py` · 149 lines
-- `server/jarvis_server/api.py` · 241 lines
+- `server/jarvis_server/api.py` · 380 lines
 - `server/jarvis_server/config.py` · 61 lines
 - `server/jarvis_server/learner.py` · 121 lines
 - `server/jarvis_server/llm.py` · 70 lines
