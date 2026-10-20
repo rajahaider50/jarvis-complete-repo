@@ -14,21 +14,23 @@ It never fakes a step: every row is a real command with a real exit code.
 Naya Termux tab kholo, `cd` ki zarurat **nahi** — jis folder me bhi ho, chalega:
 
 ```sh
-pkg install -y curl python
-bash <(curl -fsSL https://raw.githubusercontent.com/rajahaider50/jarvis-complete-repo/main/server/start.sh)
+curl -fsSL https://raw.githubusercontent.com/rajahaider50/jarvis-complete-repo/main/server/start.sh -o ~/jarvis-start.sh && bash ~/jarvis-start.sh
 ```
 
-Bas. Doosri baar se sirf:
+Pehli baar sirf itna extra (agar `curl`/`python` pehle se nahi hain):
 
 ```sh
-bash <(curl -fsSL https://raw.githubusercontent.com/rajahaider50/jarvis-complete-repo/main/server/start.sh)
+pkg install -y curl python
 ```
 
-* `curl` + `python` pehle se hon to pehli line skip kar do — ek hi command kaafi hai.
-* Script khud `~/jarvis-src` / `~/.jarvis-server` me apni copy rakhta hai, is liye aapki **current
-  directory se koi farq nahi padta** (na `cd`, na path ka jhanjhat).
-* `git` optional hai: agar git hai to clone/pull karta hai, warna seedha GitHub ka archive
-  download karke `.env` (token) aur `.pylibs` bacha kar rakh deta hai.
+* Script apni copy **`~/jarvis-start.sh`** me bacha leta hai, is liye aage yeh sab kahin se bhi:
+  `bash ~/jarvis-start.sh --status` · `--stop` · `--restart` · `--logs` · `--token`
+* Code `~/.jarvis-server/repo` me jata hai — aapki **current directory se koi farq nahi padta**
+  (na `cd`, na path ka jhanjhat).
+* `git` optional hai: agar git hai to clone/pull, warna GitHub ka archive download karke
+  `.env` (token) aur `.pylibs` bacha kar rakh deta hai.
+* `bash <(curl ...)` bhi chalta hai, lekin kuch restricted shells (proot) me `/dev/fd` nahi hota —
+  is liye `-o` wala version upar rakha hai (warna `bash: /dev/fd/63: No such file or directory`).
 * `pkg install` fail ho to pehle `pkg update -y` chala kar dobara try karo.
 
 **Private fork ho to** (token chahiye):
@@ -193,16 +195,21 @@ If the app says `401`, the token does not match. If it says timeout, the URL is 
 ## 9. What I actually tested (2026-10-19/20)
 
 * `bash -n server/start.sh` — syntax clean.
-* Full run in a phone-like sandbox: **14 steps → 12 PASS, 0 FAIL, 2 SKIP** (wakelock + boot skipped
-  because the sandbox reports `PREFIX` unset, i.e. not a real Termux UI), total 11 s.
+* Full run in a phone-like sandbox: **14–15 steps → 0 FAIL**, total 11–86 s
+  (wakelock + boot skipped because the sandbox is not a real Termux UI; 15 steps when git is present).
+* **The public command itself**, run from `/tmp` (nowhere near the repo, fresh `$HOME`):
+  `curl ... -o ~/jarvis-start.sh && bash ~/jarvis-start.sh` →
+  clone + `.env` + dependencies + **33/33 self-test** + server + `/health` + watchdog + verified public
+  URL, **13 PASS / 0 FAIL / 2 SKIP**, brain `memories=0 skills=0` (honest empty start).
+* **9/9 public checks** on that fresh install: `/health` open, `/api/state` 401 without token and 200
+  with it, memory written + deleted, recall, `/control`, `/`.
+  (`/control` and the dashboard answer 200; the write test used the new token from `.env`.)
 * `python3 selftest.py` inside the script: **33/33 checks** (health, memory, dedupe, recall, a real
   learning job, skills CRUD, affect deltas, SDUI pages, sync, 401/200 auth, dashboard, control page).
-* Public URL checks from the internet: **9/9** — `/health` open, `/api/state` 401 without token and
-  200 with it, memory written + deleted, recall, `/control`, `/`.
 * Watchdog: killed the server pid → back up within 20 s (new pid, same data).
 * Tunnel reuse: running `start` again kept the same public URL instead of churning it.
 * Tunnel self-heal: the URL watchdog noticed a dead free tunnel and opened a working one
   (`watchdog.log`: `reopening the tunnel`), which then passed the 9 public checks.
-* cloudflared path tested with the real `cloudflared-linux-arm64` binary (quick tunnel verified).
+* cloudflared path tested with the real `cloudflared-linux-arm64` binary (quick tunnel, `--protocol http2`).
 
 Those runs are the reason every step in the table has a real log behind it.
