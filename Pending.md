@@ -1,5 +1,5 @@
 # PENDING (not done yet). Delete a line when finished and add it to Complete.md.
-- [ ] Phone test: run `bash server/start.sh` in a fresh Termux tab — share the 14-step table (PASS/FAIL/SKIP), the watcher state (`--status`) and the public URL; then connect the app (Profile > Brain server) and press Test connection.
+- [ ] Phone test (v1.3.0): re-run the one-liner, then share the **14/15-step table** (it must reach `15 PASS public HTTPS tunnel` and print the table), the **command center screen** (URL + token visible), and `--status`. Confirm `wc -c ~/.jarvis-server/watchdog.sh` is **not 0** and `--status` says watchdog running. Then connect the app (Profile > Brain server) and press Test connection.
 - [ ] Phone test: keep the server overnight with the screen off and confirm in the morning that `--status` says UP and `watchdog.log` shows no restart loop.
 - [ ] Phone test: AI cursor — Profile > Cursor Lab (grid + 5 targets, real tap lands on the ring); add/drag cursors (up to 10, colours/numbers); panel nudge + Tap/Dbl/Long/All + PANIC; joystick speed 1-15; grid overlay.
 - [ ] Phone test: AI cursor by voice — "screen par cursor dikhao", "yahan click karo", "do cursor banao aur dono click karo"; cursor moves smoothly and does not swallow its own tap.

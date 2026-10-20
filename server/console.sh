@@ -148,8 +148,13 @@ draw() {
     printf '  %s●%s SERVER   %sDOWN%s    watchdog %s   (press 7 to restart)\n' \
       "$RED$B" "$R" "$RED$B" "$R" "$(pid_alive "$wpid" && echo running || echo stopped)"
   fi
-  printf '  %s●%s BRAIN    v%s   memories %s   skills %s   jobs %s\n' \
-    "$TEAL" "$R" "$ver" "$mem" "$sk" "$jobs"
+  if [ "$state" = UP ]; then
+    printf '  %s●%s BRAIN    v%s   memories %s   skills %s   jobs %s\n' \
+      "$TEAL" "$R" "$ver" "$mem" "$sk" "$jobs"
+  else
+    printf '  %s●%s BRAIN    %soffline - no counts to show (press 7 to start it)%s\n' \
+      "$TEAL" "$R" "$D" "$R"
+  fi
   printf '  %s●%s STATE    mood %s   learner %s/%ss   queued %s  done %s  failed %s\n' \
     "$TEAL" "$R" "$mood" "$learner" "$interval" "$queued" "$done" "$failed"
   printf '  %s●%s TUNNEL   %s   url opened %s\n' \
@@ -312,7 +317,7 @@ confirm_stop() {
   printf '\n  %sStop the server, watchdog AND tunnel?%s (y/N) ' "$AMBER" "$R"
   read -r a || true
   case "$a" in
-    y|Y) restore; printf '\n'; bash "$START_SH" --stop --no-console; sleep 2;;
+    y|Y) restore; printf '\n'; bash "$START_SH" --stop --no-console; STOPPED=1; sleep 2;;
     *)   printf '  %scancelled - nothing was stopped%s\n' "$D" "$R"; sleep 1;;
   esac
 }
@@ -353,8 +358,13 @@ while true; do
       t|T)   tutorial_screen; pause_ ;;
       h|H)   help_screen; pause_ ;;
       q|Q)   restore
-             printf '  %sconsole closed - server, watchdog and tunnel are still running.%s\n' "$D" "$R"
-             printf '  %sback here any time: bash ~/jarvis-start.sh --console%s\n\n' "$D" "$R"
+             if [ "${STOPPED:-0}" = 1 ]; then
+               printf '  %sconsole closed - everything was stopped with 9.%s\n' "$D" "$R"
+               printf '  %sstart it again: bash ~/jarvis-start.sh%s\n\n' "$D" "$R"
+             else
+               printf '  %sconsole closed - server, watchdog and tunnel are still running.%s\n' "$D" "$R"
+               printf '  %sback here any time: bash ~/jarvis-start.sh --console%s\n\n' "$D" "$R"
+             fi
              exit 0;;
       *) : ;;
     esac

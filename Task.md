@@ -1,5 +1,27 @@
 # TASK (current task; ONE at a time)
-Status: in progress — S1 + S2 done (green), S3 is next.
+Status: in progress — S1 + S2 + S2.5 + S2.6 done (green), S3 is next.
+
+- **Step S2.6 — DONE (v1.3.0, commit `9d74b17d`)** — the first real phone run exposed two fatal bugs and
+  a slow-tunnel false negative; all three are fixed and proven:
+  1. `logs/step-14.log` on the phone said `boot_dir: unbound variable` — `local boot_dir=… f="$boot_dir/…"`
+     under `set -u` reads `$boot_dir` before it exists, so the shell exited after step 14 (no step 15,
+     no table, no URL). Fixed by splitting the assignments (with a comment so it cannot come back).
+  2. `watchdog.sh` was 0 bytes: the generated script had `PYTHONPATH="$PYTHONPATH"`, which errors when
+     `PYTHONPATH` is unset (fresh Termux + flask already installed) and leaves the file empty while the
+     step still said PASS. Fixed to `${PYTHONPATH:-}` **and** the step now FAILs on an empty script or a
+     watchdog that dies within 1 s.
+  3. cloudflared needed ~2m45s on that phone (precheck 08:25:14 → registered 08:28:01) but the script
+     gave up after 40 s. Now: 240 s wait with a heartbeat, **recovery** of a tunnel that is already
+     running (same pid/URL), then the ssh fallback.
+  Also new: **`server/console.sh` — the command center** (live panel: server/health/uptime/memories/
+  skills/jobs/mood/learner/local URL/public URL/token/data/logs; 14 commands incl. teach, add memory,
+  jobs, memories, live logs, restart, new URL, stop, update, tutorial; `q` closes only the panel).
+  `start.sh` auto-opens it after a green run (needs a real TTY) and `--console` opens it any time;
+  it also chmods its own saved copy (fixes `Permission denied` on `~/jarvis-start.sh`).
+  Tested: Termux-like run (PREFIX + PYTHONPATH unset + fake HOME) 14/14 PASS; public install from the
+  pushed repo 13 PASS/0 FAIL/2 SKIP with a verified URL; 9/9 public checks; console driven in a pty
+  (teach → job done → memory + skill, jobs, memories, tutorial, stop, quit); tunnel recovery; ssh
+  fallback with a broken cloudflared stub; watchdog restart after `kill -9`.
 
 - **Task:** Phase 4 — Autonomous companion server (see Roadmap.md). Owner's request: a real backend that
   learns in the background, keeps human-like memory/skills, has an honest affect model, syncs with the app,
