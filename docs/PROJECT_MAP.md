@@ -1,9 +1,11 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-20 02:51 · 259 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-20 09:06 · 260 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
 - docs/SERVER_ONE_COMMAND.md
+- server/console.sh
+- server/start.sh
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -255,7 +257,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/REPORT_20261018_masla3_call_stalling.md` · 65 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/SERVER_DEPLOY_FREE.md` · 103 lines
-- `docs/SERVER_ONE_COMMAND.md` · 216 lines
+- `docs/SERVER_ONE_COMMAND.md` · 302 lines
 - `docs/SERVER_SETUP_TERMUX.md` · 163 lines
 - `docs/SERVER_SYSTEM.md` · 99 lines
 - `docs/START_PROMPT.md` · 16 lines
@@ -269,10 +271,11 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `server/Procfile` · 4 lines
 - `server/README.md` · 57 lines
 - `server/conftest.py` · 2 lines
+- `server/console.sh` · 367 lines
 - `server/requirements.txt` · 5 lines
 - `server/run_termux.sh` · 16 lines
 - `server/selftest.py` · 141 lines
-- `server/start.sh` · 765 lines
+- `server/start.sh` · 834 lines
 - `server/vendor_wheels.py` · 122 lines
 - `server/wsgi.py` · 7 lines
 - `server/jarvis_server/__init__.py` · 10 lines
