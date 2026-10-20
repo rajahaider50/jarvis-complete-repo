@@ -1,13 +1,11 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-20 09:15 · 260 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-20 09:36 · 260 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- Complete.md
-- Pending.md
-- Task.md
-- docs/HANDOFF_STATE.md
 - server/console.sh
+- server/start.sh
+- server/jarvis_server/api.py
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -283,7 +281,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `server/jarvis_server/__init__.py` · 10 lines
 - `server/jarvis_server/__main__.py` · 19 lines
 - `server/jarvis_server/affect.py` · 149 lines
-- `server/jarvis_server/api.py` · 380 lines
+- `server/jarvis_server/api.py` · 401 lines
 - `server/jarvis_server/config.py` · 61 lines
 - `server/jarvis_server/learner.py` · 121 lines
 - `server/jarvis_server/llm.py` · 70 lines
