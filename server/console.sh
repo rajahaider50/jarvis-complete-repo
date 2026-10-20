@@ -138,7 +138,7 @@ draw() {
   printf '  %s╭──────────────────────────────────────────────────╮%s\n' "$RULE" "$R"
   printf '  %s│%s%s%s%s│%s\n' "$RULE" "$R" "$B$GOLD" "$(printf '%-50s' '  J A R V I S  ·  brain server')" "$RULE" "$R"
   printf '  %s│%s%s%s%s│%s\n' "$RULE" "$R" "$D" "$(printf '%-50s' '  command center')" "$RULE" "$R"
-  printf '  %s│%s%s%s%s│%s\n' "$RULE" "$R" "$D" "$(printf '%-50s' '  v1.3.0 · q = quit · 1-9 0 = commands')" "$RULE" "$R"
+  printf '  %s│%s%s%s%s│%s\n' "$RULE" "$R" "$D" "$(printf '%-50s' '  v1.3.1 · q = quit · 1-9 0 = commands')" "$RULE" "$R"
   printf '  %s╰──────────────────────────────────────────────────╯%s\n\n' "$RULE" "$R"
 
   # server

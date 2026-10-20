@@ -55,7 +55,7 @@ CONTROL_HTML = """<!doctype html>
   <small id="tokstate"></small>
 </div>
 
-<div class="b"><h2>Live state</h2><pre id="state">…</pre></div>
+<div class="b"><h2>Live state</h2><div id="live"></div><pre id="state">…</pre></div>
 
 <div class="b"><h2>Add a memory</h2>
   <textarea id="mtext" rows="2" placeholder="e.g. Owner builds dynamic 3D websites"></textarea>
@@ -104,18 +104,39 @@ async function api(path, opts){
   var j = null; try { j = JSON.parse(t); } catch (e) {}
   return {ok:r.ok, code:r.status, body:j, raw:t};
 }
+var lastGood = 0;
+function paintLive(hok, s){
+  var age = lastGood ? Math.round((Date.now() - lastGood) / 1000) : -1;
+  if (hok) {
+    $('live').innerHTML = '<span class="ok">● live</span> <small>the server itself answered ' +
+      (age < 2 ? 'just now' : age + 's ago') + ' · auto-refresh every 5s</small>';
+    return;
+  }
+  var code = s ? s.code : 0;
+  var why = code === 530 ? 'the Cloudflare edge lost the tunnel for a moment (HTTP 530)'
+          : code === 502 || code === 503 || code === 504 ? 'the tunnel is up but the server did not answer (HTTP ' + code + ')'
+          : code ? 'HTTP ' + code : 'network error';
+  $('live').innerHTML = '<span class="bad">● reconnecting</span> <small>' + why +
+    ' — showing the last values below. Retrying every 5s; nothing is lost.</small>';
+}
 async function refresh(){
-  var h = await api('/health'), s = await api('/api/state'), a = await api('/api/affect');
-  var lines = [];
-  lines.push('health      ' + (h.ok ? 'ok  v' + (h.body.version || '?') : 'FAILED'));
-  if (s.body && s.body.counts) lines.push('memories    ' + s.body.counts.memories + '      skills ' + s.body.counts.skills + '      jobs ' + s.body.counts.jobs + '      events ' + s.body.counts.events);
-  if (s.body && s.body.learner) lines.push('learner     ' + (s.body.learner.running ? 'on' : 'off') + ' / ' + s.body.learner.interval_s + 's      queued ' + s.body.learner.queued + '      done ' + s.body.learner.done + '      failed ' + s.body.learner.failed);
-  if (!s.ok) lines.push('state       HTTP ' + s.code + (s.code === 401 ? '   (paste the token above)' : ''));
-  $('state').textContent = lines.join('\\n');
-  if (a.body && a.body.state) {
-    var st = a.body.state;
-    $('affect').textContent = 'mood ' + a.body.mood + '   valence ' + st.valence + '   arousal ' + st.arousal +
-      '   energy ' + st.energy + '   trust ' + st.trust + '   focus ' + st.focus + '\\n' + (a.body.note || '');
+  try {
+    var h = await api('/health'), s = await api('/api/state'), a = await api('/api/affect');
+    var lines = [];
+    lines.push('health      ' + (h.ok ? 'ok  v' + (h.body.version || '?') : 'FAILED'));
+    if (s.body && s.body.counts) lines.push('memories    ' + s.body.counts.memories + '      skills ' + s.body.counts.skills + '      jobs ' + s.body.counts.jobs + '      events ' + s.body.counts.events);
+    if (s.body && s.body.learner) lines.push('learner     ' + (s.body.learner.running ? 'on' : 'off') + ' / ' + s.body.learner.interval_s + 's      queued ' + s.body.learner.queued + '      done ' + s.body.learner.done + '      failed ' + s.body.learner.failed);
+    if (!s.ok) lines.push('state       HTTP ' + s.code + (s.code === 401 ? '   (paste the token above)' : ''));
+    $('state').textContent = lines.join('\\n');
+    if (a.body && a.body.state) {
+      var st = a.body.state;
+      $('affect').textContent = 'mood ' + a.body.mood + '   valence ' + st.valence + '   arousal ' + st.arousal +
+        '   energy ' + st.energy + '   trust ' + st.trust + '   focus ' + st.focus + '\\n' + (a.body.note || '');
+    }
+    if (h.ok) lastGood = Date.now();
+    paintLive(h.ok, s);
+  } catch (e) {
+    paintLive(false, null);          // fetch itself failed: tunnel blip, not a broken brain
   }
 }
 function esc(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }

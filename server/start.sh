@@ -32,7 +32,7 @@
 # ==============================================================================
 set -uo pipefail
 
-SCRIPT_VERSION="1.3.0"
+SCRIPT_VERSION="1.3.1"
 REPO_URL="${JARVIS_REPO:-https://github.com/rajahaider50/jarvis-complete-repo.git}"
 BRANCH="${JARVIS_BRANCH:-main}"
 PORT="${JARVIS_PORT:-8787}"
