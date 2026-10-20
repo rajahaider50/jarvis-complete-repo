@@ -1,9 +1,9 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-10-19 19:40 · 259 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-10-20 02:51 · 259 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- server/start.sh
+- docs/SERVER_ONE_COMMAND.md
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -255,7 +255,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `docs/REPORT_20261018_masla3_call_stalling.md` · 65 lines
 - `docs/REQUEST_TEMPLATE.md` · 20 lines
 - `docs/SERVER_DEPLOY_FREE.md` · 103 lines
-- `docs/SERVER_ONE_COMMAND.md` · 209 lines
+- `docs/SERVER_ONE_COMMAND.md` · 216 lines
 - `docs/SERVER_SETUP_TERMUX.md` · 163 lines
 - `docs/SERVER_SYSTEM.md` · 99 lines
 - `docs/START_PROMPT.md` · 16 lines
