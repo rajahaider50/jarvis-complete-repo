@@ -24,7 +24,10 @@ pkg install -y curl python
 ```
 
 * Script apni copy **`~/jarvis-start.sh`** me bacha leta hai, is liye aage yeh sab kahin se bhi:
-  `bash ~/jarvis-start.sh --status` · `--stop` · `--restart` · `--logs` · `--token`
+  `bash ~/jarvis-start.sh --status` · `--console` · `--stop` · `--restart` · `--logs` · `--token`
+* Script khud ko executable bana leti hai, is liye `~/jarvis-start.sh` bhi chal jati hai.
+  (`curl -o` file ko +x ke bina banata hai — pehle `Permission denied` isi wajah se aata tha;
+  ab dono chalte hain, aur safe tareeqa `bash ~/jarvis-start.sh` hai.)
 * Code `~/.jarvis-server/repo` me jata hai — aapki **current directory se koi farq nahi padta**
   (na `cd`, na path ka jhanjhat).
 * `git` optional hai: agar git hai to clone/pull, warna GitHub ka archive download karke
@@ -82,11 +85,62 @@ Nothing is swallowed.
 
 ---
 
-## 3. All commands
+## 3. The command center (khud khul jata hai)
+
+Jab install green ho jata hai, script khud **command center** khol deti hai — ek live
+terminal panel jisme sab kuch asli server se aata hai (koi mock nahi):
+
+```
+  ╭──────────────────────────────────────────────────╮
+  │  J A R V I S  ·  brain server                    │
+  │  command center                                  │
+  │  v1.3.0 · q = quit · 1-9 0 = commands            │
+  ╰──────────────────────────────────────────────────╯
+
+  ● SERVER   UP      pid 20167   up 3h 12m
+  ● BRAIN    v0.1.0   memories 4   skills 2   jobs 1
+  ● STATE    mood calm   learner on/15s   queued 0  done 3  failed 0
+  ● TUNNEL   running   url opened 12s ago
+
+  PUBLIC URL
+    https://xxxx.trycloudflare.com
+  LOCAL
+    http://127.0.0.1:8787   dashboard /   control /control
+  TOKEN  <aapka token>
+  DATA   ~/jarvis-data (24 KB)   LOGS ~/.jarvis-server/logs
+```
+
+Menu (har number asli kaam karta hai — 14 commands):
+
+| key | command | kya hota hai |
+|---|---|---|
+| `1` | Status refresh | `/health` + `/api/state` dobara padhta hai (panel 10s me khud bhi refresh hota hai) |
+| `2` | Links + token | app me paste karne wali URL + token, aur `/` `/control` `/health` links |
+| `3` | Teach JARVIS | learning job queue karta hai; learner ~15s me memory/skill likhta hai |
+| `4` | Add a memory | seedha brain me note (turant recall hota hai) |
+| `5` | Jobs + results | last jobs ka status/result/error — proof learner ne kaam kiya |
+| `0` | Memories | jo abhi tak sikhaya gaya hai (khali = honest empty brain) |
+| `6` | Live logs | `server.log` live tail (`q` se rukta hai, server chalta rehta hai) |
+| `7` | Restart server | poora `--restart` (stop → self-test → start → health → watchdog → tunnel) |
+| `8` | New public URL | `--tunnel-only` (chal raha URL ho to wahi reuse hota hai) |
+| `9` | Stop everything | server + watchdog + tunnel band (pehle confirm poochta hai) |
+| `u` | Update + restart | naya code pull karke poora check + restart |
+| `t` | Tutorial | har command ka detail — kya karta hai, kab use karna hai |
+| `h` | Help | keys + shortcuts |
+| `q` | Quit console | sirf panel band hota hai, **server chalta rehta hai** |
+
+`q` dabane par server nahi rukta: server, watchdog aur tunnel apni alag session
+(`setsid`/`nohup`) me chalte hain. Wapas kholne ke liye: `bash ~/jarvis-start.sh --console`.
+
+---
+
+## 4. All commands
 
 | command | what it does |
 |---|---|
-| `bash server/start.sh` | install + self-test + start + watchdog + public URL + table |
+| `bash server/start.sh` | install + self-test + start + watchdog + public URL + table + command center |
+| `bash server/start.sh --console` | seedha command center (live panel + menu + tutorial) |
+| `bash server/start.sh --no-console` | sirf install/table, panel nahi |
 | `bash server/start.sh --status` | real `/health` answer, pids, public URL, token, last log lines |
 | `bash server/start.sh --stop` | stops server, watchdog and tunnel |
 | `bash server/start.sh --restart` | stop + start |
@@ -101,7 +155,7 @@ Nothing is swallowed.
 
 ---
 
-## 4. Where everything lives
+## 5. Where everything lives
 
 | what | path |
 |---|---|
@@ -121,7 +175,7 @@ The start script **never overwrites an existing token**; running it again keeps 
 
 ---
 
-## 5. 24/7 — what actually keeps it alive
+## 6. 24/7 — what actually keeps it alive
 
 1. **Watchdog** (`~/.jarvis-server/watchdog.sh`, its own session via `setsid`): every 20 s it asks
    `http://127.0.0.1:8787/health`; if the server does not answer it starts it again and logs
@@ -139,7 +193,7 @@ The start script **never overwrites an existing token**; running it again keeps 
 
 ---
 
-## 6. Free public URL
+## 7. Free public URL
 
 The script tries in this order:
 
@@ -162,7 +216,7 @@ Vercel/Netlify cannot run a long-lived process — so they are not used here.
 
 ---
 
-## 7. Connect the app (real, no fake state)
+## 8. Connect the app (real, no fake state)
 
 1. Profile → **Brain server (memory · learning)**.
 2. Paste the **URL** (the public one, or `http://127.0.0.1:8787` if the app is on the same phone).
@@ -177,13 +231,16 @@ If the app says `401`, the token does not match. If it says timeout, the URL is 
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 | symptom | real cause | fix |
 |---|---|---|
 | `FAIL install dependencies` | no pip for this python, or pip hung | the script falls back to `vendor_wheels.py` (downloads the official wheels into `server/.pylibs`). If that also fails, read `logs/step-06.log` |
 | `FAIL wait for /health` | port taken, or python error | `--status`, then `logs/server.log`; `--port 9000` if 8787 is busy |
 | `FAIL public HTTPS tunnel` | no cloudflared **and** no ssh, or no internet | `pkg install cloudflared`, or use `--no-tunnel` and connect over LAN/VPN |
+| `Permission denied` on `~/jarvis-start.sh` | `curl -o` does not set +x | use `bash ~/jarvis-start.sh ...` (v1.3.0 also chmods itself on the first run) |
+| cloudflared says `printed no working URL` | on mobile data the Cloudflare precheck + edge connect can take minutes | v1.3.0 waits up to 240 s and prints `still connecting ... Ns`; if it dies it automatically falls back to the ssh tunnel |
+| a public URL exists but the script "does not know it" | an older run opened the tunnel after the script gave up | v1.3.0 **recovers** it: `--tunnel-only` reads the running tunnel's log, verifies the URL and saves it (same pid, no new tunnel) |
 | app: `401` | wrong token | `bash server/start.sh --token` |
 | app: timeout | old tunnel address | `bash server/start.sh --status` → paste the new URL |
 | the public URL dies every few minutes | that network blocks UDP/QUIC (common on mobile data) | the script already runs cloudflared with `--protocol http2`; try `JARVIS_TUNNEL_PROTOCOL=quic` if http2 is slow on your network |
@@ -192,7 +249,7 @@ If the app says `401`, the token does not match. If it says timeout, the URL is 
 
 ---
 
-## 9. What I actually tested (2026-10-19/20)
+## 10. What I actually tested (2026-10-19/20)
 
 * `bash -n server/start.sh` — syntax clean.
 * Full run in a phone-like sandbox: **14–15 steps → 0 FAIL**, total 11–86 s
@@ -211,5 +268,34 @@ If the app says `401`, the token does not match. If it says timeout, the URL is 
 * Tunnel self-heal: the URL watchdog noticed a dead free tunnel and opened a working one
   (`watchdog.log`: `reopening the tunnel`), which then passed the 9 public checks.
 * cloudflared path tested with the real `cloudflared-linux-arm64` binary (quick tunnel, `--protocol http2`).
+* **Command center** (v1.3.0), driven in a real pty: links screen, teach → `job #2 queued`, learner
+  finished it (`done 1`, memory `raw` + skill `pakistan-ka-capital-is`), jobs screen, memories screen,
+  tutorial, `q` → `console closed - server, watchdog and tunnel are still running`.
+* **Auto-open**: a full local install ended with `opening the command center`, showed the live URL +
+  token, and `q` returned to the shell with the server still up.
+* **Tunnel recovery**: deleted `tunnel.url` while a tunnel was running → `--tunnel-only` printed
+  `recovered the tunnel that was already running: https://... (verified from the internet)`,
+  same pid, same URL, instant.
+* **ssh fallback**: with a cloudflared stub that exits immediately, the script printed its last lines,
+  said `trying the free ssh tunnel instead` and produced a verified `https://....lhr.life` URL.
+* **Watchdog after the fix**: `kill -9` on the server pid → new pid within 20 s, same database
+  (`memories=1 skills=1` survived).
+
+### Two real bugs found by the first phone run (2026-10-20) — both fixed in v1.3.0
+
+1. **The run stopped right after step 14 and never printed the table.**
+   `set -u` + `local boot_dir="$HOME/.termux/boot" f="$boot_dir/jarvis-server.sh"` reads `$boot_dir`
+   before it exists → `boot_dir: unbound variable` → the shell exits. Proven from the phone's own
+   `logs/step-14.log`. Fixed by assigning the two variables separately (and the cause is commented
+   in the code so it cannot come back).
+2. **The watchdog script was 0 bytes, so nothing was watching the server.**
+   The generated script contains `PYTHONPATH="$PYTHONPATH"`; when `PYTHONPATH` is unset (fresh
+   Termux, flask already installed) that expansion fails under `set -u`, leaving a truncated file
+   while the step still reported PASS. Fixed with `PYTHONPATH="${PYTHONPATH:-}"` **and** a guard:
+   an empty watchdog file or a watchdog that dies within 1 s is now a hard FAIL, never a silent pass.
+3. **The tunnel looked "failed" but was actually working.** On that phone cloudflared needed
+   ~2m45s (precheck 08:25:14 → connection registered 08:28:01) while the old script gave up after
+   40 s. v1.3.0 waits 240 s with a heartbeat, recovers a URL that is already live, and only then
+   falls back to ssh.
 
 Those runs are the reason every step in the table has a real log behind it.

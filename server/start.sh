@@ -10,7 +10,8 @@
 #     4 python version       8 start + /health check  12  public HTTPS URL
 #
 #  USAGE
-#    bash server/start.sh                 install + test + start + verify (inside a clone)
+#    bash server/start.sh                 install + test + start + verify, then the command center
+#    bash start.sh --console              open the command center (live panel + menu + tutorial)
 #    bash start.sh --status               is it running? real /health answer + pids + URL
 #    bash start.sh --stop                 stop server, watchdog and tunnel
 #    bash start.sh --restart              stop then start again
@@ -19,18 +20,19 @@
 #    bash start.sh --tunnel-only          open (or refresh) just the public URL
 #    bash start.sh --no-tunnel            do not open a public URL
 #    bash start.sh --no-watch             do not run the watchdog
+#    bash start.sh --no-console           do not open the command center at the end
 #    bash start.sh --port 9000            use another port
 #    bash start.sh --dir ~/jarvis-src     run from another checkout
 #
 #  One-liner (clones the repo by itself when run outside it):
-#    bash <(curl -fsSL https://raw.githubusercontent.com/rajahaider50/jarvis-complete-repo/main/server/start.sh)
+#    curl -fsSL https://raw.githubusercontent.com/rajahaider50/jarvis-complete-repo/main/server/start.sh -o ~/jarvis-start.sh && bash ~/jarvis-start.sh
 #
 #  No root needed anywhere. On Termux it also takes the wakelock and installs the
 #  boot script; on a PC/VPS those two steps are reported as SKIP.
 # ==============================================================================
 set -uo pipefail
 
-SCRIPT_VERSION="1.2.0"
+SCRIPT_VERSION="1.3.0"
 REPO_URL="${JARVIS_REPO:-https://github.com/rajahaider50/jarvis-complete-repo.git}"
 BRANCH="${JARVIS_BRANCH:-main}"
 PORT="${JARVIS_PORT:-8787}"
@@ -50,6 +52,7 @@ PIP_TIMEOUT="${JARVIS_PIP_TIMEOUT:-240}"
 JARVIS_TUNNEL_PROTOCOL="${JARVIS_TUNNEL_PROTOCOL:-http2}"
 ACTION="start"
 SRCDIR=""
+WANT_CONSOLE="ask"
 
 # ------------------------------------------------------------------ pretty output
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -419,7 +422,7 @@ s_watchdog() {
 export JARVIS_HOME="$RUNTIME_DIR"
 PORT=$PORT
 SERVER_DIR=$SERVER_DIR
-PYTHONPATH="$PYTHONPATH"
+PYTHONPATH="${PYTHONPATH:-}"
 export PYTHONPATH
 LOG="$LOG_DIR/watchdog.log"
 SERVER_LOG="$LOG_DIR/server.log"
@@ -472,9 +475,17 @@ PY
 done
 EOF
   chmod +x "$WATCHDOG"
+  # an empty watchdog script would "start" and die instantly - refuse to report PASS for that
+  if [ ! -s "$WATCHDOG" ]; then say "the watchdog script came out empty - not starting it"; return 1; fi
   local wpid
   wpid="$(spawn "$LOG_DIR/watchdog.log" bash "$WATCHDOG")"
   echo "$wpid" > "$WATCH_PID_FILE"
+  sleep 1
+  if ! pid_alive "$wpid"; then
+    say "watchdog exited right away - last lines:"
+    tail -n 10 "$LOG_DIR/watchdog.log" 2>/dev/null
+    return 1
+  fi
   say "pid $wpid - restarts the server within ~20s if it dies"
   event "watchdog pid $wpid"
   return 0
@@ -489,7 +500,12 @@ s_wakelock() {
 
 s_boot() {
   if ! is_termux; then skip "not Termux - on a PC/VPS use systemd or pm2 (see docs/SERVER_DEPLOY_FREE.md)"; return 3; fi
-  local boot_dir="$HOME/.termux/boot" f="$boot_dir/jarvis-server.sh"
+  # NOTE: keep these two assignments apart. With `set -u`,  local a="..." b="$a/x"
+  # reads $a BEFORE the local assignment exists -> "a: unbound variable" kills the
+  # whole script (this is exactly what stopped the first Termux run after step 14).
+  local boot_dir f
+  boot_dir="$HOME/.termux/boot"
+  f="$boot_dir/jarvis-server.sh"
   mkdir -p "$boot_dir" || return 1
   cat > "$RUNTIME_DIR/run-now.sh" <<EOF
 #!/usr/bin/env bash
@@ -529,11 +545,24 @@ s_tunnel() {
   if [ -s "$TUNNEL_URL_FILE" ] && public_health_ok "$(cat "$TUNNEL_URL_FILE")"; then
     say "the public URL is already answering: $(cat "$TUNNEL_URL_FILE")"; return 0
   fi
+  # A previous run may have opened a working tunnel but never saved its URL (cloudflared can
+  # need minutes on mobile data to print it). Recover it instead of starting a second tunnel.
+  local old_pid old_url
+  old_pid="$(read_pid "$TUNNEL_PID_FILE")"
+  if pid_alive "$old_pid" && [ -s "$LOG_DIR/tunnel.log" ]; then
+    old_url="$(awk 'match($0,/https:\/\/[a-z0-9-]+\.trycloudflare\.com/){u=substr($0,RSTART,RLENGTH)} END{print u}' "$LOG_DIR/tunnel.log" 2>/dev/null)"
+    if [ -n "$old_url" ] && public_health_ok "$old_url"; then
+      printf '%s\n' "$old_url" > "$TUNNEL_URL_FILE"
+      say "recovered the tunnel that was already running: $old_url (verified from the internet)"
+      event "tunnel $old_url (recovered)"
+      return 0
+    fi
+  fi
   if [ -f "$TUNNEL_PID_FILE" ]; then stop_thing "$TUNNEL_PID_FILE" "old tunnel" >/dev/null 2>&1; fi
-  local i url tpid
+  local i url tpid cf_dead=0
   if ! command -v cloudflared >/dev/null 2>&1 && is_termux; then
     say "cloudflared is not installed - installing it once for a sturdier tunnel"
-    pkg install -y cloudflared >/dev/null 2>&1 || say "install did not work - using the ssh tunnel instead"
+    pkg install -y cloudflared >/dev/null 2>&1 || say "install did not work - will try the ssh tunnel"
   fi
   if command -v cloudflared >/dev/null 2>&1; then
     say "opening a cloudflared quick tunnel"
@@ -547,16 +576,30 @@ s_tunnel() {
     cfargs+=(--url "http://127.0.0.1:$PORT")
     tpid="$(spawn "$LOG_DIR/tunnel.log" cloudflared "${cfargs[@]}")"
     echo "$tpid" > "$TUNNEL_PID_FILE"
-    for i in $(seq 1 40); do
+    # cloudflared runs a network precheck first and can need minutes on mobile data
+    # (measured on a phone: precheck 08:25:14 -> connection registered 08:28:01). Give it
+    # 240 s and print a heartbeat, so a slow-but-working tunnel is never killed early.
+    for i in $(seq 1 240); do
       url="$(awk 'match($0,/https:\/\/[a-z0-9-]+\.trycloudflare\.com/){u=substr($0,RSTART,RLENGTH)} END{print u}' "$LOG_DIR/tunnel.log" 2>/dev/null)"
       if [ -n "$url" ] && public_health_ok "$url"; then
         printf '%s\n' "$url" > "$TUNNEL_URL_FILE"; say "public URL $url (verified from the internet)"; event "tunnel $url"; return 0
       fi
+      if ! pid_alive "$tpid"; then cf_dead=1; break; fi
+      if [ $((i % 20)) -eq 0 ]; then say "still connecting to the Cloudflare edge... ${i}s"; fi
       sleep 1
     done
-    say "cloudflared printed no working URL - see $LOG_DIR/tunnel.log"
-    tail -n 6 "$LOG_DIR/tunnel.log" 2>/dev/null
-    return 1
+    if [ "$cf_dead" = 1 ]; then
+      say "cloudflared exited before giving a URL - last lines:"
+    else
+      say "cloudflared gave no working URL in 240 s - last lines:"
+    fi
+    tail -n 15 "$LOG_DIR/tunnel.log" 2>/dev/null
+    stop_thing "$TUNNEL_PID_FILE" "cloudflared" >/dev/null 2>&1
+    say "trying the free ssh tunnel instead"
+  fi
+  if ! command -v ssh >/dev/null 2>&1 && is_termux; then
+    say "ssh is missing - installing openssh for the fallback tunnel"
+    pkg install -y openssh >/dev/null 2>&1
   fi
   if command -v ssh >/dev/null 2>&1; then
     say "using the free localhost.run tunnel (cloudflared is sturdier: pkg install cloudflared)"
@@ -685,10 +728,12 @@ while [ $# -gt 0 ]; do
     --restart)   ACTION=restart;;
     --logs)      ACTION=logs;;
     --token)     ACTION=token;;
+    --console)   ACTION=console;;
     --tunnel)    WANT_TUNNEL=1;;
     --tunnel-only) ACTION=tunnelonly;;
     --no-tunnel) WANT_TUNNEL=0;;
     --no-watch)  WANT_WATCH=0;;
+    --no-console) WANT_CONSOLE=0;;
     --port)      shift; PORT="${1:-8787}";;
     --dir)       shift; SRCDIR="${1:-}";;
     --help|-h)   ACTION=help;;
@@ -699,6 +744,9 @@ done
 
 # where does this script live, and which checkout do we serve?
 SELF="${BASH_SOURCE[0]:-}"
+# curl -o saves the file without +x, so "~/jarvis-start.sh" would say Permission denied.
+# Make the copy runnable now, so both "bash ~/jarvis-start.sh" and "~/jarvis-start.sh" work.
+[ -n "$SELF" ] && [ -f "$SELF" ] && [ ! -x "$SELF" ] && chmod +x "$SELF" 2>/dev/null
 SERVER_DIR=""; REPO_ROOT=""; MODE=fetch
 if [ -n "$SRCDIR" ]; then
   if [ -d "$SRCDIR/jarvis_server" ]; then SERVER_DIR="$SRCDIR"
@@ -720,9 +768,21 @@ if [ "$MODE" = fetch ]; then
 fi
 
 mkdir -p "$LOG_DIR"
+# if the terminal is closed or Ctrl+C is pressed, leave a line in the event log so the
+# next run (or the console) can tell where it stopped instead of just vanishing.
+trap 'event "interrupted (signal) after step $STEP_N"' INT TERM
+
+open_console() {
+  [ -f "$SERVER_DIR/console.sh" ] || { say "console.sh not found in $SERVER_DIR"; return 1; }
+  local starter="$SERVER_DIR/start.sh"
+  [ -n "$SELF" ] && [ -f "$SELF" ] && starter="$SELF"
+  JARVIS_HOME="$RUNTIME_DIR" JARVIS_PORT="$PORT" JARVIS_SERVER_DIR="$SERVER_DIR" \
+  JARVIS_START_SH="$starter" exec bash "$SERVER_DIR/console.sh"
+}
 
 case "$ACTION" in
   help)  awk 'NR>=2 && NR<=32 {sub(/^# ?/,""); print}' "$SELF" 2>/dev/null; exit 0;;
+  console) open_console; exit $?;;
   status) do_status; exit 0;;
   stop)   do_stop;   exit 0;;
   tunnelonly) do_tunnel_only; exit $?;;
@@ -760,5 +820,14 @@ head1 "9) PUBLIC URL";      run_step "public HTTPS tunnel"     s_tunnel
 
 summary_table
 final_notes
-[ "$N_FAIL" -eq 0 ] || exit 1
+if [ "$N_FAIL" -gt 0 ]; then
+  say "  fix the FAIL step(s) above, then open the console:  bash ~/jarvis-start.sh --console"
+  exit 1
+fi
+# everything green and a real terminal in front of us -> hand over to the command center
+if [ "$WANT_CONSOLE" != 0 ] && [ -t 0 ] && [ -t 1 ]; then
+  printf '  %sopening the command center (q = back to the shell, the server keeps running)...%s\n\n' "$D" "$R"
+  sleep 1
+  open_console
+fi
 exit 0
