@@ -56,8 +56,28 @@ object CallHost {
             AppLog.i("Timing", "call_setup_services ${System.currentTimeMillis() - t0}ms")
         }
         scope.launch {
-            if (!ModelCatalog.ready && Prefs.apiKey.isNotBlank()) ModelCatalog.refresh()
-            if (client === c) c.start()
+            var ready = ModelCatalog.ready
+            if (!ready && Prefs.apiKey.isNotBlank()) {
+                try { ModelCatalog.refresh() } catch (e: Exception) { AppLog.w(e) }
+                ready = ModelCatalog.ready
+            }
+            if (client !== c) return@launch
+            // If Gemini Live has no models/key, automatically switch to a backup provider before failing the call.
+            if (provider == null && (!ready || ModelCatalog.liveCandidates().isEmpty())) {
+                val p = CustomProviders.list.firstOrNull { it.fallback && CustomProviders.canCall(it) }
+                    ?: CustomProviders.list.firstOrNull { CustomProviders.canCall(it) }
+                if (p != null) {
+                    AppLog.i("Call", "Gemini Live unavailable; auto-switching to ${p.name}")
+                    Prefs.callProvider = p.id; Prefs.save()
+                    val n = PipelineClient(app, scope, p)
+                    n.onTurn = c.onTurn
+                    client = n
+                    c.stop()
+                    n.start()
+                    return@launch
+                }
+            }
+            c.start()
         }
         return c
     }

@@ -59,6 +59,7 @@ class MainActivity : ComponentActivity() {
         com.jarvis.app.code.Skills.init(this)
         com.jarvis.app.code.Skills.installPack(this)
         com.jarvis.app.code.MemoryStore.init(this)
+        com.jarvis.app.appskills.AppSkills.init(this)
         Speaker.init(this)
         ChatStore.init(this)
         DeviceControl.init(this)
@@ -145,6 +146,7 @@ fun JarvisApp() {
         composable("assistant") { AssistantScreen(back) }
         composable("code") { CodeScreen(back) }
         composable("skills") { SkillsScreen(back) }
+        composable("appskills") { AppSkillsScreen(back) }
         composable("uistyle") { UiStyleScreen(back) }
         composable("cursorlab") { CursorLabScreen(back) }
         composable("cursormemory") { CursorMemoryScreen(back) }

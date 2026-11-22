@@ -48,6 +48,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     /** Called when Gemini Live cannot be used at all (quota, no model ...), so a backup provider can take over the call. */
     var onUnavailable: (() -> Unit)? = null
     private var liveModels = listOf<String>()
+    @Volatile private var unavailableNotified = false
 
     private val okc get() = Http.client   // one shared client: creating a new one on every call made the Live screen slow to open
     private var ws: WebSocket? = null
@@ -138,9 +139,13 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
 
     // ---------- connection ----------
     override fun start() {
-        error = null; userText = ""; aiText = ""; connStarted = 0L
-        reconnectTries = 0; reconnecting = false
+        stopSession()                       // clear any stale sockets/listeners from a previous interrupted start
+        error = null; userText = ""; aiText = ""; info = ""; micSilent = false; aecLost = false; echoGuard = false
+        connStarted = System.currentTimeMillis()
+        reconnectTries = 0; reconnecting = false; waitingNet = false
+        Diag.wsState = "starting"
         registerNet()
+        ui { if (state != State.IDLE) state = State.CONNECTING }
         restart("live_connect_start")
     }
 
@@ -148,6 +153,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         winner = -1; gotSetup = false; simple = false; retriedSimple = false; lastReason = ""
         waitingNet = false
         liveModels = ModelCatalog.liveCandidates()
+        unavailableNotified = false
         AppLog.i("Timing", "$logTag models=${liveModels.size}")
         nextBatch(0)
     }
@@ -155,9 +161,9 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     /** The server is going away or the socket dropped: resume the same conversation on a fresh connection. */
     @Synchronized
     private fun reconnect(why: String) {
-        if (reconnecting) return
-        if (!Prefs.liveResume) { ui { if (state != State.IDLE) { state = State.ERROR; error = "Call ended: $why" } }; return }
-        if (reconnectTries >= MAX_RECONNECT) { ui { if (state != State.IDLE) { state = State.ERROR; error = "Call lost: $why" } }; return }
+        if (reconnecting || state == State.IDLE) return
+        if (!Prefs.liveResume) { notifyUnavailable("Call ended: $why"); return }
+        if (reconnectTries >= MAX_RECONNECT) { notifyUnavailable("Call lost: $why"); return }
         reconnectTries++
         reconnecting = true
         Diag.reconnects++; Diag.wsState = "reconnecting"
@@ -184,10 +190,11 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     /** Opens up to [PARALLEL] candidate models starting at [from]; the first that sends setupComplete wins. */
     @Synchronized
     private fun nextBatch(from: Int) {
+        if (state == State.IDLE) return
         if (winner >= 0) return
-        val key = Prefs.apiKey
-        if (key.isBlank()) { fail("Add your Gemini API key in Profile > Gemini API"); return }
-        if (liveModels.isEmpty()) { fail("No Live-capable model was found for your key. Open Profile > Gemini API and tap Test & Load Models."); return }
+        val key = Prefs.apiKey.trim()
+        if (key.isBlank()) { notifyUnavailable("Add your Gemini API key in Profile > Gemini API"); return }
+        if (liveModels.isEmpty()) { notifyUnavailable("No Live-capable model was found for your key. Open Profile > Gemini API and tap Test & Load Models."); return }
         if (from >= liveModels.size) { noModelLeft(); return }
         batchStart = from
         val trials = (from until minOf(from + PARALLEL, liveModels.size)).map { Trial(it, liveModels[it]) }
@@ -207,7 +214,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
 
     private fun open(t: Trial, key: String) {
         val req = Request.Builder()
-            .url("wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=$key").build()
+            .url("wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=" + java.net.URLEncoder.encode(key, "UTF-8")).build()
         t.socket = okc.newWebSocket(req, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 t.socket = webSocket
@@ -241,6 +248,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     /** A candidate finished setup: adopt it, close the losers (and the previous socket after a seamless reconnect). */
     @Synchronized
     private fun won(t: Trial) {
+        if (state == State.IDLE) { try { t.socket?.close(1000, "stopped") } catch (e: Exception) { AppLog.w(e) }; return }
         if (winner >= 0) { try { t.socket?.close(1000, "stale") } catch (e: Exception) { AppLog.w(e) }; return }
         winner = t.idx
         gotSetup = true
@@ -287,6 +295,19 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         if (b.isNotEmpty() && b.all { it.done }) nextBatch(batchStart + PARALLEL)
     }
 
+    @Synchronized
+    private fun notifyUnavailable(msg: String) {
+        if (unavailableNotified || state == State.IDLE) return
+        unavailableNotified = true
+        Diag.log("ws", "live unavailable -> fallback: ${msg.take(180)}")
+        if (onUnavailable != null) {
+            ui { error = msg; info = "Switching backup…"; state = State.CONNECTING }
+            onUnavailable?.invoke()
+        } else {
+            fail(msg)
+        }
+    }
+
     private fun noModelLeft() {
         if (!retriedSimple) {                                   // some accounts/models reject tools or nested config: try a minimal setup once
             retriedSimple = true; simple = true
@@ -296,8 +317,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         }
         val why = lastReason.ifBlank { "no model accepted the connection" }
         val quota = why.contains("quota", true) || why.contains("exhausted", true) || why.contains("exceeded", true) || why.contains("billing", true)
-        fail(if (quota) "Gemini Live has no quota left on this key ($why). Use a custom provider for calls, or try again later." else "Live connection closed: $why")
-        onUnavailable?.invoke()
+        notifyUnavailable(if (quota) "Gemini Live has no quota left on this key ($why)." else "Live connection closed: $why")
     }
 
     private fun ended(code: Int, reason: String) {
@@ -309,19 +329,20 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             Diag.log("ws", "CLOSED code=$code why=${why.take(160)} setup=$gotSetup")
             AppLog.e("LiveClient", "Live connection closed · model=$modelName · setup=$gotSetup · code=$code · $why")
             val keyProblem = why.contains("API key", true) || why.contains("permission", true) || why.contains("API_KEY", true)
-            if (!gotSetup && !keyProblem) {
+            val quota = why.contains("quota", true) || why.contains("exhausted", true) || why.contains("exceeded", true) || why.contains("billing", true)
+            if (!gotSetup && (keyProblem || quota)) {
+                notifyUnavailable("Live connection closed: $why")
+            } else if (!gotSetup) {
                 winner = -1; ws = null
                 if (why.isNotBlank()) lastReason = why
                 nextBatch(batchStart + PARALLEL)                // the model that won the race then dropped without setup: continue with the next
-            } else if (!gotSetup) {
-                fail("Live connection closed: $why")
             } else {
                 reconnect(why)                                  // the call was live: keep it alive by resuming
             }
         }
     }
 
-    private fun fail(m: String) { ui { error = m; state = State.ERROR; stopAudio() } }
+    private fun fail(m: String) { ui { error = m; state = State.ERROR; info = ""; stopAudio() } }
 
     fun systemText(): String {
         val sb = StringBuilder()
@@ -378,9 +399,10 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
                     .put("triggerTokens", 24000))
             }
         } else {
-            // minimal setup for keys/models that reject tools or nested generationConfig
-            setup.put("responseModalities", JSONArray().put("AUDIO")).put("speechConfig", speech)
+            // minimal setup for models that reject tools / advanced fields, but keep valid Live schema
+            setup.put("generationConfig", JSONObject().put("responseModalities", JSONArray().put("AUDIO")).put("speechConfig", speech))
             setup.put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemText()))))
+            setup.put("inputAudioTranscription", JSONObject()).put("outputAudioTranscription", JSONObject())
         }
         return JSONObject().put("setup", setup).also { out ->
             Diag.log("Live", "setup built: simple=$simple hasTools=${setup.has("tools")} cursorTools=${out.toString().contains("cursor_create")} " +
@@ -629,6 +651,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
     private fun stopSession() {
         winner = -1
         waitingNet = false
+        reconnecting = false
         val prev = oldWs
         oldWs = null; oldWinner = -1
         try { prev?.close(1000, "bye") } catch (e: Exception) { AppLog.w(e) }

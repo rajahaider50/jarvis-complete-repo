@@ -93,6 +93,7 @@ fun ProfileScreen(onNav: (String) -> Unit) {
                     }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Code, "Code & documents workspace") { onNav("code") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Extension, "Skills") { onNav("skills") }
+                    Hairline(0.12f); PrefRowV(Icons.Outlined.AutoAwesomeMotion, "App Skills (UI automation)") { onNav("appskills") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Layers, "Interface style") { onNav("uistyle") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Security, "Access & permissions") { onNav("access") }
                     Hairline(0.12f); PrefRowV(Icons.Outlined.Terminal, "Console (errors)") { onNav("console") }
