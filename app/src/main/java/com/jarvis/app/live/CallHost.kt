@@ -77,6 +77,7 @@ object CallHost {
                     return@launch
                 }
             }
+            // Fast-start: if we have a previously verified live model, keep it first; catalog refresh already happened.
             c.start()
         }
         return c

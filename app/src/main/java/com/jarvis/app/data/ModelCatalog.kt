@@ -107,10 +107,22 @@ object ModelCatalog {
      *  Models that cannot send audio (server 1007) are left out; if that would leave nothing at all, keep them,
      *  because a wrong model that fails is better than "no live model at all" with no explanation. */
     fun liveCandidates(): List<String> {
-        val all = (Prefs.liveModels.toList() + listOfNotNull(liveModel()) + live.map { it.id }).distinct()
+        val readyFirst = live.filter { it.id in Prefs.liveReadyModels }.sortedBy { rank(it) }.map { it.id }
+        val all = (Prefs.liveModels.toList() + readyFirst + listOfNotNull(liveModel()) + live.map { it.id }).distinct()
         val ok = all.filterNot { isNoAudio(it) }
         return if (ok.isEmpty()) all else ok
     }
+
+    fun isLiveReady(id: String): Boolean = id.isNotBlank() && liveReady().contains(id)
+
+    fun markLiveReady(id: String) {
+        val clean = id.trim().removePrefix("models/")
+        if (clean.isBlank() || isLiveReady(clean)) return
+        Prefs.liveReadyModels = (liveReady() + clean).joinToString(",")
+        Prefs.save()
+    }
+
+    fun liveReady(): List<String> = Prefs.liveReadyModels.split(',').map { it.trim() }.filter { it.isNotBlank() }
     fun liveModel(): String? = live.firstOrNull { "flash" in it.id }?.id ?: live.firstOrNull()?.id
 
     /**

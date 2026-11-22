@@ -261,6 +261,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             try { old.close(1000, "swapped") } catch (e: Exception) { AppLog.w(e) }
             Diag.log("ws", "seamless swap done: the old socket is closed, the call never stopped")
         }
+        ModelCatalog.markLiveReady(t.model)
         AppLog.i("Timing", "live_connected ${System.currentTimeMillis() - connStarted}ms · ${t.model}")
         ui { modelName = t.model; state = State.LIVE; info = "Live"; startPlayback(); startAudio() }
     }
@@ -308,6 +309,13 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
         }
     }
 
+    private fun isAccessProblem(why: String): Boolean {
+        val w = why.lowercase()
+        return w.contains("quota") || w.contains("exhausted") || w.contains("exceeded") || w.contains("billing") ||
+            w.contains("free tier") || w.contains("not available") || w.contains("api key") || w.contains("permission") ||
+            w.contains("api_key") || w.contains("unauth") || w.contains("forbidden") || w.contains("403")
+    }
+
     private fun noModelLeft() {
         if (!retriedSimple) {                                   // some accounts/models reject tools or nested config: try a minimal setup once
             retriedSimple = true; simple = true
@@ -316,8 +324,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             return
         }
         val why = lastReason.ifBlank { "no model accepted the connection" }
-        val quota = why.contains("quota", true) || why.contains("exhausted", true) || why.contains("exceeded", true) || why.contains("billing", true)
-        notifyUnavailable(if (quota) "Gemini Live has no quota left on this key ($why)." else "Live connection closed: $why")
+        notifyUnavailable(if (isAccessProblem(why)) "Gemini Live unavailable on this key: $why" else "Live connection closed: $why")
     }
 
     private fun ended(code: Int, reason: String) {
@@ -328,9 +335,7 @@ class LiveClient(private val ctx: Context, private val scope: CoroutineScope) : 
             Diag.lastClose = "code=$code $why"
             Diag.log("ws", "CLOSED code=$code why=${why.take(160)} setup=$gotSetup")
             AppLog.e("LiveClient", "Live connection closed · model=$modelName · setup=$gotSetup · code=$code · $why")
-            val keyProblem = why.contains("API key", true) || why.contains("permission", true) || why.contains("API_KEY", true)
-            val quota = why.contains("quota", true) || why.contains("exhausted", true) || why.contains("exceeded", true) || why.contains("billing", true)
-            if (!gotSetup && (keyProblem || quota)) {
+            if (!gotSetup && isAccessProblem(why)) {
                 notifyUnavailable("Live connection closed: $why")
             } else if (!gotSetup) {
                 winner = -1; ws = null

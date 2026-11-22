@@ -43,6 +43,7 @@ object Prefs {
     var serverEnabled by mutableStateOf(true)   // use the brain server whenever it is reachable
     var serverSyncMemory by mutableStateOf(true) // push/pull memory with the server (S3)
     var noAudioModels by mutableStateOf("")     // live models that answered "AUDIO is not supported" (server code 1007)
+    var liveReadyModels by mutableStateOf("")   // live models that successfully completed setup in this environment
     var resumeHandle by mutableStateOf("")      // last Gemini Live session-resumption handle
     var resumeAt by mutableStateOf(0L)          // when the handle was received (valid ~30 min)
     var assistantName by mutableStateOf("Jarvis")
@@ -120,6 +121,7 @@ object Prefs {
         serverEnabled = sp.getBoolean("srvOn", true)
         serverSyncMemory = sp.getBoolean("srvMem", true)
         noAudioModels = sp.getString("noaudio", "") ?: ""
+        liveReadyModels = sp.getString("liveready", "") ?: ""
         resumeHandle = sp.getString("resumehandle", "") ?: ""
         resumeAt = sp.getLong("resumeat", 0L)
         fxEnabled = sp.getBoolean("fxon", true)
@@ -183,6 +185,7 @@ object Prefs {
             .putInt("callvol", callVolume).putBoolean("autoear", autoEarpiece)
             .putString("halfduplex", halfDuplex).putString("shareq", shareQuality)
             .putString("noaudio", noAudioModels)
+            .putString("liveready", liveReadyModels)
             .putBoolean("shareRec", shareToRecorders).putBoolean("recBoth", recBothVoices)
             .putString("srvUrl", serverUrl).putString("srvTok", serverToken)
             .putBoolean("srvOn", serverEnabled).putBoolean("srvMem", serverSyncMemory)
