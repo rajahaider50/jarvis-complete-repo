@@ -1,16 +1,12 @@
 # PROJECT MAP (generated: do not edit by hand)
 
-Updated 2026-11-22 15:53 · 264 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
+Updated 2026-11-22 17:30 · 264 files. Read docs/AI_GUIDE.md first, then this map, then ONLY the files you need.
 
 ## Changed since the previous map
-- app/src/main/java/com/jarvis/app/MainActivity.kt
-- app/src/main/java/com/jarvis/app/appskills/AppSkillPlayer.kt
-- app/src/main/java/com/jarvis/app/appskills/AppSkillRecorder.kt
-- app/src/main/java/com/jarvis/app/appskills/AppSkills.kt
+- app/src/main/java/com/jarvis/app/data/ModelCatalog.kt
+- app/src/main/java/com/jarvis/app/data/Prefs.kt
 - app/src/main/java/com/jarvis/app/live/CallHost.kt
 - app/src/main/java/com/jarvis/app/live/LiveClient.kt
-- app/src/main/java/com/jarvis/app/ui/screens/AppSkillsScreen.kt
-- app/src/main/java/com/jarvis/app/ui/screens/ProfileScreen.kt
 
 ## Kotlin source (`app/src/main/java/com/jarvis/app/`)
 format: `path` · lines · what it is · declares · uses (other project files)
@@ -55,12 +51,12 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `GeminiClient.kt` · 255 · Minimal Gemini API client (REST, v1beta). No model names are hard-coded: · GeminiClient
 - `ImageUtil.kt` · 31 · - · ImageUtil
 - `Langs.kt` · 45 · - · Lang, Langs
-- `ModelCatalog.kt` · 132 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog
+- `ModelCatalog.kt` · 144 · Real models available for the user's key (from models.list) + automatic per-task selection · ModelCatalog
 - `ModelCatalogFile.kt` · 102 · A small offline catalog of well-known models, so a provider that does not report · ModelCatalogFile
 - `ModelRouter.kt` · 172 · Scores real provider models and remembers temporary health/quota state locally. · ModelRouter · uses: AppLog.kt
 - `NavState.kt` · 11 · The screen the app is showing right now, so the assistant knows where the user is (get_app · NavState
 - `PhoneActions.kt` · 132 · Things the assistant can do on the phone for you (browser, apps, screen). Used by the live · PhoneActions · uses: JarvisAccessibilityService.kt
-- `Prefs.kt` · 195 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
+- `Prefs.kt` · 198 · All user settings, stored privately on the device. · CustomVoice, Prefs · uses: Color.kt
 - `ProbeService.kt` · 52 · Real, tiny requests that check whether a provider model actually answers, how fast, and · ProbeService
 - `RealFacts.kt` · 58 · The real state of the phone, read from Android at the moment it is needed. It is given to  · RealFacts
 - `Startup.kt` · 105 · The prepared "system active" briefing: text + voice audio, cached so Home can play it inst · Greeting, GreetingPlayer, Startup · uses: PcmPlayer.kt, Speaker.kt
@@ -74,7 +70,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CallAudioTap.kt` · 68 · A tap into the live call's raw audio, used by the in-app screen recorder to mix both sides · CallAudioTap
 - `CallCamera.kt` · 14 · The live call camera, owned by the app (not the screen) so both the UI and the assistant c · CallCamera
 - `CallEngine.kt` · 52 · What every kind of voice call looks like to the screens, the floating bubble and the notif · CallEngine · uses: Prefs.kt
-- `CallHost.kt` · 120 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
+- `CallHost.kt` · 121 · Owns the one live call of the whole process. · CallHost · uses: AudioRouter.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt, ModelCatalog.kt, Prefs.kt
 - `CallLocks.kt` · 49 · Holds a partial wake lock (CPU) and a Wi-Fi high-performance lock for the whole live call, · CallLocks · uses: AppLog.kt
 - `CallService.kt` · 87 · Keeps the live call (and its microphone) alive while the app is in the background, as Andr · CallService · uses: AppLog.kt, MainActivity.kt, Prefs.kt
 - `ClickMemory.kt` · 272 · Click-lesson memory for the AI cursor. It is FILE based (no Room): a machine file `ui_clic · ClickMemory · uses: AppLog.kt
@@ -83,7 +79,7 @@ format: `path` · lines · what it is · declares · uses (other project files)
 - `CursorPanel.kt` · 292 · The user's floating control panel for the AI cursor: cursor list, X/Y readout (2 decimals) · CursorPanel, JoystickView · uses: AppLog.kt
 - `Diag.kt` · 132 · Evidence logger for the bugfix work. Everything goes to logcat with the tag [TAG] (timesta · Diag
 - `JarvisAccessibilityService.kt` · 552 · The real result of a dispatched gesture (bugfix Masla A / §2.1). Top-level so CursorContro · GestureOutcome, JarvisAccessibilityService · uses: Prefs.kt
-- `LiveClient.kt` · 670 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
+- `LiveClient.kt` · 675 · Real-time voice call with Gemini (Live API over WebSocket). · LiveClient, Http · uses: AppLog.kt, Device.kt, Langs.kt, ModelCatalog.kt, Prefs.kt, Voices.kt
 - `MicCaptureHub.kt` · 304 · The ONE owner of the microphone. Everything that needs mic PCM (the Gemini sender, the in- · MicCaptureHub · uses: AppLog.kt
 - `PhoneTools.kt` · 203 · Everything the assistant can do on the phone, described once and used by BOTH call engines · PhoneTools · uses: AppLog.kt, Device.kt, PhoneActions.kt, Weather.kt
 - `PipelineClient.kt` · 170 · A voice call with ANY provider: your speech is cut out of the microphone, turned into text · PipelineClient · uses: PcmPlayer.kt, Speaker.kt, WavUtil.kt, AppLog.kt, ChatStore.kt, CustomProviders.kt
